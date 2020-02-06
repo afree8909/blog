@@ -46,14 +46,26 @@
   };
 </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Afree&#39;s blog">
-<meta property="og:url" content="https://afree8909.github.io/blog/tags/git/index.html">
+  <meta name="description" content="什么是HTTP缓存HTTP缓存通常指浏览器缓存，基于HTTP中header字段实现HTTP缓存分为强缓存和协商缓存，见下图  Cache-Control主要字段说明 缓存校验字段 缓存字段对比 HTTP缓存流程 为什么使用HTTP缓存终端缓存策略，可以缩短端到端的请求资源的距离，减少延迟，而且缓存重用，也能减少宽带流量，降低网络负荷。最终用户体验和性能得到优化，避免无用资源请求浪费">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTTP缓存原理">
+<meta property="og:url" content="https://afree8909.github.io/blog/2020/02/07/HTTP%E7%BC%93%E5%AD%98%E5%8E%9F%E7%90%86/index.html">
 <meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="什么是HTTP缓存HTTP缓存通常指浏览器缓存，基于HTTP中header字段实现HTTP缓存分为强缓存和协商缓存，见下图  Cache-Control主要字段说明 缓存校验字段 缓存字段对比 HTTP缓存流程 为什么使用HTTP缓存终端缓存策略，可以缩短端到端的请求资源的距离，减少延迟，而且缓存重用，也能减少宽带流量，降低网络负荷。最终用户体验和性能得到优化，避免无用资源请求浪费">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-cce700528e23bc81.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-2a26a690808fb292.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-4656eec189b891ab.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-0d9fb787867f2f04.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-e9f7b43d56529039.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2020-02-06T16:18:40.311Z">
+<meta property="article:modified_time" content="2020-02-06T16:20:13.923Z">
 <meta property="article:author" content="Afree">
+<meta property="article:tag" content="缓存">
+<meta property="article:tag" content="http">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-cce700528e23bc81.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 
-<link rel="canonical" href="https://afree8909.github.io/blog/tags/git/">
+<link rel="canonical" href="https://afree8909.github.io/blog/2020/02/07/HTTP%E7%BC%93%E5%AD%98%E5%8E%9F%E7%90%86/">
 
 
 <script id="page-configurations">
@@ -61,11 +73,11 @@
   CONFIG.page = {
     sidebar: "",
     isHome: false,
-    isPost: false
+    isPost: true
   };
 </script>
 
-  <title>Tag: git | Afree's blog</title>
+  <title>HTTP缓存原理 | Afree's blog</title>
   
 
 
@@ -195,54 +207,125 @@
           <div class="content">
             
 
+  <div class="posts-expand">
+      
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h1 class="collection-header">git
-          <small>Tag</small>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2020/02/07/HTTP%E7%BC%93%E5%AD%98%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HTTP缓存原理
         </h1>
-      </div>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-02-07 00:18:40 / Modified: 00:20:13" itemprop="dateCreated datePublished" datetime="2020-02-07T00:18:40+08:00">2020-02-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/HTTP/" itemprop="url" rel="index">
+                    <span itemprop="name">HTTP</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>186</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <h1 class="collection-header">2020</h1>
+        <h3 id="什么是HTTP缓存"><a href="#什么是HTTP缓存" class="headerlink" title="什么是HTTP缓存"></a>什么是HTTP缓存</h3><p>HTTP缓存通常指浏览器缓存，基于HTTP中header字段实现<br>HTTP缓存分为强缓存和协商缓存，见下图</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-cce700528e23bc81.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="Cache-Control主要字段说明"><a href="#Cache-Control主要字段说明" class="headerlink" title="Cache-Control主要字段说明"></a>Cache-Control主要字段说明</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-2a26a690808fb292.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="缓存校验字段"><a href="#缓存校验字段" class="headerlink" title="缓存校验字段"></a>缓存校验字段</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-4656eec189b891ab.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="缓存字段对比"><a href="#缓存字段对比" class="headerlink" title="缓存字段对比"></a>缓存字段对比</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-0d9fb787867f2f04.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="HTTP缓存流程"><a href="#HTTP缓存流程" class="headerlink" title="HTTP缓存流程"></a>HTTP缓存流程</h3><p><img src="https://upload-images.jianshu.io/upload_images/9696036-e9f7b43d56529039.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="为什么使用HTTP缓存"><a href="#为什么使用HTTP缓存" class="headerlink" title="为什么使用HTTP缓存"></a>为什么使用HTTP缓存</h3><p>终端缓存策略，可以缩短端到端的请求资源的距离，减少延迟，而且缓存重用，也能减少宽带流量，降低网络负荷。<br>最终用户体验和性能得到优化，避免无用资源请求浪费</p>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-02-07T00:16:30+08:00"
-              content="2020-02-07">
-          02-07
-        </time>
-      </div>
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E7%BC%93%E5%AD%98/" rel="tag"># 缓存</a>
+              <a href="/blog/tags/http/" rel="tag"># http</a>
+          </div>
 
-      <h2 class="post-title">
-          <a class="post-title-link" href="/blog/2020/02/07/Git%20%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E5%A4%A7%E5%85%A8/" itemprop="url">
-            <span itemprop="name">Git 常用命令大全</span>
-          </a>
-      </h2>
+        
 
-    </header>
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/02/07/Git%20%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E5%A4%A7%E5%85%A8/" rel="prev" title="Git 常用命令大全">
+      <i class="fa fa-chevron-left"></i> Git 常用命令大全
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
   </article>
+  
+  
+  
 
-    </div>
   </div>
-  
-  
-  
-
-  
-
 
 
           </div>
           
+    <div class="comments" id="gitalk-container"></div>
 
 <script>
   window.addEventListener('tabs:register', () => {
@@ -289,6 +372,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是HTTP缓存"><span class="nav-number">1.</span> <span class="nav-text">什么是HTTP缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Cache-Control主要字段说明"><span class="nav-number">1.1.</span> <span class="nav-text">Cache-Control主要字段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缓存校验字段"><span class="nav-number">1.2.</span> <span class="nav-text">缓存校验字段</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缓存字段对比"><span class="nav-number">1.3.</span> <span class="nav-text">缓存字段对比</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP缓存流程"><span class="nav-number">2.</span> <span class="nav-text">HTTP缓存流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么使用HTTP缓存"><span class="nav-number">3.</span> <span class="nav-text">为什么使用HTTP缓存</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -455,6 +539,25 @@
 
   
 
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '8c59aad07aacdd6024cf7fcaf2e6af39',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
 
 </body>
 </html>

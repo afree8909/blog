@@ -46,14 +46,23 @@
   };
 </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Afree&#39;s blog">
-<meta property="og:url" content="https://afree8909.github.io/blog/tags/git/index.html">
+  <meta name="description" content="Put方法流程图 特殊值hash高16bit不变，低16bit和高16bit做了一个异或 1234static final int hash(Object key) &amp;#123;       int h;       return (key &#x3D;&#x3D; null) ? 0 : (h &#x3D; key.hashCode()) ^ (h &gt;&gt;&gt; 16);   &amp;#1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java8中HashMap分析">
+<meta property="og:url" content="https://afree8909.github.io/blog/2020/02/07/Java8%E4%B8%ADHashMap%E5%88%86%E6%9E%90/index.html">
 <meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="Put方法流程图 特殊值hash高16bit不变，低16bit和高16bit做了一个异或 1234static final int hash(Object key) &amp;#123;       int h;       return (key &#x3D;&#x3D; null) ? 0 : (h &#x3D; key.hashCode()) ^ (h &gt;&gt;&gt; 16);   &amp;#1">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/9696036-d3f845741e8a5756.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/9696036-07f14b44d2fd625b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2020-02-06T16:10:49.225Z">
+<meta property="article:modified_time" content="2020-02-06T16:12:03.756Z">
 <meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta property="article:tag" content="集合">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/9696036-d3f845741e8a5756.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 
-<link rel="canonical" href="https://afree8909.github.io/blog/tags/git/">
+<link rel="canonical" href="https://afree8909.github.io/blog/2020/02/07/Java8%E4%B8%ADHashMap%E5%88%86%E6%9E%90/">
 
 
 <script id="page-configurations">
@@ -61,11 +70,11 @@
   CONFIG.page = {
     sidebar: "",
     isHome: false,
-    isPost: false
+    isPost: true
   };
 </script>
 
-  <title>Tag: git | Afree's blog</title>
+  <title>Java8中HashMap分析 | Afree's blog</title>
   
 
 
@@ -195,54 +204,149 @@
           <div class="content">
             
 
+  <div class="posts-expand">
+      
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h1 class="collection-header">git
-          <small>Tag</small>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2020/02/07/Java8%E4%B8%ADHashMap%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Java8中HashMap分析
         </h1>
-      </div>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-02-07 00:10:49 / Modified: 00:12:03" itemprop="dateCreated datePublished" datetime="2020-02-07T00:10:49+08:00">2020-02-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Java/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" itemprop="url" rel="index">
+                    <span itemprop="name">数据结构</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>497</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <h1 class="collection-header">2020</h1>
+        <h3 id="Put方法流程图"><a href="#Put方法流程图" class="headerlink" title="Put方法流程图"></a>Put方法流程图</h3><p><img src="http://upload-images.jianshu.io/upload_images/9696036-d3f845741e8a5756.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="特殊值"><a href="#特殊值" class="headerlink" title="特殊值"></a>特殊值</h3><h4 id="hash"><a href="#hash" class="headerlink" title="hash"></a>hash</h4><p>高16bit不变，低16bit和高16bit做了一个异或</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">static final int hash(Object key) &#123;</span><br><span class="line">       int h;</span><br><span class="line">       return (key &#x3D;&#x3D; null) ? 0 : (h &#x3D; key.hashCode()) ^ (h &gt;&gt;&gt; 16);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="size"><a href="#size" class="headerlink" title="size"></a>size</h4><ul>
+<li>map中存储的KV数目</li>
+<li>值为2的n次幂<ul>
+<li>哈希表是通过除法散列法，取模会用到除法运算，效率很低，而HashMap通过 h&amp;（length－1）替代取模</li>
+<li>length 为2的整数次幂，是为了使不同hash值发生碰撞概率小即更均匀散列</li>
+<li>length 的值为100..0，length－1为011..1，相当于对取模，而且保证了hash可以奇偶都有</li>
+</ul>
+</li>
+</ul>
+<h4 id="threshold"><a href="#threshold" class="headerlink" title="threshold"></a>threshold</h4><ul>
+<li>阀值，=容量*loadFactor（负载因子，默认0.75）</li>
+</ul>
+<h3 id="扩容机制"><a href="#扩容机制" class="headerlink" title="扩容机制"></a>扩容机制</h3><ul>
+<li>hash与旧链表大小做 &amp; 运算，=0不变，=1移动到原位置+旧链表大小的位置<br><img src="http://upload-images.jianshu.io/upload_images/9696036-07f14b44d2fd625b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></li>
+</ul>
+<h3 id="线程是否安全"><a href="#线程是否安全" class="headerlink" title="线程是否安全"></a>线程是否安全</h3><ul>
+<li>JDK1.7，扩容前后链表导致，转移过程中修改了原来链表中节点引用关系，可能导致死循环</li>
+<li>JDK1.8，不会引起死循环，但put／get不一定同步</li>
+</ul>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-02-07T00:16:30+08:00"
-              content="2020-02-07">
-          02-07
-        </time>
-      </div>
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+              <a href="/blog/tags/%E9%9B%86%E5%90%88/" rel="tag"># 集合</a>
+          </div>
 
-      <h2 class="post-title">
-          <a class="post-title-link" href="/blog/2020/02/07/Git%20%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E5%A4%A7%E5%85%A8/" itemprop="url">
-            <span itemprop="name">Git 常用命令大全</span>
-          </a>
-      </h2>
+        
 
-    </header>
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/02/07/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E2%80%94%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%90%86%E8%A7%A3/" rel="prev" title="Java并发编程—线程池理解">
+      <i class="fa fa-chevron-left"></i> Java并发编程—线程池理解
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/02/07/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/" rel="next" title="单例模式">
+      单例模式 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
   </article>
+  
+  
+  
 
-    </div>
   </div>
-  
-  
-  
-
-  
-
 
 
           </div>
           
+    <div class="comments" id="gitalk-container"></div>
 
 <script>
   window.addEventListener('tabs:register', () => {
@@ -289,6 +393,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Put方法流程图"><span class="nav-number">1.</span> <span class="nav-text">Put方法流程图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#特殊值"><span class="nav-number">2.</span> <span class="nav-text">特殊值</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#hash"><span class="nav-number">2.1.</span> <span class="nav-text">hash</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#size"><span class="nav-number">2.2.</span> <span class="nav-text">size</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#threshold"><span class="nav-number">2.3.</span> <span class="nav-text">threshold</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#扩容机制"><span class="nav-number">3.</span> <span class="nav-text">扩容机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#线程是否安全"><span class="nav-number">4.</span> <span class="nav-text">线程是否安全</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -455,6 +560,25 @@
 
   
 
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '3bc6653e9b58e153bae46fe4bbfeebb0',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
 
 </body>
 </html>

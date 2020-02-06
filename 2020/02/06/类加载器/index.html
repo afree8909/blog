@@ -46,21 +46,23 @@
   };
 </script>
 
-  <meta name="description" content="目的希望自主生成用于所有移动业务上标识设备唯一性的标识符 作用业务支撑、日活和新增设备等数据统计、风控等 uuid系统图 UUID生成移动端相关参数AndroidIMEI  * International Mobile Equipment Identity，移动设备国际识别码，是手机的唯一识别号码。等价于DeviceId * 仅支持具有通话功能的设备，例如平板没有 * 需要权限，并且在少数手机拿到">
+  <meta name="description" content="JVM类加载器概念“通过一个类的全限定名来获取描述此类的二进制字节流。” ——实现这个动作的代码模块称为类加载器。 加载阶段 根据一个类的全限定名来获取定义此类的二进制字节流 将这个字节流所代表的静态存储结构转化为 JVM 方法区中的运行时数据结构 在内存中生成一个代表这个类的 java.lang.Class 对象，作为方法区这个类的各种数据的访问入口。  扩展 如果想维持双亲委派机制，则覆写fi">
 <meta property="og:type" content="article">
-<meta property="og:title" content="自定义UUID-移动设备唯一标识">
-<meta property="og:url" content="https://afree8909.github.io/blog/2020/02/06/%E8%87%AA%E5%AE%9A%E4%B9%89UUID-%E7%A7%BB%E5%8A%A8%E8%AE%BE%E5%A4%87%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/index.html">
+<meta property="og:title" content="类加载器">
+<meta property="og:url" content="https://afree8909.github.io/blog/2020/02/06/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/index.html">
 <meta property="og:site_name" content="Afree&#39;s blog">
-<meta property="og:description" content="目的希望自主生成用于所有移动业务上标识设备唯一性的标识符 作用业务支撑、日活和新增设备等数据统计、风控等 uuid系统图 UUID生成移动端相关参数AndroidIMEI  * International Mobile Equipment Identity，移动设备国际识别码，是手机的唯一识别号码。等价于DeviceId * 仅支持具有通话功能的设备，例如平板没有 * 需要权限，并且在少数手机拿到">
-<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/9696036-3430540af001a4ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
-<meta property="article:published_time" content="2020-02-06T07:31:08.927Z">
-<meta property="article:modified_time" content="2020-02-06T13:54:26.766Z">
+<meta property="og:description" content="JVM类加载器概念“通过一个类的全限定名来获取描述此类的二进制字节流。” ——实现这个动作的代码模块称为类加载器。 加载阶段 根据一个类的全限定名来获取定义此类的二进制字节流 将这个字节流所代表的静态存储结构转化为 JVM 方法区中的运行时数据结构 在内存中生成一个代表这个类的 java.lang.Class 对象，作为方法区这个类的各种数据的访问入口。  扩展 如果想维持双亲委派机制，则覆写fi">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/9696036-bdec0871909f7e63.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/9696036-6c2d2a58d8a20614.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/9696036-635865c5ccbce353.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2020-02-06T15:54:50.160Z">
+<meta property="article:modified_time" content="2020-02-06T15:56:08.531Z">
 <meta property="article:author" content="Afree">
-<meta property="article:tag" content="ID">
+<meta property="article:tag" content="源码">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/9696036-3430540af001a4ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/9696036-bdec0871909f7e63.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 
-<link rel="canonical" href="https://afree8909.github.io/blog/2020/02/06/%E8%87%AA%E5%AE%9A%E4%B9%89UUID-%E7%A7%BB%E5%8A%A8%E8%AE%BE%E5%A4%87%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/">
+<link rel="canonical" href="https://afree8909.github.io/blog/2020/02/06/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/">
 
 
 <script id="page-configurations">
@@ -72,7 +74,7 @@
   };
 </script>
 
-  <title>自定义UUID-移动设备唯一标识 | Afree's blog</title>
+  <title>类加载器 | Afree's blog</title>
   
 
 
@@ -207,7 +209,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2020/02/06/%E8%87%AA%E5%AE%9A%E4%B9%89UUID-%E7%A7%BB%E5%8A%A8%E8%AE%BE%E5%A4%87%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2020/02/06/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.png">
@@ -220,7 +222,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          自定义UUID-移动设备唯一标识
+          类加载器
         </h1>
 
         <div class="post-meta">
@@ -231,7 +233,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-02-06 15:31:08 / Modified: 21:54:26" itemprop="dateCreated datePublished" datetime="2020-02-06T15:31:08+08:00">2020-02-06</time>
+              <time title="Created: 2020-02-06 23:54:50 / Modified: 23:56:08" itemprop="dateCreated datePublished" datetime="2020-02-06T23:54:50+08:00">2020-02-06</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -239,14 +241,14 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
-                    <span itemprop="name">Android</span>
+                  <a href="/blog/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
                   </a>
                 </span>
                   , 
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Android/%E5%BA%94%E7%94%A8/" itemprop="url" rel="index">
-                    <span itemprop="name">应用</span>
+                  <a href="/blog/categories/Java/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
                   </a>
                 </span>
             </span>
@@ -264,7 +266,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">Symbols count in article: </span>
-              <span>611</span>
+              <span>650</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
@@ -283,45 +285,36 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>希望自主生成用于所有移动业务上标识设备唯一性的标识符</p>
-<h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h3><p>业务支撑、日活和新增设备等数据统计、风控等</p>
-<h3 id="uuid系统图"><a href="#uuid系统图" class="headerlink" title="uuid系统图"></a>uuid系统图</h3><p><img src="http://upload-images.jianshu.io/upload_images/9696036-3430540af001a4ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h3 id="UUID生成"><a href="#UUID生成" class="headerlink" title="UUID生成"></a>UUID生成</h3><h4 id="移动端相关参数"><a href="#移动端相关参数" class="headerlink" title="移动端相关参数"></a>移动端相关参数</h4><h5 id="Android"><a href="#Android" class="headerlink" title="Android"></a>Android</h5><pre><code>IMEI
-
-* International Mobile Equipment Identity，移动设备国际识别码，是手机的唯一识别号码。等价于DeviceId
-* 仅支持具有通话功能的设备，例如平板没有
-* 需要权限，并且在少数手机拿到的是不合法值
-* 一定的重复率（约5%）
-
-MAC Address
-
-* 支持带有Wifi和蓝牙硬件的设备
-* 需要权限
-
-Sim Serial Number
-
-* Sim卡序列号
-* 对于CDMA设备，返回一个空值</code></pre><h5 id="iOS"><a href="#iOS" class="headerlink" title="iOS"></a>iOS</h5><pre><code>IDFA: 广告标志符,重置系统、还原广告会重新生成）
-OpenUDID: 由OpenUDID的SDK包生成，该应用重置则会重新生成
-keychain: 系统级存储，用于生成的标识存储
-MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算法"><a href="#uuid生成算法" class="headerlink" title="uuid生成算法"></a>uuid生成算法</h4><p>相关参数：客户端类型、版本号、设备信息长度、设备信息内容（见上）、时间戳、设备信息类型、随机数<br>原则：生成uuid唯一，设备信息可反查，设备信息关联uuid，设备信息可校验等<br>算法：32位明文存储相关信息，AES64对称加密</p>
-<h4 id="表结构"><a href="#表结构" class="headerlink" title="表结构"></a>表结构</h4><table>
-<thead>
-<tr>
-<th>uuid</th>
-<th>imei</th>
-<th>mac</th>
-<th>simid</th>
-<th>idfa</th>
-<th>keychainid</th>
-<th>openudid</th>
-<th>idfa</th>
-<th align="left">udid</th>
-<th align="left">Xxx</th>
-</tr>
-</thead>
-</table>
-<h3 id="相关问题"><a href="#相关问题" class="headerlink" title="相关问题"></a>相关问题</h3><p>uuid没法保存<br>uuid合法性（去重、是否作弊）<br>兼容已有uuid<br>防止刷接口<br>防止伪造uuid</p>
+        <h3 id="JVM类加载器"><a href="#JVM类加载器" class="headerlink" title="JVM类加载器"></a>JVM类加载器</h3><h4 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h4><p>“通过一个类的全限定名来获取描述此类的二进制字节流。” ——实现这个动作的代码模块称为类加载器。</p>
+<h4 id="加载阶段"><a href="#加载阶段" class="headerlink" title="加载阶段"></a>加载阶段</h4><ul>
+<li>根据一个类的全限定名来获取定义此类的二进制字节流</li>
+<li>将这个字节流所代表的静态存储结构转化为 JVM 方法区中的运行时数据结构</li>
+<li>在内存中生成一个代表这个类的 java.lang.Class 对象，作为方法区这个类的各种数据的访问入口。</li>
+</ul>
+<h4 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h4><ul>
+<li>如果想维持双亲委派机制，则覆写findClass方法</li>
+<li>如果想打破双亲委派机制，则覆写loadClass方法</li>
+</ul>
+<p><img src="http://upload-images.jianshu.io/upload_images/9696036-bdec0871909f7e63.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h4><h5 id="Tomcat类加载器"><a href="#Tomcat类加载器" class="headerlink" title="Tomcat类加载器"></a>Tomcat类加载器</h5><ul>
+<li><p>Java类库的隔离：不同应用程序使用不同的类加载器，可以实现Java类库的隔离。</p>
+</li>
+<li><p>Java类库的共享：通过Common类加载器和Shared类加载器可以实现Java类库的共享。</p>
+</li>
+<li><p>安全：服务器和应用程序有各自的类加载器加载Class文件。服务器的类库与应用程序的类库可以互相独立。</p>
+</li>
+<li><p>支持HotSwap（热替换）：JSP文件有独立的类加载器，服务器能通过替换JSP文件的类加载器来实现JSP的HotSwap功能。</p>
+</li>
+</ul>
+<p><img src="http://upload-images.jianshu.io/upload_images/9696036-6c2d2a58d8a20614.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="Android类加载图"><a href="#Android类加载图" class="headerlink" title="Android类加载图"></a>Android类加载图</h3><h4 id="加载阶段-1"><a href="#加载阶段-1" class="headerlink" title="加载阶段"></a>加载阶段</h4><p>通过一个dex文件或者apk文件的路径完成类的加载</p>
+<h4 id="类加载器"><a href="#类加载器" class="headerlink" title="类加载器"></a>类加载器</h4><ul>
+<li>BootClassLoader，主要用于加载系统的类，包括java和Android系统的类库</li>
+<li>PathClassLoader，主要用于加载应用内中的类，路径是固定的，只能加载/data/app中的apk，无法指定dex路径</li>
+<li>DexClassLoader，可任意加载.apk、zip或jar等，实现动态加载</li>
+</ul>
+<p><img src="http://upload-images.jianshu.io/upload_images/9696036-635865c5ccbce353.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="TODO"><a href="#TODO" class="headerlink" title="TODO"></a>TODO</h4><p>类加载器相关应用，插件化、热补等</p>
 
     </div>
 
@@ -331,7 +324,7 @@ MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算�
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/blog/tags/ID/" rel="tag"># ID</a>
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
           </div>
 
         
@@ -339,10 +332,13 @@ MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算�
 
         
     <div class="post-nav">
-      <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/blog/2020/02/06/Android%E7%BA%BF%E7%A8%8B%E6%B6%88%E6%81%AF%E6%9C%BA%E5%88%B6/" rel="next" title="Android线程消息机制">
-      Android线程消息机制 <i class="fa fa-chevron-right"></i>
+    <a href="/blog/2020/02/06/Java%E7%B1%BB%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/" rel="prev" title="Java类生命周期">
+      <i class="fa fa-chevron-left"></i> Java类生命周期
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/02/06/Java%E5%AF%B9%E8%B1%A1%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/" rel="next" title="Java对象生命周期">
+      Java对象生命周期 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -404,7 +400,7 @@ MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算�
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#目的"><span class="nav-number">1.</span> <span class="nav-text">目的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#作用"><span class="nav-number">2.</span> <span class="nav-text">作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#uuid系统图"><span class="nav-number">3.</span> <span class="nav-text">uuid系统图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UUID生成"><span class="nav-number">4.</span> <span class="nav-text">UUID生成</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#移动端相关参数"><span class="nav-number">4.1.</span> <span class="nav-text">移动端相关参数</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Android"><span class="nav-number">4.1.1.</span> <span class="nav-text">Android</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#iOS"><span class="nav-number">4.1.2.</span> <span class="nav-text">iOS</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#uuid生成算法"><span class="nav-number">4.2.</span> <span class="nav-text">uuid生成算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#表结构"><span class="nav-number">4.3.</span> <span class="nav-text">表结构</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#相关问题"><span class="nav-number">5.</span> <span class="nav-text">相关问题</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#JVM类加载器"><span class="nav-number">1.</span> <span class="nav-text">JVM类加载器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#概念"><span class="nav-number">1.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#加载阶段"><span class="nav-number">1.2.</span> <span class="nav-text">加载阶段</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#扩展"><span class="nav-number">1.3.</span> <span class="nav-text">扩展</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#示例"><span class="nav-number">1.4.</span> <span class="nav-text">示例</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Tomcat类加载器"><span class="nav-number">1.4.1.</span> <span class="nav-text">Tomcat类加载器</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android类加载图"><span class="nav-number">2.</span> <span class="nav-text">Android类加载图</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#加载阶段-1"><span class="nav-number">2.1.</span> <span class="nav-text">加载阶段</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#类加载器"><span class="nav-number">2.2.</span> <span class="nav-text">类加载器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TODO"><span class="nav-number">2.3.</span> <span class="nav-text">TODO</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -582,7 +578,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo: 'blog-comment',
       owner: 'afree8909',
       admin: ['afree8909'],
-      id: '99837406ba86a507ef0d83042f533a88',
+      id: '3dcb2d1a24a3138c19476cd4d4731041',
         language: 'zh-CN',
       distractionFreeMode: true
     });
