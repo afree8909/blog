@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="基于API 23   SurfaceComposerClient的创建过程WMS.addWinodwWMS添加window过程，最后会执行到session.windowAddedLocked 1234567891011&#x2F;&#x2F;WMSpublic int addWindow(Session session, IWindow client, int seq, WindowManage">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统_Surface">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/11/25/Android%E7%B3%BB%E7%BB%9F_Surface/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="基于API 23   SurfaceComposerClient的创建过程WMS.addWinodwWMS添加window过程，最后会执行到session.windowAddedLocked 1234567891011&#x2F;&#x2F;WMSpublic int addWindow(Session session, IWindow client, int seq, WindowManage">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-b7271e93c8490bde.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-11-25T03:14:17.260Z">
+<meta property="article:modified_time" content="2020-02-06T17:11:09.507Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta property="article:tag" content="Surface">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-b7271e93c8490bde.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/11/25/Android%E7%B3%BB%E7%BB%9F_Surface/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Android系统_Surface | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/11/25/Android%E7%B3%BB%E7%BB%9F_Surface/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android系统_Surface
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-11-25 11:14:17" itemprop="dateCreated datePublished" datetime="2019-11-25T11:14:17+08:00">2019-11-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 01:11:09" itemprop="dateModified" datetime="2020-02-07T01:11:09+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>11k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>10 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>基于API 23</p>
+</blockquote>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-b7271e93c8490bde.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="SurfaceComposerClient的创建过程"><a href="#SurfaceComposerClient的创建过程" class="headerlink" title="SurfaceComposerClient的创建过程"></a>SurfaceComposerClient的创建过程</h3><h4 id="WMS-addWinodw"><a href="#WMS-addWinodw" class="headerlink" title="WMS.addWinodw"></a>WMS.addWinodw</h4><p>WMS添加window过程，最后会执行到session.windowAddedLocked</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;WMS</span><br><span class="line">public int addWindow(Session session, IWindow client, int seq, WindowManager.LayoutParams attrs, int viewVisibility, int displayId, Rect outContentInsets, Rect outStableInsets, Rect outOutsets, InputChannel outInputChannel) &#123;</span><br><span class="line">    ...</span><br><span class="line">    win.attach(); &#x2F;&#x2F; WindowState</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; WindowState.attch</span><br><span class="line">void attach() &#123;</span><br><span class="line">    mSession.windowAddedLocked();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Session-windowAddedLocked"><a href="#Session-windowAddedLocked" class="headerlink" title="Session.windowAddedLocked"></a>Session.windowAddedLocked</h4><p>创建 SurfaceSession 对象，并将当前 Session 添加到 WMS.mSessions 成员变量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">void windowAddedLocked() &#123;</span><br><span class="line">    if (mSurfaceSession &#x3D;&#x3D; null) &#123;</span><br><span class="line">        mSurfaceSession &#x3D; new SurfaceSession();</span><br><span class="line">        mService.mSessions.add(this);</span><br><span class="line">        if (mLastReportedAnimatorScale !&#x3D; mService.getCurrentAnimatorScale()) &#123;</span><br><span class="line">            mService.dispatchNewAnimatorScaleLocked(this);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    mNumWindow++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="android-view-SurfaceSession-cpp"><a href="#android-view-SurfaceSession-cpp" class="headerlink" title="android_view_SurfaceSession.cpp"></a>android_view_SurfaceSession.cpp</h4><p>SurfaceSession 的创建会调用 JNI，在 JNI 调用 nativeCreate()<br>构造了一个SurfaceComposerClient对象。并返回它的指针。这个对象一个应用程序就有一个，它是应用程序与SurfaceFlinger沟通的桥梁</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; SurfaceSeesion</span><br><span class="line">public SurfaceSession() &#123;</span><br><span class="line">   mNativeClient &#x3D; nativeCreate();</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; JNI</span><br><span class="line">static jlong nativeCreate(JNIEnv* env, jclass clazz) &#123;</span><br><span class="line">    &#x2F;&#x2F; 创建 SurfaceComposeClient 空实现，查看onFirstRef</span><br><span class="line">    SurfaceComposerClient* client &#x3D; new SurfaceComposerClient();</span><br><span class="line">    client-&gt;incStrong((void*)nativeCreate);</span><br><span class="line">    return reinterpret_cast&lt;jlong&gt;(client);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="SurfaceComposerClient-onFirstRef"><a href="#SurfaceComposerClient-onFirstRef" class="headerlink" title="SurfaceComposerClient.onFirstRef"></a>SurfaceComposerClient.onFirstRef</h4><p>通过SurfaceFlinger创造了一个Client对象，每一个APP都有一个Client对象向对应，通过这个代理对象可以跟SurfaceFlinger通信</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">void SurfaceComposerClient::onFirstRef() &#123;</span><br><span class="line">    ....</span><br><span class="line">    sp&lt;ISurfaceComposerClient&gt; conn;</span><br><span class="line">    &#x2F;&#x2F;sf 就是SurfaceFlinger</span><br><span class="line">    conn &#x3D; (rootProducer !&#x3D; nullptr) ? sf-&gt;createScopedConnection(rootProducer) :</span><br><span class="line">            sf-&gt;createConnection();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="SurfaceFlinger-cpp"><a href="#SurfaceFlinger-cpp" class="headerlink" title="SurfaceFlinger.cpp"></a>SurfaceFlinger.cpp</h4><p>构造了一个Client对象，Client实现了ISurfaceComposerClient接口。是一个可以跨进程通信的aidl对象。除此之外它还可以创建Surface，并且维护一个应用程序的所有Layer</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;ISurfaceComposerClient&gt; SurfaceFlinger::createConnection()&#123;</span><br><span class="line">  sp&lt;ISurfaceComposerClient&gt; bclient;</span><br><span class="line">  sp&lt;Client&gt; client(new Client(this));</span><br><span class="line">  return bclient;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Client-h"><a href="#Client-h" class="headerlink" title="Client.h"></a>Client.h</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">class Client : public BnSurfaceComposerClient</span><br><span class="line">&#123;</span><br><span class="line">public:</span><br><span class="line">    </span><br><span class="line">    void attachLayer(const sp&lt;IBinder&gt;&amp; handle, const sp&lt;Layer&gt;&amp; layer);</span><br><span class="line">    void detachLayer(const Layer* layer);</span><br><span class="line">    </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Surface的创建"><a href="#Surface的创建" class="headerlink" title="Surface的创建"></a>Surface的创建</h3><p>一个ViewRootImpl就对应一个Surface</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">final Surface mSurface &#x3D; new Surface();</span><br><span class="line"></span><br><span class="line">public Surface() &#123;</span><br><span class="line">    &#x2F;&#x2F; 空构造函数，需要继续追看Surface赋值过程</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ViewRootImpl-relayoutWindow"><a href="#ViewRootImpl-relayoutWindow" class="headerlink" title="ViewRootImpl.relayoutWindow"></a>ViewRootImpl.relayoutWindow</h4><p>直接看ViewRootImpl的绘制流程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">private void performTraversals() &#123;</span><br><span class="line">    finalView host &#x3D; mView; &#x2F;&#x2F;mView是一个Window的根View，对于Activity来说就是DecorView</span><br><span class="line">    ...</span><br><span class="line">    relayoutWindow(params, viewVisibility, insetsPending);</span><br><span class="line">    ...</span><br><span class="line">    performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);</span><br><span class="line">    ...         </span><br><span class="line">    performLayout(lp, mWidth, mHeight);</span><br><span class="line">    ...</span><br><span class="line">    performDraw();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; 重布window</span><br><span class="line">private int relayoutWindow(WindowManager.LayoutParams params, ...) throws RemoteException &#123;</span><br><span class="line">    ...</span><br><span class="line">    int relayoutResult &#x3D; mWindowSession.relayout(mWindow,..., mSurface);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="WindowManagerService-relayoutWindow"><a href="#WindowManagerService-relayoutWindow" class="headerlink" title="WindowManagerService.relayoutWindow"></a>WindowManagerService.relayoutWindow</h4><p>winAnimator.createSurfaceLocked实际上是创建了一个SurfaceControl。即上面是先构造SurfaceControl，然后在构造Surface</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public int relayoutWindow(Session session, IWindow client....Surface outSurface)&#123; </span><br><span class="line">    ...</span><br><span class="line">    result &#x3D; createSurfaceControl(outSurface, result, win, winAnimator);  </span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private int createSurfaceControl(Surface outSurface, int result, WindowState win,WindowStateAnimator winAnimator) &#123;</span><br><span class="line">    ...</span><br><span class="line">    surfaceController &#x3D; winAnimator.createSurfaceLocked(win.mAttrs.type, win.mOwnerUid);</span><br><span class="line">    ...</span><br><span class="line">    surfaceController.getSurface(outSurface);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="SurfaceControl的创建"><a href="#SurfaceControl的创建" class="headerlink" title="SurfaceControl的创建"></a>SurfaceControl的创建</h4><p>通过SurfaceControl的构造函数创建了一个SurfaceControl对象,这个对象的作用其实就是负责维护Surface,Surface其实也是由这个对象负责创建的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">long mNativeObject; &#x2F;&#x2F;成员指针变量，指向native创建的SurfaceControl</span><br><span class="line"></span><br><span class="line">private SurfaceControl(...)&#123;</span><br><span class="line">    ...</span><br><span class="line">    mNativeObject &#x3D; nativeCreate(session, name, w, h, format, flags,</span><br><span class="line">        parent !&#x3D; null ? parent.mNativeObject : 0, windowType, ownerUid);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="android-view-SurfaceControl-cpp"><a href="#android-view-SurfaceControl-cpp" class="headerlink" title="android_view_SurfaceControl.cpp"></a>android_view_SurfaceControl.cpp</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">static jlong nativeCreate(JNIEnv* env, ...) &#123;</span><br><span class="line">    &#x2F;&#x2F;这个client为前面创建的SurfaceComposerClinent</span><br><span class="line">    sp&lt;SurfaceComposerClient&gt; client(android_view_SurfaceSession_getClient(env, sessionObj)); </span><br><span class="line">    &#x2F;&#x2F;创建成功之后，这个指针会指向新创建的SurfaceControl</span><br><span class="line">    sp&lt;SurfaceControl&gt; surface;</span><br><span class="line">    status_t err &#x3D; client-&gt;createSurface(String8(name.c_str()), w, h, format, &amp;surface, flags, parent, windowType, ownerUid);</span><br><span class="line">    ...</span><br><span class="line">    return reinterpret_cast&lt;jlong&gt;(surface.get()); &#x2F;&#x2F;返回这个SurfaceControl的地址</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="SurfaceComposerClient-createSurface"><a href="#SurfaceComposerClient-createSurface" class="headerlink" title="SurfaceComposerClient.createSurface"></a>SurfaceComposerClient.createSurface</h4><p>创建时传入了一个对象 sp<IGraphicBufferProducer> gbp, 后面会说吗应用所渲染的每一帧，实际上都会添加到IGraphicBufferProducer中，来等待SurfaceFlinger的渲染</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;outSurface会指向新创建的SurfaceControl</span><br><span class="line">status_t SurfaceComposerClient::createSurface(...sp&lt;SurfaceControl&gt;* outSurface..) </span><br><span class="line">&#123;</span><br><span class="line">    sp&lt;IGraphicBufferProducer&gt; gbp; </span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F; 调用 之前缓存的client进行创建</span><br><span class="line">    err &#x3D; mClient-&gt;createSurface(name, w, h, format, flags, parentHandle, windowType, ownerUid, &amp;handle, &amp;gbp);</span><br><span class="line">    if (err &#x3D;&#x3D; NO_ERROR) &#123;</span><br><span class="line">        &#x2F;&#x2F;SurfaceControl创建成功, 指针赋值</span><br><span class="line">        sur &#x3D; new SurfaceControl(this, handle, gbp, true);</span><br><span class="line">    &#125;</span><br><span class="line">    return sur;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Client-createSurface"><a href="#Client-createSurface" class="headerlink" title="Client.createSurface"></a>Client.createSurface</h4><p>Client将应用程序创建Surface的请求转换为异步消息投递到SurfaceFlinger的消息队列中，将创建Surface的任务转交给SurfaceFlinger，因为同一时刻可以有多个应用程序请求SurfaceFlinger为其创建Surface，通过消息队列可以实现请求排队，然后SurfaceFlinger依次为应用程序创建Surface</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">status_t Client::createSurface(</span><br><span class="line">        const String8&amp; name,</span><br><span class="line">        uint32_t w, uint32_t h, PixelFormat format, uint32_t flags,</span><br><span class="line">        sp&lt;IBinder&gt;* handle,</span><br><span class="line">        sp&lt;IGraphicBufferProducer&gt;* gbp)</span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    sp&lt;MessageBase&gt; msg &#x3D; new MessageCreateLayer(mFlinger.get(),</span><br><span class="line">            name, this, w, h, format, flags, handle, gbp);</span><br><span class="line">    mFlinger-&gt;postMessageSync(msg);</span><br><span class="line">    return static_cast&lt;MessageCreateLayer*&gt;( msg.get() )-&gt;getResult();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="SurfaceFlinger-createLayer"><a href="#SurfaceFlinger-createLayer" class="headerlink" title="SurfaceFlinger.createLayer"></a>SurfaceFlinger.createLayer</h4><p>该函数中根据flag创建不同的Layer，Layer用于标示一个图层。<br>除了SurfaceFlinger需要统一管理系统中创建的所有Layer对象外，专门为每个应用程序进程服务的Client也需要统一管理当前应用程序进程所创建的Layer，因此在addClientLayer函数里还会通过Client::attachLayer将创建的Layer和该类对应的handle以键值对的方式保存到Client的成员变量mLayers表中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">status_t SurfaceFlinger::createLayer(const String8&amp; name,const sp&lt;Client&gt;&amp; client...)</span><br><span class="line">&#123;</span><br><span class="line">    status_t result &#x3D; NO_ERROR;</span><br><span class="line">    &#x2F;&#x2F;创建的layer</span><br><span class="line">    sp&lt;Layer&gt; layer; </span><br><span class="line">    switch (flags &amp; ISurfaceComposerClient::eFXSurfaceMask) &#123;</span><br><span class="line">        case ISurfaceComposerClient::eFXSurfaceNormal:</span><br><span class="line">            result &#x3D; createBufferLayer(client,</span><br><span class="line">                    uniqueName, w, h, flags, format,</span><br><span class="line">                    handle, gbp, &amp;layer);</span><br><span class="line">            break;</span><br><span class="line">            ... &#x2F;&#x2F;Layer 其它情况的创建</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;这个layer和client相关联, 添加到Client的mLayers集合中</span><br><span class="line">    result &#x3D; addClientLayer(client, *handle, *gbp, layer, *parent);  </span><br><span class="line">    ...</span><br><span class="line">    return result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="SurfaceFlinger-createNormalLayer"><a href="#SurfaceFlinger-createNormalLayer" class="headerlink" title="SurfaceFlinger.createNormalLayer"></a>SurfaceFlinger.createNormalLayer</h4><p>SurfaceFlinger为应用程序创建好Layer后，需要统一管理这些Layer对象，因此通过函数addClientLayer将创建的Layer保存到当前State的Z秩序列表layersSortedByZ中，同时将这个Layer所对应的IGraphicBufferProducer本地Binder对象gbp保存到SurfaceFlinger的成员变量mGraphicBufferProducerList中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">status_t SurfaceFlinger::createNormalLayer(const sp&lt;Client&gt;&amp; client,</span><br><span class="line">        const String8&amp; name, uint32_t w, uint32_t h, uint32_t flags, PixelFormat&amp; format,</span><br><span class="line">        sp&lt;IBinder&gt;* handle, sp&lt;IGraphicBufferProducer&gt;* gbp, sp&lt;Layer&gt;* outLayer)</span><br><span class="line">&#123;</span><br><span class="line">    &#x2F;&#x2F; initialize the surfaces</span><br><span class="line">    switch (format) &#123;</span><br><span class="line">    case PIXEL_FORMAT_TRANSPARENT:</span><br><span class="line">    case PIXEL_FORMAT_TRANSLUCENT:</span><br><span class="line">        format &#x3D; PIXEL_FORMAT_RGBA_8888;</span><br><span class="line">        break;</span><br><span class="line">    case PIXEL_FORMAT_OPAQUE:</span><br><span class="line">        format &#x3D; PIXEL_FORMAT_RGBX_8888;</span><br><span class="line">        break;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    *outLayer &#x3D; new Layer(this, client, name, w, h, flags);</span><br><span class="line">    status_t err &#x3D; (*outLayer)-&gt;setBuffers(w, h, format, flags);</span><br><span class="line">    if (err &#x3D;&#x3D; NO_ERROR) &#123;</span><br><span class="line">        *handle &#x3D; (*outLayer)-&gt;getHandle();</span><br><span class="line">        *gbp &#x3D; (*outLayer)-&gt;getProducer();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ALOGE_IF(err, &quot;createNormalLayer() failed (%s)&quot;, strerror(-err));</span><br><span class="line">    return err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Layer-cpp"><a href="#Layer-cpp" class="headerlink" title="Layer.cpp"></a>Layer.cpp</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">void Layer::onFirstRef() &#123;</span><br><span class="line">    &#x2F;&#x2F; Creates a custom BufferQueue for SurfaceFlingerConsumer to use</span><br><span class="line">    sp&lt;IGraphicBufferProducer&gt; producer;</span><br><span class="line">    sp&lt;IGraphicBufferConsumer&gt; consumer;</span><br><span class="line">    BufferQueue::createBufferQueue(&amp;producer, &amp;consumer);</span><br><span class="line">    mProducer &#x3D; new MonitoredProducer(producer, mFlinger);</span><br><span class="line">    mSurfaceFlingerConsumer &#x3D; new SurfaceFlingerConsumer(consumer, mTextureName);</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setConsumerUsageBits(getEffectiveUsage(0));</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setContentsChangedListener(this);</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setName(mName);</span><br><span class="line"></span><br><span class="line">#ifdef TARGET_DISABLE_TRIPLE_BUFFERING</span><br><span class="line">#warning &quot;disabling triple buffering&quot;</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setDefaultMaxBufferCount(2);</span><br><span class="line">#else</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setDefaultMaxBufferCount(3);</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">    const sp&lt;const DisplayDevice&gt; hw(mFlinger-&gt;getDefaultDisplayDevice());</span><br><span class="line">    updateTransformHint(hw);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="BufferQueue-cpp"><a href="#BufferQueue-cpp" class="headerlink" title="BufferQueue.cpp"></a>BufferQueue.cpp</h4><ul>
+<li>BufferQueue是一个服务中心，IGraphicBufferProducer和IGraphicBufferConsumer<br>所需要使用的buffer必须要通过它来管理。比如说当IGraphicBufferProducer想要获取一个buffer时，它不能越过BufferQueue直接与IGraphicBufferConsumer进行联系，反之亦然。</li>
+<li>IGraphicBufferProducer就是“填充”buffer空间的人，通常情况下是应用程序。因为应用程序不断地刷新UI，从而将产生的显示数据源源不断地写到buffer中。当IGraphicBufferProducer需要使用一块buffer时，它首先会向中介BufferQueue发起dequeueBuffer申请，然后才能对指定的buffer进行操作。此时buffer就只属于IGraphicBufferProducer一个人的了，它可以对buffer进行任何必要的操作，而IGraphicBufferConsumer此刻绝不能操作这块buffer。当IGraphicBufferProducer认为一块buffer已经写入完成后，它进一步调用queueBuffer函数。从字面上看这个函数是“入列”的意思，形象地表达了buffer此时的操作，把buffer归还到BufferQueue的队列中。一旦queue成功后，buffer的owner也就随之改变为BufferQueue了</li>
+<li>IGraphicBufferConsumer是与IGraphicBufferProducer相对应的，它的操作同样受到BufferQueue的管控。当一块buffer已经就绪后，IGraphicBufferConsumer就可以开始工作了。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">void BufferQueue::createBufferQueue(sp&lt;IGraphicBufferProducer&gt;* outProducer,</span><br><span class="line">        sp&lt;IGraphicBufferConsumer&gt;* outConsumer,</span><br><span class="line">        const sp&lt;IGraphicBufferAlloc&gt;&amp; allocator) &#123;</span><br><span class="line"></span><br><span class="line">    sp&lt;BufferQueueCore&gt; core(new BufferQueueCore(allocator));</span><br><span class="line">    *outProducer &#x3D; producer;</span><br><span class="line">    *outConsumer &#x3D; consumer;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="从SurfaceControl中获取Surface"><a href="#从SurfaceControl中获取Surface" class="headerlink" title="从SurfaceControl中获取Surface"></a>从SurfaceControl中获取Surface</h4><p>上面完成了 surfaceController的创建跟踪，下面分析从surfaceController获取surface过程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">private int createSurfaceControl(Surface outSurface, int result, WindowState win,WindowStateAnimator winAnimator) &#123;</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F; 上面完成了 surfaceController的创建</span><br><span class="line">    SurfaceControl surfaceController &#x3D; winAnimator.createSurfaceLocked();</span><br><span class="line">    &#x2F;&#x2F; 下面分析 surfaceController获取surface</span><br><span class="line">    outSurface.copyFrom(surfaceControl);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="android-view-Surface-nativeCreateFromSurfaceControl"><a href="#android-view-Surface-nativeCreateFromSurfaceControl" class="headerlink" title="android_view_Surface.nativeCreateFromSurfaceControl"></a>android_view_Surface.nativeCreateFromSurfaceControl</h4><p>JNI构建方法获取到一个指针，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">static jlong nativeCreateFromSurfaceControl(JNIEnv* env, jclass clazz, jlong surfaceControlNativeObj) &#123;</span><br><span class="line">    &#x2F;&#x2F; 把java指针转化内native指针</span><br><span class="line">    sp&lt;SurfaceControl&gt; ctrl(reinterpret_cast&lt;SurfaceControl *&gt;(surfaceControlNativeObj));</span><br><span class="line">    &#x2F;&#x2F; 直接构造一个Surface，指向 ctrl-&gt;getSurface()</span><br><span class="line">    sp&lt;Surface&gt; surface(ctrl-&gt;getSurface());</span><br><span class="line">    if (surface !&#x3D; NULL) &#123;</span><br><span class="line">        surface-&gt;incStrong(&amp;sRefBaseOwner); &#x2F;&#x2F;强引用</span><br><span class="line">    &#125;</span><br><span class="line">    return reinterpret_cast&lt;jlong&gt;(surface.get());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="SurfaceControl-getSurface"><a href="#SurfaceControl-getSurface" class="headerlink" title="SurfaceControl.getSurface"></a>SurfaceControl.getSurface</h4><p>创建一个native层的Surface对象，并将该对象指针返回给Java层的Surface，从而建立Java层的Surface和native层Surface的关联关系<br>另外Surface和SurfaceControl都持有mGraphicBufferProducer用于操作位于SurfaceFlinger中的图形buffer</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;Surface&gt; SurfaceControl::getSurface() const</span><br><span class="line">&#123;</span><br><span class="line">    Mutex::Autolock _l(mLock);</span><br><span class="line">    if (mSurfaceData &#x3D;&#x3D; 0) &#123;</span><br><span class="line">         mSurfaceData &#x3D; new Surface(mGraphicBufferProducer, false);</span><br><span class="line">    &#125;</span><br><span class="line">    return mSurfaceData;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>推荐阅读：<a href="https://www.jianshu.com/p/238eb0a17760" target="_blank" rel="noopener">图形系统总结</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+              <a href="/blog/tags/Surface/" rel="tag"># Surface</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/24/Android%E7%B3%BB%E7%BB%9F_Window%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E6%B7%BB%E5%8A%A0%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90/" rel="prev" title="Android系统_Window的创建与添加过程分析">
+      <i class="fa fa-chevron-left"></i> Android系统_Window的创建与添加过程分析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/27/Android%E7%B3%BB%E7%BB%9F_%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F%E6%80%BB%E7%BB%9301/" rel="next" title="Android系统_图形系统总结01">
+      Android系统_图形系统总结01 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#SurfaceComposerClient的创建过程"><span class="nav-number">1.</span> <span class="nav-text">SurfaceComposerClient的创建过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#WMS-addWinodw"><span class="nav-number">1.1.</span> <span class="nav-text">WMS.addWinodw</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Session-windowAddedLocked"><span class="nav-number">1.2.</span> <span class="nav-text">Session.windowAddedLocked</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#android-view-SurfaceSession-cpp"><span class="nav-number">1.3.</span> <span class="nav-text">android_view_SurfaceSession.cpp</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SurfaceComposerClient-onFirstRef"><span class="nav-number">1.4.</span> <span class="nav-text">SurfaceComposerClient.onFirstRef</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SurfaceFlinger-cpp"><span class="nav-number">1.5.</span> <span class="nav-text">SurfaceFlinger.cpp</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Client-h"><span class="nav-number">1.6.</span> <span class="nav-text">Client.h</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Surface的创建"><span class="nav-number">2.</span> <span class="nav-text">Surface的创建</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ViewRootImpl-relayoutWindow"><span class="nav-number">2.1.</span> <span class="nav-text">ViewRootImpl.relayoutWindow</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WindowManagerService-relayoutWindow"><span class="nav-number">2.2.</span> <span class="nav-text">WindowManagerService.relayoutWindow</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SurfaceControl的创建"><span class="nav-number">2.3.</span> <span class="nav-text">SurfaceControl的创建</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#android-view-SurfaceControl-cpp"><span class="nav-number">2.4.</span> <span class="nav-text">android_view_SurfaceControl.cpp</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SurfaceComposerClient-createSurface"><span class="nav-number">2.5.</span> <span class="nav-text">SurfaceComposerClient.createSurface</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Client-createSurface"><span class="nav-number">2.6.</span> <span class="nav-text">Client.createSurface</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SurfaceFlinger-createLayer"><span class="nav-number">2.7.</span> <span class="nav-text">SurfaceFlinger.createLayer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SurfaceFlinger-createNormalLayer"><span class="nav-number">2.8.</span> <span class="nav-text">SurfaceFlinger.createNormalLayer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Layer-cpp"><span class="nav-number">2.9.</span> <span class="nav-text">Layer.cpp</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#BufferQueue-cpp"><span class="nav-number">2.10.</span> <span class="nav-text">BufferQueue.cpp</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#从SurfaceControl中获取Surface"><span class="nav-number">2.11.</span> <span class="nav-text">从SurfaceControl中获取Surface</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#android-view-Surface-nativeCreateFromSurfaceControl"><span class="nav-number">2.12.</span> <span class="nav-text">android_view_Surface.nativeCreateFromSurfaceControl</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SurfaceControl-getSurface"><span class="nav-number">2.13.</span> <span class="nav-text">SurfaceControl.getSurface</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '743eda2e55019c5a8dba9094b5b12411',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

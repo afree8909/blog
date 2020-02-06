@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="图文概括总结  【父非EXACTLY &amp; 子控件有weight并且指定高度为0】 则会执行二次测量方法 【不满足1条件 &amp; weight&gt;0】的控件因为没有跳过第一次测量，而在第二次测量方法中也会进行测量 【父非EXACTLY &amp; 子height未指定0 】则weight属性不生效  流程 源码分析 基于API23分析  概览123456789101112131415">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android图形系统-View之LinearLayout.onMeasure分析">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/11/18/Android%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F-View%E4%B9%8BLinearLayout.onMeasure%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="图文概括总结  【父非EXACTLY &amp; 子控件有weight并且指定高度为0】 则会执行二次测量方法 【不满足1条件 &amp; weight&gt;0】的控件因为没有跳过第一次测量，而在第二次测量方法中也会进行测量 【父非EXACTLY &amp; 子height未指定0 】则weight属性不生效  流程 源码分析 基于API23分析  概览123456789101112131415">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-f6bec68f9afc5729.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-11-18T06:35:32.062Z">
+<meta property="article:modified_time" content="2020-02-06T17:10:21.400Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta property="article:tag" content="LinearLayout">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-f6bec68f9afc5729.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/11/18/Android%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F-View%E4%B9%8BLinearLayout.onMeasure%E5%88%86%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Android图形系统-View之LinearLayout.onMeasure分析 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/11/18/Android%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F-View%E4%B9%8BLinearLayout.onMeasure%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android图形系统-View之LinearLayout.onMeasure分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-11-18 14:35:32" itemprop="dateCreated datePublished" datetime="2019-11-18T14:35:32+08:00">2019-11-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 01:10:21" itemprop="dateModified" datetime="2020-02-07T01:10:21+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>8.7k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>8 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="图文概括"><a href="#图文概括" class="headerlink" title="图文概括"></a>图文概括</h3><p><strong>总结</strong></p>
+<ol>
+<li>【父非EXACTLY &amp; 子控件有weight并且指定高度为0】 则会执行二次测量方法</li>
+<li>【不满足1条件 &amp; weight&gt;0】的控件因为没有跳过第一次测量，而在第二次测量方法中也会进行测量</li>
+<li>【父非EXACTLY &amp; 子height未指定0 】则weight属性不生效</li>
+</ol>
+<p><strong>流程</strong><br><img src="https://upload-images.jianshu.io/upload_images/9696036-f6bec68f9afc5729.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h3><blockquote>
+<p>基于API23分析</p>
+</blockquote>
+<h4 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">@Override</span><br><span class="line">protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line">   if (mOrientation &#x3D;&#x3D; VERTICAL) &#123;</span><br><span class="line">       measureVertical(widthMeasureSpec, heightMeasureSpec);</span><br><span class="line">   &#125; else &#123;</span><br><span class="line">       measureHorizontal(widthMeasureSpec, heightMeasureSpec);</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void measureVertical(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line">    &#x2F;&#x2F; 变量声明</span><br><span class="line">    &#x2F;&#x2F; 第一次测量，循环测量（非EXACTLY &amp; lp.height&#x3D;&#x3D;0 &amp; lp.weight&gt;0,父不定高且子高度为0还有权重）</span><br><span class="line">    &#x2F;&#x2F; 忽略，useLargestChild&#x3D;true下的测量</span><br><span class="line">    &#x2F;&#x2F; 第二次测量 （weight相关）</span><br><span class="line">    &#x2F;&#x2F; 设置宽高值</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="变量声明"><a href="#变量声明" class="headerlink" title="变量声明"></a>变量声明</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">void measureVertical(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line">    &#x2F;&#x2F; 变量声明</span><br><span class="line">    &#x2F;&#x2F; 成员变量，核心目的，求总高度</span><br><span class="line">    mTotalLength &#x3D; 0;</span><br><span class="line">    &#x2F;&#x2F; 记录子空间中最大宽度</span><br><span class="line">    int maxWidth &#x3D; 0;</span><br><span class="line">    &#x2F;&#x2F; 子控件的测量状态，会在遍历子控件测量的时候通过combineMeasuredStates来合并上一个子控件测量状态与当前遍历到的子控件的测量状态，采取的是按位相或</span><br><span class="line">    int childState &#x3D; 0;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F; layout_weight&lt;&#x3D;0的子控件最大宽度</span><br><span class="line">    int alternativeMaxWidth &#x3D; 0;</span><br><span class="line">    &#x2F;&#x2F; layout_weight&gt;0的子控件最大宽度</span><br><span class="line">    int weightedMaxWidth &#x3D; 0;</span><br><span class="line">    &#x2F;&#x2F; 以上两个最大宽度跟上面的maxWidth最大的区别在于matchWidthLocally这个参数</span><br><span class="line">    &#x2F;&#x2F; 当matchWidthLocally为真，那么以下两个变量只会跟当前子控件的左右margin和相比较取大值</span><br><span class="line">    &#x2F;&#x2F; 否则，则跟maxWidth的计算方法一样</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F; 是否子控件全是match_parent的标志位，用于判断是否需要重新测量</span><br><span class="line">    boolean allFillParent &#x3D; true;</span><br><span class="line">    &#x2F;&#x2F; 所有子控件的weight之和</span><br><span class="line">    float totalWeight &#x3D; 0;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F; 子控件数目（不含孙及以下控件）</span><br><span class="line">    final int count &#x3D; getVirtualChildCount();</span><br><span class="line">    &#x2F;&#x2F; 测量模式</span><br><span class="line">    final int widthMode &#x3D; MeasureSpec.getMode(widthMeasureSpec);</span><br><span class="line">    final int heightMode &#x3D; MeasureSpec.getMode(heightMeasureSpec);</span><br><span class="line">    &#x2F;&#x2F; 当子控件为match_parent的时候，该值为ture，同时判定的还有上面所说的matchWidthLocally，这个变量决定了子控件的测量是父控件干预还是填充父控件（剩余的空白位置）。</span><br><span class="line">    boolean matchWidth &#x3D; false;</span><br><span class="line">    &#x2F;&#x2F; 是否跳过第一次测量</span><br><span class="line">    boolean skippedMeasure &#x3D; false;</span><br><span class="line">    </span><br><span class="line">    final int baselineChildIndex &#x3D; mBaselineAlignedChildIndex;        </span><br><span class="line">    final boolean useLargestChild &#x3D; mUseLargestChild;</span><br><span class="line">    </span><br><span class="line">    int largestChildHeight &#x3D; Integer.MIN_VALUE;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="第一次测量"><a href="#第一次测量" class="headerlink" title="第一次测量"></a>第一次测量</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">void measureVertical(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line">    &#x2F;&#x2F; 第一次测量</span><br><span class="line">    &#x2F;&#x2F; See how tall everyone is. Also remember max width.</span><br><span class="line">    for (int i &#x3D; 0; i &lt; count; ++i) &#123;</span><br><span class="line">        final View child &#x3D; getVirtualChildAt(i);</span><br><span class="line">        </span><br><span class="line">        ...</span><br><span class="line">        &#x2F;&#x2F; 添加 Divider高度</span><br><span class="line">        if (hasDividerBeforeChildAt(i)) &#123;</span><br><span class="line">         mTotalLength +&#x3D; mDividerHeight;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        LinearLayout.LayoutParams lp &#x3D; (LinearLayout.LayoutParams) child.getLayoutParams();</span><br><span class="line">        &#x2F;&#x2F; 总weight 添加weight</span><br><span class="line">        totalWeight +&#x3D; lp.weight;</span><br><span class="line">        </span><br><span class="line">        if (heightMode &#x3D;&#x3D; MeasureSpec.EXACTLY &amp;&amp; lp.height &#x3D;&#x3D; 0 &amp;&amp; lp.weight &gt; 0) &#123;</span><br><span class="line">           &#x2F;&#x2F; EXACTLY 且 高度为0 且 weight&gt;0 则先跳过该控件的测量</span><br><span class="line">           final int totalLength &#x3D; mTotalLength;</span><br><span class="line">           mTotalLength &#x3D; Math.max(totalLength, totalLength + lp.topMargin + lp.bottomMargin);</span><br><span class="line">           skippedMeasure &#x3D; true;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            int oldHeight &#x3D; Integer.MIN_VALUE;</span><br><span class="line">               </span><br><span class="line">            if (lp.height &#x3D;&#x3D; 0 &amp;&amp; lp.weight &gt; 0) &#123;</span><br><span class="line">                &#x2F;&#x2F; 此条件下，防止height为0</span><br><span class="line">                oldHeight &#x3D; 0;</span><br><span class="line">                lp.height &#x3D; LayoutParams.WRAP_CONTENT;</span><br><span class="line">            &#125;</span><br><span class="line">        </span><br><span class="line">            &#x2F;&#x2F; 测量child（已经使用的height通过padding实现剔除）</span><br><span class="line">            measureChildBeforeLayout(</span><br><span class="line">                 child, i, widthMeasureSpec, 0, heightMeasureSpec,</span><br><span class="line">                 totalWeight &#x3D;&#x3D; 0 ? mTotalLength : 0);</span><br><span class="line">        </span><br><span class="line">            &#x2F;&#x2F; ...</span><br><span class="line">            final int totalLength &#x3D; mTotalLength;</span><br><span class="line">            mTotalLength &#x3D; Math.max(totalLength, totalLength + childHeight + lp.topMargin +</span><br><span class="line">                 lp.bottomMargin + getNextLocationOffset(child));</span><br><span class="line">       </span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F; 计算 宽度 和最大宽度等</span><br><span class="line">        &#x2F;&#x2F; ...</span><br><span class="line">    </span><br><span class="line">        i +&#x3D; getChildrenSkipCount(child, i);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="调用子测量方法"><a href="#调用子测量方法" class="headerlink" title="调用子测量方法"></a>调用子测量方法</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">void measureChildBeforeLayout(View child, int childIndex,</span><br><span class="line">       int widthMeasureSpec, int totalWidth, int heightMeasureSpec,</span><br><span class="line">       int totalHeight) &#123;</span><br><span class="line">    measureChildWithMargins(child, widthMeasureSpec, totalWidth,</span><br><span class="line">      heightMeasureSpec, totalHeight);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">protected void measureChildWithMargins(View child,</span><br><span class="line">       int parentWidthMeasureSpec, int widthUsed,</span><br><span class="line">       int parentHeightMeasureSpec, int heightUsed) &#123;</span><br><span class="line">    final MarginLayoutParams lp &#x3D; (MarginLayoutParams) child.getLayoutParams();</span><br><span class="line">    &#x2F;&#x2F; child测量时，会将已经用过的height和weight当作measure的padding来剔除</span><br><span class="line">    final int childWidthMeasureSpec &#x3D; getChildMeasureSpec(parentWidthMeasureSpec,</span><br><span class="line">          mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin</span><br><span class="line">                  + widthUsed, lp.width);</span><br><span class="line">    final int childHeightMeasureSpec &#x3D; getChildMeasureSpec(parentHeightMeasureSpec,</span><br><span class="line">          mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin</span><br><span class="line">                  + heightUsed, lp.height);</span><br><span class="line">    </span><br><span class="line">    child.measure(childWidthMeasureSpec, childHeightMeasureSpec);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="useLargestChild相关测量"><a href="#useLargestChild相关测量" class="headerlink" title="useLargestChild相关测量"></a>useLargestChild相关测量</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">void measureVertical(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line">    &#x2F;&#x2F; 下面的这一段代码主要是为useLargestChild属性服务的，忽略</span><br><span class="line">    if (mTotalLength &gt; 0 &amp;&amp; hasDividerBeforeChildAt(count)) &#123;</span><br><span class="line">      mTotalLength +&#x3D; mDividerHeight;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    if (useLargestChild &amp;&amp;</span><br><span class="line">          (heightMode &#x3D;&#x3D; MeasureSpec.AT_MOST || heightMode &#x3D;&#x3D; MeasureSpec.UNSPECIFIED)) &#123;</span><br><span class="line">      mTotalLength &#x3D; 0;</span><br><span class="line">    </span><br><span class="line">      for (int i &#x3D; 0; i &lt; count; ++i) &#123;</span><br><span class="line">          final View child &#x3D; getVirtualChildAt(i);</span><br><span class="line">    </span><br><span class="line">          if (child &#x3D;&#x3D; null) &#123;</span><br><span class="line">              mTotalLength +&#x3D; measureNullChild(i);</span><br><span class="line">              continue;</span><br><span class="line">          &#125;</span><br><span class="line">    </span><br><span class="line">          if (child.getVisibility() &#x3D;&#x3D; GONE) &#123;</span><br><span class="line">              i +&#x3D; getChildrenSkipCount(child, i);</span><br><span class="line">              continue;</span><br><span class="line">          &#125;</span><br><span class="line">    </span><br><span class="line">          final LinearLayout.LayoutParams lp &#x3D; (LinearLayout.LayoutParams)</span><br><span class="line">                  child.getLayoutParams();</span><br><span class="line">          &#x2F;&#x2F; Account for negative margins</span><br><span class="line">          final int totalLength &#x3D; mTotalLength;</span><br><span class="line">          mTotalLength &#x3D; Math.max(totalLength, totalLength + largestChildHeight +</span><br><span class="line">                  lp.topMargin + lp.bottomMargin + getNextLocationOffset(child));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">       </span><br><span class="line">    &#x2F;&#x2F; Add in our padding</span><br><span class="line">    mTotalLength +&#x3D; mPaddingTop + mPaddingBottom;</span><br><span class="line">    </span><br><span class="line">    int heightSize &#x3D; mTotalLength;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F; Check against our minimum height</span><br><span class="line">    heightSize &#x3D; Math.max(heightSize, getSuggestedMinimumHeight());</span><br><span class="line">       </span><br><span class="line">    &#x2F;&#x2F; Reconcile our calculated size with the heightMeasureSpec</span><br><span class="line">    int heightSizeAndState &#x3D; resolveSizeAndState(heightSize, heightMeasureSpec, 0);</span><br><span class="line">    heightSize &#x3D; heightSizeAndState &amp; MEASURED_SIZE_MASK;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="第二次测量"><a href="#第二次测量" class="headerlink" title="第二次测量"></a>第二次测量</h4><p>⚠️ <strong>weight</strong></p>
+<ol>
+<li>【父非EXACTLY &amp; 子控件有weight并且指定高度为0】 则会执行二次测量方法</li>
+<li>【不满足1条件 &amp; weight&gt;0】的控件因为没有跳过第一次测量，而在第二次测量方法中也会进行测量</li>
+<li>【父非EXACTLY &amp; 子height未制定0 则weight属性不生效】</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">公式：</span><br><span class="line">第一次测量：mTotalLength &#x3D; (是否跳过第一次测量) ？ 子.h ：0 </span><br><span class="line">剩余高度： delta &#x3D; heightSize - mTotalLength </span><br><span class="line">分配子高度： share &#x3D; (int) (childExtra * delta &#x2F; weightSum) </span><br><span class="line">剩余权重： weightSum -&#x3D; childExtra</span><br><span class="line">剩余分配高度：  delta -&#x3D; share </span><br><span class="line">子高度： childHeight &#x3D; child.getMeasuredHeight() + share</span><br><span class="line">&#96;&#96;&#96; </span><br><span class="line">假设： LinearLayout.h &#x3D; 100 , A.w : B.w &#x3D; 2 :8 (权重)</span><br><span class="line">结果： 子控件设置不同的height，结果如下（-1 &#x3D; match_parent）</span><br><span class="line"></span><br><span class="line">|  | A.h&#x3D;0 | B.h&#x3D;0 | A.h&#x3D;-1 | B.h&#x3D;-1 |</span><br><span class="line">| --- | --- | --- | --- | --- |</span><br><span class="line">| mTotalLength | 0 | 0 | 200 | 200 |</span><br><span class="line">| delta | 100 | 80  | -100 | -80 |</span><br><span class="line">| share | 20 | 80 | -20 | -80 |</span><br><span class="line">| delta | 80 | 0 | -80 | 0 |</span><br><span class="line">| childHeight | 20 | 80 | 80 | 20 |</span><br></pre></td></tr></table></figure>
+<p>void measureVertical(int widthMeasureSpec, int heightMeasureSpec) {<br>    // 计算剩余高度<br>    int delta = heightSize - mTotalLength;<br>    // 上面skippedMeasure为true，剩余高度!=0 ，且totalWeight&gt;0<br>    // 有weight的会测量两次，测量两次的控件是上面没有跳过测量的控件而跳过测量的控件这里进行测量（父非EXACTLY且子高度为0还有权重）<br>    if (skippedMeasure || delta != 0 &amp;&amp; totalWeight &gt; 0.0f) {<br>        // 限定weight总和范围，如果设置过weighSum范围，那么子控件的weight为设置的weight<br>      float weightSum = mWeightSum &gt; 0.0f ? mWeightSum : totalWeight;</p>
+<pre><code>mTotalLength = 0;
+
+for (int i = 0; i &lt; count; ++i) {
+    final View child = getVirtualChildAt(i);
+
+    if (child.getVisibility() == View.GONE) {
+        continue;
+    }
+
+    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) child.getLayoutParams();
+
+    float childExtra = lp.weight;
+    // weight  &gt; 0 的控件进行测量
+    if (childExtra &gt; 0) {
+      // 公式 = 剩余高度*（子控件的weight/weightSum）
+      int share = (int) (childExtra * delta / weightSum);
+      // weightSum计余
+      weightSum -= childExtra;
+      // 剩余高度
+      delta -= share;
+      // 计算child 的测量规格    
+      final int childWidthMeasureSpec = getChildMeasureSpec(widthMeasureSpec,
+             mPaddingLeft + mPaddingRight +
+                     lp.leftMargin + lp.rightMargin, lp.width);
+      // 如果child height没有指定0（wrap或者match） 且非 EXACTLY
+      if ((lp.height != 0) || (heightMode != MeasureSpec.EXACTLY)) {
+          // childHeight = 测量高度+分配高度
+          // ⚠️ 此处share为 负数
+          int childHeight = child.getMeasuredHeight() + share;
+          if (childHeight &lt; 0) {
+              childHeight = 0;
+          }
+          // child测量
+          child.measure(childWidthMeasureSpec,
+                  MeasureSpec.makeMeasureSpec(childHeight, MeasureSpec.EXACTLY));
+      } else {
+          // 用分配高度进行child 测量
+          child.measure(childWidthMeasureSpec,
+             MeasureSpec.makeMeasureSpec(share &gt; 0 ? share : 0,</code></pre><p>MeasureSpec.EXACTLY));<br>              }</p>
+<pre><code>          childState = combineMeasuredStates(childState, child.getMeasuredState()
+                  &amp; (MEASURED_STATE_MASK&gt;&gt;MEASURED_HEIGHT_STATE_SHIFT));
+      }
+
+    // 计算宽度 
+    // ...  省略
+  }
+
+
+  mTotalLength += mPaddingTop + mPaddingBottom;
+
+}  else {
+    // 没有weight，只有usrLargestChild为true的计算，省略 
+}</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#### 设置宽高值</span><br></pre></td></tr></table></figure>
+<p>void measureVertical(int widthMeasureSpec, int heightMeasureSpec) {<br>    // 设置宽高<br>    if (!allFillParent &amp;&amp; widthMode != MeasureSpec.EXACTLY) {<br>      maxWidth = alternativeMaxWidth;<br>    }</p>
+<pre><code>maxWidth += mPaddingLeft + mPaddingRight;
+
+// Check against our minimum width
+maxWidth = Math.max(maxWidth, getSuggestedMinimumWidth());
+// 设置 LinearLayout的宽、高值
+setMeasuredDimension(resolveSizeAndState(maxWidth, widthMeasureSpec, childState),
+      heightSizeAndState);
+
+if (matchWidth) {
+  forceUniformWidth(count, heightMeasureSpec);
+}   </code></pre><p>}</p>
+<pre><code>
+-------
+
+推荐阅读：[图形系统总结](https://www.jianshu.com/p/238eb0a17760)
+</code></pre>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+              <a href="/blog/tags/LinearLayout/" rel="tag"># LinearLayout</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/17/Android%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F%E2%80%94View.measure%E8%A7%A3%E6%9E%90/" rel="prev" title="Android图形系统—View.measure解析">
+      <i class="fa fa-chevron-left"></i> Android图形系统—View.measure解析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/19/Android%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F%E2%80%94View.layout%E8%A7%A3%E6%9E%90/" rel="next" title="Android图形系统—View.layout解析">
+      Android图形系统—View.layout解析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#图文概括"><span class="nav-number">1.</span> <span class="nav-text">图文概括</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#概览"><span class="nav-number">2.1.</span> <span class="nav-text">概览</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#变量声明"><span class="nav-number">2.2.</span> <span class="nav-text">变量声明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#第一次测量"><span class="nav-number">2.3.</span> <span class="nav-text">第一次测量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#调用子测量方法"><span class="nav-number">2.4.</span> <span class="nav-text">调用子测量方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#useLargestChild相关测量"><span class="nav-number">2.5.</span> <span class="nav-text">useLargestChild相关测量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#第二次测量"><span class="nav-number">2.6.</span> <span class="nav-text">第二次测量</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: 'c6daa9c2ce5e0d0704167abd6ce54816',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

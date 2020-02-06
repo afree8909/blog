@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="ThreadLocal是什么？ This class provides thread-local variables. These variables differ from their normal counterparts in that each thread that accesses one (via its get or set method) has its own, indepen">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解ThreadLocal">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/03/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3ThreadLocal/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="ThreadLocal是什么？ This class provides thread-local variables. These variables differ from their normal counterparts in that each thread that accesses one (via its get or set method) has its own, indepen">
+<meta property="og:image" content="https://afree8909.github.io/blog/2019/03/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3ThreadLocal/media/15527089073930.jpg">
+<meta property="article:published_time" content="2019-03-16T02:32:59.814Z">
+<meta property="article:modified_time" content="2020-02-06T16:36:49.182Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://afree8909.github.io/blog/2019/03/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3ThreadLocal/media/15527089073930.jpg">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/03/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3ThreadLocal/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>深入理解ThreadLocal | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/03/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3ThreadLocal/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          深入理解ThreadLocal
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-03-16 10:32:59" itemprop="dateCreated datePublished" datetime="2019-03-16T10:32:59+08:00">2019-03-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 00:36:49" itemprop="dateModified" datetime="2020-02-07T00:36:49+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>7k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>6 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="ThreadLocal是什么？"><a href="#ThreadLocal是什么？" class="headerlink" title="ThreadLocal是什么？"></a>ThreadLocal是什么？</h3><blockquote>
+<p>This class provides thread-local variables. These variables differ from their normal counterparts in that each thread that accesses one (via its get or set method) has its own, independently initialized copy of the variable. ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread (e.g., a user ID or Transaction ID).<br>Each thread holds an implicit reference to its copy of a thread-local variable as long as the thread is alive and the ThreadLocal instance is accessible; after a thread goes away, all of its copies of thread-local instances are subject to garbage collection (unless other references to these copies exist).</p>
+</blockquote>
+<p>释义：<br>ThreadLocal提供线程本地实例。它与普通变量区别在于，每个使用该变量的线程都会初始化一个完全独立的实例副本。<br>ThreadLocal 变量通常被private static修饰。当一个线程结束时，它所使用的所有 ThreadLocal 相对的实例副本都可被回收。</p>
+<h3 id="ThreadLocal解决什么问题？"><a href="#ThreadLocal解决什么问题？" class="headerlink" title="ThreadLocal解决什么问题？"></a>ThreadLocal解决什么问题？</h3><p>并发编程中常见需求：每条线程都需要存取一个同名变量，但每条线程中该变量的值均不相同。<br>常规思路：使用一个线程共享的Map&lt;Thread,T&gt;,通过map来获取对应线程变量的值。带来的问题是需要同步，效率比较低。<br>而ThreadLocal从另一个角度解决多线程并发的问题。ThreadLocal会为每一个线程提供一个独立的变量副本，从而隔离了多个线程对数据的访问冲突。因为每一个线程都拥有自己的变量副本，从而也就没有必要对该变量进行同步了。<br>（空间换时间）</p>
+<h3 id="ThreadLocal源码解析"><a href="#ThreadLocal源码解析" class="headerlink" title="ThreadLocal源码解析"></a>ThreadLocal源码解析</h3><h5 id="整体结构图"><a href="#整体结构图" class="headerlink" title="整体结构图"></a>整体结构图</h5><ul>
+<li>Thread持有成员变量threadLocals（ThreadLocalMap）</li>
+<li>ThreadLocalMap是一个映射表，内部实现一个数组，每一个元素位Entry</li>
+<li>Entry为一个键值对，key为Thread，Value为任何对象</li>
+</ul>
+<p><img src="media/15527089073930.jpg" alt=""></p>
+<h5 id="ThreadLocal解析"><a href="#ThreadLocal解析" class="headerlink" title="ThreadLocal解析"></a>ThreadLocal解析</h5><p>set和get方法通过线程对应ThreadLocalMap来管理实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public void set(T value) &#123;</span><br><span class="line">     Thread t &#x3D; Thread.currentThread(); &#x2F;&#x2F; 获取当前线程</span><br><span class="line">     ThreadLocalMap map &#x3D; getMap(t); &#x2F;&#x2F; 获取线程对应映射表</span><br><span class="line">     if (map !&#x3D; null) &#x2F;&#x2F; 设置KV</span><br><span class="line">         map.set(this, value);</span><br><span class="line">     else</span><br><span class="line">         createMap(t, value);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public T get() &#123;</span><br><span class="line">      Thread t &#x3D; Thread.currentThread();</span><br><span class="line">      ThreadLocalMap map &#x3D; getMap(t);</span><br><span class="line">      if (map !&#x3D; null) &#123;</span><br><span class="line">          &#x2F;&#x2F; 获取映射表中当前ThreadLocal对应的Value</span><br><span class="line">          ThreadLocalMap.Entry e &#x3D; map.getEntry(this);</span><br><span class="line">          if (e !&#x3D; null) &#123;</span><br><span class="line">              @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">              T result &#x3D; (T)e.value;</span><br><span class="line">              return result;</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      &#x2F;&#x2F; 如果Map还未初始化或者Map中没有找到Key，则设置一个初始值</span><br><span class="line">      return setInitialValue();</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<h5 id="ThreadLocalMap解析"><a href="#ThreadLocalMap解析" class="headerlink" title="ThreadLocalMap解析"></a>ThreadLocalMap解析</h5><p><strong>成员变量和内部类</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 为了处理非常大(指的是值)和长时间的用途，哈希表的Key使用了弱引用(WeakReferences)。</span><br><span class="line">&#x2F;&#x2F; 引用的队列(弱引用)不再被使用的时候，对应的过期的条目就能通过主动删除移出哈希表。</span><br><span class="line">static class ThreadLocalMap &#123;</span><br><span class="line"></span><br><span class="line">       &#x2F;&#x2F; Value为WeakReference持有</span><br><span class="line">       static class Entry extends WeakReference&lt;ThreadLocal&lt;?&gt;&gt; &#123;</span><br><span class="line">           &#x2F;** The value associated with this ThreadLocal. *&#x2F;</span><br><span class="line">           Object value;</span><br><span class="line"></span><br><span class="line">           Entry(ThreadLocal&lt;?&gt; k, Object v) &#123;</span><br><span class="line">               super(k);</span><br><span class="line">               value &#x3D; v;</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line"></span><br><span class="line">       &#x2F;**</span><br><span class="line">        * 初始化容量，必须是2的幂次方</span><br><span class="line">        *&#x2F;</span><br><span class="line">       private static final int INITIAL_CAPACITY &#x3D; 16;</span><br><span class="line"></span><br><span class="line">       &#x2F;**</span><br><span class="line">        * 哈希表，长度为2的幂次方</span><br><span class="line">        *&#x2F;</span><br><span class="line">       private Entry[] table;</span><br><span class="line"></span><br><span class="line">       &#x2F;**</span><br><span class="line">        * The number of entries in the table.（Entry数目）</span><br><span class="line">        *&#x2F;</span><br><span class="line">       private int size &#x3D; 0;</span><br><span class="line"></span><br><span class="line">       &#x2F;**</span><br><span class="line">        * 记录下一次扩容阀值</span><br><span class="line">        *&#x2F;</span><br><span class="line">       private int threshold; &#x2F;&#x2F; Default to 0</span><br><span class="line"></span><br><span class="line">       &#x2F;**</span><br><span class="line">        * Set the resize threshold to maintain at worst a 2&#x2F;3 load factor.（设置下一次阀值，len的三分之二）</span><br><span class="line">        *&#x2F;</span><br><span class="line">       private void setThreshold(int len) &#123;</span><br><span class="line">           threshold &#x3D; len * 2 &#x2F; 3;</span><br><span class="line">       &#125;</span><br><span class="line"></span><br><span class="line">       &#x2F;**</span><br><span class="line">        * Increment i modulo len.（以len为模增加i）</span><br><span class="line">        *&#x2F;</span><br><span class="line">       private static int nextIndex(int i, int len) &#123;</span><br><span class="line">           return ((i + 1 &lt; len) ? i + 1 : 0);</span><br><span class="line">       &#125;</span><br><span class="line"></span><br><span class="line">       &#x2F;**</span><br><span class="line">        * Decrement i modulo len.（以len为模减少i）</span><br><span class="line">        *&#x2F;</span><br><span class="line">       private static int prevIndex(int i, int len) &#123;</span><br><span class="line">           return ((i - 1 &gt;&#x3D; 0) ? i - 1 : len - 1);</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>构造函数</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 构造ThreadLocal时候使用，对应ThreadLocal的实例方法void createMap(Thread t, T firstValue)</span><br><span class="line">ThreadLocalMap(ThreadLocal&lt;?&gt; firstKey, Object firstValue) &#123;</span><br><span class="line">    &#x2F;&#x2F; 哈希表默认容量为16</span><br><span class="line">    table &#x3D; new Entry[INITIAL_CAPACITY];</span><br><span class="line">    &#x2F;&#x2F; 计算第一个元素的哈希码 （黄金分割数 &amp;（容量-1））</span><br><span class="line">    int i &#x3D; firstKey.threadLocalHashCode &amp; (INITIAL_CAPACITY - 1);</span><br><span class="line">    table[i] &#x3D; new Entry(firstKey, firstValue);</span><br><span class="line">    size &#x3D; 1;</span><br><span class="line">    setThreshold(INITIAL_CAPACITY);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 构造InheritableThreadLocal时候使用，基于父线程的ThreadLocalMap里面的内容进行提取放入新的ThreadLocalMap的哈希表中</span><br><span class="line">&#x2F;&#x2F; 对应ThreadLocal的静态方法static ThreadLocalMap createInheritedMap(ThreadLocalMap parentMap)</span><br><span class="line">private ThreadLocalMap(ThreadLocalMap parentMap) &#123;</span><br><span class="line">    Entry[] parentTable &#x3D; parentMap.table;</span><br><span class="line">    int len &#x3D; parentTable.length;</span><br><span class="line">    setThreshold(len);</span><br><span class="line">    table &#x3D; new Entry[len];</span><br><span class="line">    &#x2F;&#x2F; 基于父ThreadLocalMap的哈希表进行拷贝</span><br><span class="line">    for (Entry e : parentTable) &#123;</span><br><span class="line">        if (e !&#x3D; null) &#123;</span><br><span class="line">            @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">            ThreadLocal&lt;Object&gt; key &#x3D; (ThreadLocal&lt;Object&gt;) e.get();</span><br><span class="line">            if (key !&#x3D; null) &#123;</span><br><span class="line">                Object value &#x3D; key.childValue(e.value);</span><br><span class="line">                Entry c &#x3D; new Entry(key, value);</span><br><span class="line">                int h &#x3D; key.threadLocalHashCode &amp; (len - 1);</span><br><span class="line">                while (table[h] !&#x3D; null)</span><br><span class="line">                    h &#x3D; nextIndex(h, len);</span><br><span class="line">                table[h] &#x3D; c;</span><br><span class="line">                size++;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>set部分</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line">private void set(ThreadLocal&lt;?&gt; key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">           &#x2F;&#x2F; We don&#39;t use a fast path as with get() because it is at</span><br><span class="line">           &#x2F;&#x2F; least as common to use set() to create new entries as</span><br><span class="line">           &#x2F;&#x2F; it is to replace existing ones, in which case, a fast</span><br><span class="line">           &#x2F;&#x2F; path would fail more often than not.</span><br><span class="line">           </span><br><span class="line">           Entry[] tab &#x3D; table;</span><br><span class="line">           int len &#x3D; tab.length;</span><br><span class="line">           int i &#x3D; key.threadLocalHashCode &amp; (len-1); &#x2F;&#x2F;取index值</span><br><span class="line">           &#x2F;&#x2F; nextIndex方法实现全遍历</span><br><span class="line">           for (Entry e &#x3D; tab[i];</span><br><span class="line">                e !&#x3D; null;</span><br><span class="line">                e &#x3D; tab[i &#x3D; nextIndex(i, len)]) &#123; </span><br><span class="line">                </span><br><span class="line">               ThreadLocal&lt;?&gt; k &#x3D; e.get();</span><br><span class="line"></span><br><span class="line">               if (k &#x3D;&#x3D; key) &#123; &#x2F;&#x2F; 匹配则直接替换value</span><br><span class="line">                   e.value &#x3D; value;</span><br><span class="line">                   return;</span><br><span class="line">               &#125;</span><br><span class="line">               &#x2F;&#x2F; key为null，则替换key并赋值value</span><br><span class="line">               if (k &#x3D;&#x3D; null) &#123; </span><br><span class="line">                   replaceStaleEntry(key, value, i);</span><br><span class="line">                   return;</span><br><span class="line">               &#125;</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line">           tab[i] &#x3D; new Entry(key, value);</span><br><span class="line">           int sz &#x3D; ++size;</span><br><span class="line">           &#x2F;&#x2F; 追求效率的平衡，仅清理i到sz指引的回收value</span><br><span class="line">           if (!cleanSomeSlots(i, sz) &amp;&amp; sz &gt;&#x3D; threshold)</span><br><span class="line">               rehash(); &#x2F;&#x2F; 重新hash</span><br><span class="line">       &#125;</span><br><span class="line">       </span><br><span class="line">         private void rehash() &#123;</span><br><span class="line">           &#x2F;&#x2F; 清理一遍哈希表</span><br><span class="line">           expungeStaleEntries();</span><br><span class="line"></span><br><span class="line">           &#x2F;&#x2F; 哈希表元素数目大雨 3&#x2F;4阀值，则扩容</span><br><span class="line">           if (size &gt;&#x3D; threshold - threshold &#x2F; 4)</span><br><span class="line">               resize();</span><br><span class="line">       &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">   private void resize() &#123;</span><br><span class="line">           Entry[] oldTab &#x3D; table;</span><br><span class="line">           int oldLen &#x3D; oldTab.length;</span><br><span class="line">           int newLen &#x3D; oldLen * 2;</span><br><span class="line">           Entry[] newTab &#x3D; new Entry[newLen];</span><br><span class="line">           int count &#x3D; 0;</span><br><span class="line"></span><br><span class="line">           for (int j &#x3D; 0; j &lt; oldLen; ++j) &#123;</span><br><span class="line">               Entry e &#x3D; oldTab[j];</span><br><span class="line">               if (e !&#x3D; null) &#123;</span><br><span class="line">                   ThreadLocal&lt;?&gt; k &#x3D; e.get();</span><br><span class="line">                   if (k &#x3D;&#x3D; null) &#123;</span><br><span class="line">                       e.value &#x3D; null; &#x2F;&#x2F; Help the GC</span><br><span class="line">                   &#125; else &#123;</span><br><span class="line">                       int h &#x3D; k.threadLocalHashCode &amp; (newLen - 1);</span><br><span class="line">                       while (newTab[h] !&#x3D; null)</span><br><span class="line">                           h &#x3D; nextIndex(h, newLen);</span><br><span class="line">                       newTab[h] &#x3D; e;</span><br><span class="line">                       count++;</span><br><span class="line">                   &#125;</span><br><span class="line">               &#125;</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line">           setThreshold(newLen);</span><br><span class="line">           size &#x3D; count;</span><br><span class="line">           table &#x3D; newTab;</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure>
+<p><strong>get部分</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"> private Entry getEntry(ThreadLocal&lt;?&gt; key) &#123;</span><br><span class="line">           int i &#x3D; key.threadLocalHashCode &amp; (table.length - 1);</span><br><span class="line">           Entry e &#x3D; table[i];</span><br><span class="line">           if (e !&#x3D; null &amp;&amp; e.get() &#x3D;&#x3D; key)</span><br><span class="line">               return e;</span><br><span class="line">           else  &#x2F;&#x2F; 注意这里，如果e为null或者Key对不上，会调用getEntryAfterMiss</span><br><span class="line">               return getEntryAfterMiss(key, i, e);</span><br><span class="line">       &#125;</span><br><span class="line"></span><br><span class="line">private Entry getEntryAfterMiss(ThreadLocal&lt;?&gt; key, int i, Entry e) &#123;</span><br><span class="line">           Entry[] tab &#x3D; table;</span><br><span class="line">           int len &#x3D; tab.length;</span><br><span class="line"></span><br><span class="line">           &#x2F;&#x2F; 这里会通过nextIndex尝试遍历整个哈希表，如果找到匹配的Key则返回Entry</span><br><span class="line">           &#x2F;&#x2F; 如果哈希表中存在Key &#x3D;&#x3D; null的情况，调用expungeStaleEntry进行清理</span><br><span class="line">           while (e !&#x3D; null) &#123;</span><br><span class="line">               ThreadLocal&lt;?&gt; k &#x3D; e.get();</span><br><span class="line">               if (k &#x3D;&#x3D; key)</span><br><span class="line">                   return e;</span><br><span class="line">               if (k &#x3D;&#x3D; null)</span><br><span class="line">                   expungeStaleEntry(i);</span><br><span class="line">               else</span><br><span class="line">                   i &#x3D; nextIndex(i, len);</span><br><span class="line">               e &#x3D; tab[i];</span><br><span class="line">           &#125;</span><br><span class="line">           return null;</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="FAQ"><a href="#FAQ" class="headerlink" title="FAQ"></a>FAQ</h3><ul>
+<li>什么情况下ThreadLocal的使用会导致内存泄漏？<ul>
+<li>通过源码分析可以知道，ThreadLocalMap存放的Value是弱引用，会自动GC。但是对应的强引用则只在调用get、set或者remove才可能被回收</li>
+<li>例如：大量地(静态)初始化ThreadLocal实例，初始化之后不再调用get()、set()、remove()方法。</li>
+</ul>
+</li>
+</ul>
+<h3 id="ThreadLocal使用场景"><a href="#ThreadLocal使用场景" class="headerlink" title="ThreadLocal使用场景"></a>ThreadLocal使用场景</h3><ul>
+<li>JavaWeb中Session的实现</li>
+<li>Android应用中的Looper创建管理</li>
+</ul>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="http://throwable.coding.me/2019/02/17/java-currency-threadlocal/#%E9%BB%84%E9%87%91%E5%88%86%E5%89%B2%E6%95%B0%E7%9A%84%E5%BA%94%E7%94%A8" target="_blank" rel="noopener">ThreadLocal源码分析-黄金分割数的使用</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/03/16/Android%E7%BA%BF%E7%A8%8B%E6%B6%88%E6%81%AF%E6%9C%BA%E5%88%B6/" rel="prev" title="Android线程消息机制">
+      <i class="fa fa-chevron-left"></i> Android线程消息机制
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/03/20/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E2%80%94%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="next" title="Java并发编程—线程池">
+      Java并发编程—线程池 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#ThreadLocal是什么？"><span class="nav-number">1.</span> <span class="nav-text">ThreadLocal是什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ThreadLocal解决什么问题？"><span class="nav-number">2.</span> <span class="nav-text">ThreadLocal解决什么问题？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ThreadLocal源码解析"><span class="nav-number">3.</span> <span class="nav-text">ThreadLocal源码解析</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#整体结构图"><span class="nav-number">3.0.1.</span> <span class="nav-text">整体结构图</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ThreadLocal解析"><span class="nav-number">3.0.2.</span> <span class="nav-text">ThreadLocal解析</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ThreadLocalMap解析"><span class="nav-number">3.0.3.</span> <span class="nav-text">ThreadLocalMap解析</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FAQ"><span class="nav-number">4.</span> <span class="nav-text">FAQ</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ThreadLocal使用场景"><span class="nav-number">5.</span> <span class="nav-text">ThreadLocal使用场景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '8be4b82f0de3bc0b7e102c48792dc3bb',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

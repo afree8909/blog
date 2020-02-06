@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本文基于OkHttp 4.3.1源码分析OkHttp - 官方地址OkHttp - GitHub代码地址  概述OkHttp整体流程（本文覆盖红色部分） 连接时序图 HTTP不同协议连接区分参考：HTTP&#x2F;2 是如何建立连接的  源码分析ConnectInterceptor 获取发射机 获取有效连接，RealConnection 创建编码器，ExchangeCodex，实际I&#x2F;O工作逻辑 创建一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OkHttp 4源码（4）—连接机制分析">
+<meta property="og:url" content="https://afree8909.github.io/blog/2020/01/13/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%884%EF%BC%89%E2%80%94%E8%BF%9E%E6%8E%A5%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="本文基于OkHttp 4.3.1源码分析OkHttp - 官方地址OkHttp - GitHub代码地址  概述OkHttp整体流程（本文覆盖红色部分） 连接时序图 HTTP不同协议连接区分参考：HTTP&#x2F;2 是如何建立连接的  源码分析ConnectInterceptor 获取发射机 获取有效连接，RealConnection 创建编码器，ExchangeCodex，实际I&#x2F;O工作逻辑 创建一">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-074bde427d6e3cdb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-c629851ea8fb73d6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-d16e8389d436637b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2020-01-13T02:33:09.160Z">
+<meta property="article:modified_time" content="2020-02-06T16:59:18.452Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="OkHttp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-074bde427d6e3cdb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2020/01/13/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%884%EF%BC%89%E2%80%94%E8%BF%9E%E6%8E%A5%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>OkHttp 4源码（4）—连接机制分析 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2020/01/13/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%884%EF%BC%89%E2%80%94%E8%BF%9E%E6%8E%A5%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OkHttp 4源码（4）—连接机制分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-01-13 10:33:09" itemprop="dateCreated datePublished" datetime="2020-01-13T10:33:09+08:00">2020-01-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 00:59:18" itemprop="dateModified" datetime="2020-02-07T00:59:18+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index">
+                    <span itemprop="name">框架</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>21k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>19 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>本文基于OkHttp 4.3.1源码分析<br><a href="https://square.github.io/okhttp/" target="_blank" rel="noopener">OkHttp - 官方地址</a><br><a href="https://github.com/square/okhttp" target="_blank" rel="noopener">OkHttp - GitHub代码地址</a></p>
+</blockquote>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）<br><img src="https://upload-images.jianshu.io/upload_images/9696036-074bde427d6e3cdb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>连接时序图<br><img src="https://upload-images.jianshu.io/upload_images/9696036-c629851ea8fb73d6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>HTTP不同协议连接区分<br>参考：<a href="https://halfrost.com/http2_begin/" target="_blank" rel="noopener">HTTP/2 是如何建立连接的</a></p>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-d16e8389d436637b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><h3 id="ConnectInterceptor"><a href="#ConnectInterceptor" class="headerlink" title="ConnectInterceptor"></a>ConnectInterceptor</h3><ul>
+<li>获取发射机</li>
+<li>获取有效连接，RealConnection</li>
+<li>创建编码器，ExchangeCodex，实际I/O工作逻辑</li>
+<li>创建一个Exchange，封装上面结果，为后续网络读写工作提供API </li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">object ConnectInterceptor : Interceptor &#123;</span><br><span class="line"></span><br><span class="line">  @Throws(IOException::class)</span><br><span class="line">  override fun intercept(chain: Interceptor.Chain): Response &#123;</span><br><span class="line">    val realChain &#x3D; chain as RealInterceptorChain</span><br><span class="line">    val request &#x3D; realChain.request()</span><br><span class="line">    &#x2F;&#x2F; 取发射机，RealCall 创建时默认会创建一个实例</span><br><span class="line">    val transmitter &#x3D; realChain.transmitter()</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 对于非GET请求 检查为true</span><br><span class="line">    val doExtensiveHealthChecks &#x3D; request.method !&#x3D; &quot;GET&quot;</span><br><span class="line">    &#x2F;&#x2F; 构建Exchange </span><br><span class="line">    val exchange &#x3D; transmitter.newExchange(chain, doExtensiveHealthChecks)</span><br><span class="line"></span><br><span class="line">    return realChain.proceed(request, transmitter, exchange)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="发射机-Transmitter"><a href="#发射机-Transmitter" class="headerlink" title="发射机 Transmitter"></a>发射机 Transmitter</h3><blockquote>
+<p>Bridge between OkHttp’s application and network layers. This class exposes high-level application layer primitives: connections, requests, responses, and streams.</p>
+</blockquote>
+<p>OkHttp 应用层和网络层的桥梁，它提供了应用层连接、请求、响应的最上层函数</p>
+<h4 id="Transmitter构造方法"><a href="#Transmitter构造方法" class="headerlink" title="Transmitter构造方法"></a>Transmitter构造方法</h4><p>RealCall 创建时默认会创建一个实例，持有client、call、connectionPool的引用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">class Transmitter(</span><br><span class="line">  private val client: OkHttpClient,</span><br><span class="line">  private val call: Call</span><br><span class="line">) &#123;</span><br><span class="line">  &#x2F;&#x2F; 持有连接池引用</span><br><span class="line">  private val connectionPool: RealConnectionPool &#x3D; client.connectionPool.delegate</span><br><span class="line">  &#x2F;&#x2F; 监听器</span><br><span class="line">  private val eventListener: EventListener &#x3D; client.eventListenerFactory.create(call)</span><br><span class="line">  </span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Transmitter-prepareToConnect"><a href="#Transmitter-prepareToConnect" class="headerlink" title="Transmitter.prepareToConnect"></a>Transmitter.prepareToConnect</h4><p>准备连接，触发时机：重试桥开始会执行此方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">fun prepareToConnect(request: Request) &#123;</span><br><span class="line">  if (this.request !&#x3D; null) &#123;</span><br><span class="line">    if (this.request!!.url.canReuseConnectionFor(request.url) &amp;&amp; exchangeFinder!!.hasRouteToTry()) &#123;</span><br><span class="line">      return &#x2F;&#x2F; 可以重用下，结束</span><br><span class="line">    &#125;</span><br><span class="line">    check(exchange &#x3D;&#x3D; null)</span><br><span class="line">    &#x2F;&#x2F; 重置</span><br><span class="line">    if (exchangeFinder !&#x3D; null) &#123;</span><br><span class="line">      maybeReleaseConnection(null, true)</span><br><span class="line">      exchangeFinder &#x3D; null</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  &#x2F;&#x2F; 构造一个ExchangeFinder实例（下面介绍）</span><br><span class="line">  this.request &#x3D; request</span><br><span class="line">  this.exchangeFinder &#x3D; ExchangeFinder(</span><br><span class="line">      this, connectionPool, createAddress(request.url), call, eventListener)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="交换器"><a href="#交换器" class="headerlink" title="交换器"></a>交换器</h3><p>核心类</p>
+<ul>
+<li>Exchange ，单个Http请求，传输交换数据实现类</li>
+<li>ExchangeFinder ，请求连接获取，请求编解码实例构建，逻辑累</li>
+<li>ExchangeCodec，Http连接I/O操作上层封装类</li>
+</ul>
+<h4 id="Transmitter-newExchange"><a href="#Transmitter-newExchange" class="headerlink" title="Transmitter.newExchange"></a>Transmitter.newExchange</h4><ul>
+<li>获取连接 RealConnection</li>
+<li>构造连接的编码器，ExchangeCodec</li>
+<li>创建Exchange，它主要负责HTTP连接的维护管理及通知ExchangeCodec编码器进行实际的I/O操作</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">internal fun newExchange(chain: Interceptor.Chain, doExtensiveHealthChecks: Boolean): Exchange &#123;</span><br><span class="line">  ...</span><br><span class="line">  &#x2F;&#x2F; 建立连接初始方法，获取连接后，会创建一个ExchangeCodec用于I&#x2F;O工作</span><br><span class="line">  val codec &#x3D; exchangeFinder!!.find(client, chain, doExtensiveHealthChecks)</span><br><span class="line">  &#x2F;&#x2F; 创建一个 Exchange </span><br><span class="line">  val result &#x3D; Exchange(this, call, eventListener, exchangeFinder!!, codec)</span><br><span class="line"></span><br><span class="line">  synchronized(connectionPool) &#123;</span><br><span class="line">    this.exchange &#x3D; result</span><br><span class="line">    this.exchangeRequestDone &#x3D; false</span><br><span class="line">    this.exchangeResponseDone &#x3D; false</span><br><span class="line">    return result</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ExchangeFinder-find"><a href="#ExchangeFinder-find" class="headerlink" title="ExchangeFinder.find"></a>ExchangeFinder.find</h4><ul>
+<li>获取连接 RealConnection</li>
+<li>构造连接的编码器，ExchangeCodec</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">fun find(</span><br><span class="line">  client: OkHttpClient,</span><br><span class="line">  chain: Interceptor.Chain,</span><br><span class="line">  doExtensiveHealthChecks: Boolean</span><br><span class="line">): ExchangeCodec &#123;</span><br><span class="line">  val connectTimeout &#x3D; chain.connectTimeoutMillis()</span><br><span class="line">  val readTimeout &#x3D; chain.readTimeoutMillis()</span><br><span class="line">  val writeTimeout &#x3D; chain.writeTimeoutMillis()</span><br><span class="line">  val pingIntervalMillis &#x3D; client.pingIntervalMillis</span><br><span class="line">  val connectionRetryEnabled &#x3D; client.retryOnConnectionFailure</span><br><span class="line"></span><br><span class="line">  try &#123;</span><br><span class="line">    &#x2F;&#x2F; 获取有效连接</span><br><span class="line">    val resultConnection &#x3D; findHealthyConnection(</span><br><span class="line">        connectTimeout &#x3D; connectTimeout,</span><br><span class="line">        readTimeout &#x3D; readTimeout,</span><br><span class="line">        writeTimeout &#x3D; writeTimeout,</span><br><span class="line">        pingIntervalMillis &#x3D; pingIntervalMillis,</span><br><span class="line">        connectionRetryEnabled &#x3D; connectionRetryEnabled,</span><br><span class="line">        doExtensiveHealthChecks &#x3D; doExtensiveHealthChecks</span><br><span class="line">    )</span><br><span class="line">    &#x2F;&#x2F; 创建 编码器</span><br><span class="line">    return resultConnection.newCodec(client, chain)</span><br><span class="line">  &#125; catch (e: RouteException) &#123;</span><br><span class="line">    trackFailure()</span><br><span class="line">    throw e</span><br><span class="line">  &#125; catch (e: IOException) &#123;</span><br><span class="line">    trackFailure()</span><br><span class="line">    throw RouteException(e)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ExchangeFinder-findHealthyConnection"><a href="#ExchangeFinder-findHealthyConnection" class="headerlink" title="ExchangeFinder.findHealthyConnection"></a>ExchangeFinder.findHealthyConnection</h4><ul>
+<li>执行获取连接方法，获取连接</li>
+<li>如果连接是新创建的连接，则直接返回结果</li>
+<li>如果连接是复用连接池的连接，则继续判断该连接是否可用，可用则返回，不可用则继续find</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">private fun findHealthyConnection(</span><br><span class="line">   connectTimeout: Int,</span><br><span class="line">   readTimeout: Int,</span><br><span class="line">   writeTimeout: Int,</span><br><span class="line">   pingIntervalMillis: Int,</span><br><span class="line">   connectionRetryEnabled: Boolean,</span><br><span class="line">   doExtensiveHealthChecks: Boolean</span><br><span class="line"> ): RealConnection &#123;</span><br><span class="line">   while (true) &#123;</span><br><span class="line">     &#x2F;&#x2F; 执行连接获取方法</span><br><span class="line">     val candidate &#x3D; findConnection(</span><br><span class="line">         connectTimeout &#x3D; connectTimeout,</span><br><span class="line">         readTimeout &#x3D; readTimeout,</span><br><span class="line">         writeTimeout &#x3D; writeTimeout,</span><br><span class="line">         pingIntervalMillis &#x3D; pingIntervalMillis,</span><br><span class="line">         connectionRetryEnabled &#x3D; connectionRetryEnabled</span><br><span class="line">     )</span><br><span class="line"></span><br><span class="line">     &#x2F;&#x2F; 新创建的连接，无需判断可用，可以直接返回连接结果</span><br><span class="line">     synchronized(connectionPool) &#123;</span><br><span class="line">       if (candidate.successCount &#x3D;&#x3D; 0) &#123;</span><br><span class="line">         return candidate</span><br><span class="line">       &#125;</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     &#x2F;&#x2F; 判断该连接是否可用</span><br><span class="line">     if (!candidate.isHealthy(doExtensiveHealthChecks)) &#123;</span><br><span class="line">       candidate.noNewExchanges()</span><br><span class="line">       continue</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     return candidate</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ExchangeFinder-findConnection"><a href="#ExchangeFinder-findConnection" class="headerlink" title="ExchangeFinder.findConnection"></a>ExchangeFinder.findConnection</h4><p>获取连接过程</p>
+<ol>
+<li>第一次，先从连接池获取连接</li>
+<li>第二次，选择新的路由，再次尝试从连接池获取</li>
+<li>构造一个新的连接</li>
+<li>第三次，在高并发情况下，尝试走HTTP2的多路复用连接</li>
+<li>如果连接池没有获取到连接，则走构造的那个新的连接，新的连接会加入到连接池</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br></pre></td><td class="code"><pre><span class="line">private fun findConnection(</span><br><span class="line">  connectTimeout: Int,</span><br><span class="line">  readTimeout: Int,</span><br><span class="line">  writeTimeout: Int,</span><br><span class="line">  pingIntervalMillis: Int,</span><br><span class="line">  connectionRetryEnabled: Boolean</span><br><span class="line">): RealConnection &#123;</span><br><span class="line">  var foundPooledConnection &#x3D; false</span><br><span class="line">  var result: RealConnection? &#x3D; null</span><br><span class="line">  var selectedRoute: Route? &#x3D; null</span><br><span class="line">  var releasedConnection: RealConnection?</span><br><span class="line">  val toClose: Socket?</span><br><span class="line">  synchronized(connectionPool) &#123;</span><br><span class="line">    if (transmitter.isCanceled) throw IOException(&quot;Canceled&quot;)</span><br><span class="line">    hasStreamFailure &#x3D; false</span><br><span class="line">    &#x2F;&#x2F; 之前的连接 </span><br><span class="line">    releasedConnection &#x3D; transmitter.connection</span><br><span class="line">    &#x2F;&#x2F; 前连接不为null 且不支持新的ExChange了则释放连接 否则toClose 赋值null</span><br><span class="line">    toClose &#x3D; if (transmitter.connection !&#x3D; null &amp;&amp; transmitter.connection!!.noNewExchanges) &#123;</span><br><span class="line">      transmitter.releaseConnectionNoEvents()</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      null</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    if (transmitter.connection !&#x3D; null) &#123;</span><br><span class="line">      &#x2F;&#x2F; 之前的连接可用，直接赋值result</span><br><span class="line">      result &#x3D; transmitter.connection</span><br><span class="line">      releasedConnection &#x3D; null</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; 没有可用连接，则尝试获取新的连接</span><br><span class="line">    if (result &#x3D;&#x3D; null) &#123;</span><br><span class="line">      &#x2F;&#x2F; 先从连接池获取链接</span><br><span class="line">      if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) &#123;</span><br><span class="line">        foundPooledConnection &#x3D; true</span><br><span class="line">        result &#x3D; transmitter.connection</span><br><span class="line">      &#125; else if (nextRouteToTry !&#x3D; null) &#123;</span><br><span class="line">        selectedRoute &#x3D; nextRouteToTry</span><br><span class="line">        nextRouteToTry &#x3D; null</span><br><span class="line">      &#125; else if (retryCurrentRoute()) &#123;</span><br><span class="line">        selectedRoute &#x3D; transmitter.connection!!.route()</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  &#x2F;&#x2F; 如果等待close的连接不为null则关闭掉</span><br><span class="line">  toClose?.closeQuietly()</span><br><span class="line">  &#x2F;&#x2F; 释放的连接不为空，事件通知连接回收</span><br><span class="line">  if (releasedConnection !&#x3D; null) &#123;</span><br><span class="line">    eventListener.connectionReleased(call, releasedConnection!!)</span><br><span class="line">  &#125;</span><br><span class="line">  &#x2F;&#x2F; 连接池获取的连接不为空，事件通知连接连接获得</span><br><span class="line">  if (foundPooledConnection) &#123;</span><br><span class="line">    eventListener.connectionAcquired(call, result!!)</span><br><span class="line">  &#125;</span><br><span class="line">  if (result !&#x3D; null) &#123;</span><br><span class="line">    &#x2F;&#x2F; 找到了连接，返回连接，结束方法</span><br><span class="line">    return result!!</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 如果至此没有获取到可用连接，则尝试更改路由，在连接</span><br><span class="line">  var newRouteSelection &#x3D; false</span><br><span class="line">  if (selectedRoute &#x3D;&#x3D; null &amp;&amp; (routeSelection &#x3D;&#x3D; null || !routeSelection!!.hasNext())) &#123;</span><br><span class="line">    &#x2F;&#x2F; 有新的路由，则标记选了新的路由，以及获取新的路由</span><br><span class="line">    newRouteSelection &#x3D; true</span><br><span class="line">    routeSelection &#x3D; routeSelector.next()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  var routes: List&lt;Route&gt;? &#x3D; null</span><br><span class="line">  synchronized(connectionPool) &#123;</span><br><span class="line">    if (transmitter.isCanceled) throw IOException(&quot;Canceled&quot;)</span><br><span class="line"></span><br><span class="line">    if (newRouteSelection) &#123;</span><br><span class="line">      &#x2F;&#x2F; 如果更改了路由，则有新的一批地址，尝试从新的一批地址获取可用连接</span><br><span class="line">      routes &#x3D; routeSelection!!.routes</span><br><span class="line">      if (connectionPool.transmitterAcquirePooledConnection(</span><br><span class="line">              address, transmitter, routes, false)) &#123;</span><br><span class="line">        foundPooledConnection &#x3D; true</span><br><span class="line">        result &#x3D; transmitter.connection</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">      </span><br><span class="line">    if (!foundPooledConnection) &#123;</span><br><span class="line">      if (selectedRoute &#x3D;&#x3D; null) &#123;</span><br><span class="line">        selectedRoute &#x3D; routeSelection!!.next()</span><br><span class="line">      &#125;</span><br><span class="line">      &#x2F;&#x2F; 如果仍然没有获取到可用连接，则直接创建一个新的连接实例</span><br><span class="line">      result &#x3D; RealConnection(connectionPool, selectedRoute!!)</span><br><span class="line">      connectingConnection &#x3D; result</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 如果第二次从连接池中找到了可用连接，则直接返回该连接</span><br><span class="line">  if (foundPooledConnection) &#123;</span><br><span class="line">    eventListener.connectionAcquired(call, result!!)</span><br><span class="line">    return result!!</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 如果没有找到直接用的连接，则尝试TCP+TLC握手（阻塞过程）</span><br><span class="line">  result!!.connect(</span><br><span class="line">      connectTimeout,</span><br><span class="line">      readTimeout,</span><br><span class="line">      writeTimeout,</span><br><span class="line">      pingIntervalMillis,</span><br><span class="line">      connectionRetryEnabled,</span><br><span class="line">      call,</span><br><span class="line">      eventListener</span><br><span class="line">  )</span><br><span class="line">  &#x2F;&#x2F; 连接 可用，则从路由黑名单中移除 该路由地址</span><br><span class="line">  connectionPool.routeDatabase.connected(result!!.route())</span><br><span class="line">  </span><br><span class="line">  var socket: Socket? &#x3D; null</span><br><span class="line">  synchronized(connectionPool) &#123;</span><br><span class="line">    connectingConnection &#x3D; null</span><br><span class="line">    &#x2F;&#x2F; 最后一次尝试连接 （这个只在一个host多个并发连接情况下发生）</span><br><span class="line">    if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, routes, true)) &#123;</span><br><span class="line">      &#x2F;&#x2F; 如果成功，则优先使用连接池的连接，并关闭之前创建的连接socket</span><br><span class="line">      result!!.noNewExchanges &#x3D; true</span><br><span class="line">      socket &#x3D; result!!.socket()</span><br><span class="line">      result &#x3D; transmitter.connection</span><br><span class="line"></span><br><span class="line">      nextRouteToTry &#x3D; selectedRoute</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      &#x2F;&#x2F; 没有从连接池获取到连接，则把之前创建的连接存储进入</span><br><span class="line">      connectionPool.put(result!!)</span><br><span class="line">      transmitter.acquireConnectionNoEvents(result!!)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  socket?.closeQuietly()</span><br><span class="line"></span><br><span class="line">  eventListener.connectionAcquired(call, result!!)</span><br><span class="line">  return result!!</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="连接池"><a href="#连接池" class="headerlink" title="连接池"></a>连接池</h3><h4 id="初始化时机"><a href="#初始化时机" class="headerlink" title="初始化时机"></a>初始化时机</h4><p>OkHttpClient.Builder构造时，会默认构造一个连接池</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> class Builder constructor() &#123;</span><br><span class="line">    internal var connectionPool: ConnectionPool &#x3D; ConnectionPool()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="ConnectionPool"><a href="#ConnectionPool" class="headerlink" title="ConnectionPool"></a>ConnectionPool</h4><p>连接池，管理HTTP 和HTTP/2的所有连接，维护一定的连接，清理超过配置的连接，及提供可复用的连接。<br>默认最大空闲连接数目5个，最长连接时长5分钟</p>
+<p>结构：内部持有delegate为RealConnectionPool，它是连接池管理的逻辑实现类</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">class ConnectionPool internal constructor(</span><br><span class="line">  internal val delegate: RealConnectionPool &#x2F;&#x2F; 连接池管理逻辑真正实现类</span><br><span class="line">) &#123;</span><br><span class="line">  constructor(</span><br><span class="line">    maxIdleConnections: Int,</span><br><span class="line">    keepAliveDuration: Long,</span><br><span class="line">    timeUnit: TimeUnit</span><br><span class="line">  ) : this(RealConnectionPool(</span><br><span class="line">      taskRunner &#x3D; TaskRunner.INSTANCE, &#x2F;&#x2F; 工作线程</span><br><span class="line">      maxIdleConnections &#x3D; maxIdleConnections, &#x2F;&#x2F; 最大空闲连接数5</span><br><span class="line">      keepAliveDuration &#x3D; keepAliveDuration, &#x2F;&#x2F; 最长连接时长5min</span><br><span class="line">      timeUnit &#x3D; timeUnit</span><br><span class="line">  ))</span><br><span class="line"></span><br><span class="line">  constructor() : this(5, 5, TimeUnit.MINUTES)</span><br><span class="line"></span><br><span class="line">  fun idleConnectionCount(): Int &#x3D; delegate.idleConnectionCount()</span><br><span class="line"></span><br><span class="line">  fun connectionCount(): Int &#x3D; delegate.connectionCount()</span><br><span class="line"></span><br><span class="line">  &#x2F;** Close and remove all idle connections in the pool. *&#x2F;</span><br><span class="line">  fun evictAll() &#123;</span><br><span class="line">    delegate.evictAll()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RealConnectionPool-transmitterAcquirePooledConnection"><a href="#RealConnectionPool-transmitterAcquirePooledConnection" class="headerlink" title="RealConnectionPool.transmitterAcquirePooledConnection"></a>RealConnectionPool.transmitterAcquirePooledConnection</h4><p>前面我们知道Transmitter持有ConnectionPool，且看它持有的变量是直接以RealConnectionPool作为类型的，可以显示执行到它的其它方法<br>transmitterAcquirePooledConnection尝试获取连接池中的连接，达到复用连接的目的<br>一共两种情况可以使用复用的连接，1.需要多路复用连接且有支持多路复用的连接；2.能给目标Address分配stream的连接</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">fun transmitterAcquirePooledConnection(</span><br><span class="line">  address: Address,</span><br><span class="line">  transmitter: Transmitter,</span><br><span class="line">  routes: List&lt;Route&gt;?,</span><br><span class="line">  requireMultiplexed: Boolean</span><br><span class="line">): Boolean &#123;</span><br><span class="line">  this.assertThreadHoldsLock()</span><br><span class="line"></span><br><span class="line">  for (connection in connections) &#123;</span><br><span class="line">    &#x2F;&#x2F; 需要复用连接 &amp;&amp; 该连接不支持复用连接（HTTP2） 则该连接不可用</span><br><span class="line">    if (requireMultiplexed &amp;&amp; !connection.isMultiplexed) continue</span><br><span class="line">    &#x2F;&#x2F; 如果该连接可以给对应的 address 分配stream 则返回true</span><br><span class="line">    if (!connection.isEligible(address, routes)) continue</span><br><span class="line">    &#x2F;&#x2F; 满足条件下，获取</span><br><span class="line">    transmitter.acquireConnectionNoEvents(connection)</span><br><span class="line">    return true</span><br><span class="line">  &#125;</span><br><span class="line">  return false</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RealConnectionPool-acquireConnectionNoEvents"><a href="#RealConnectionPool-acquireConnectionNoEvents" class="headerlink" title="RealConnectionPool.acquireConnectionNoEvents"></a>RealConnectionPool.acquireConnectionNoEvents</h4><p>获取连接，然后在连接实例中的transmitters中添加对应承载的Transmitter弱引用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">fun acquireConnectionNoEvents(connection: RealConnection) &#123;</span><br><span class="line">  connectionPool.assertThreadHoldsLock()</span><br><span class="line"></span><br><span class="line">  check(this.connection &#x3D;&#x3D; null)</span><br><span class="line">  this.connection &#x3D; connection</span><br><span class="line">  &#x2F;&#x2F; 连接的transmitters集合添加一个弱引用</span><br><span class="line">  connection.transmitters.add(TransmitterReference(this, callStackTrace))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RealConnectionPool-put"><a href="#RealConnectionPool-put" class="headerlink" title="RealConnectionPool.put"></a>RealConnectionPool.put</h4><p>ExchangeFinder最后find的connection是创建的新的connection，则会执行Pool的put新连接方法<br>put方法 先将新的连接添加到连接集合中，然后执行清理任务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">fun put(connection: RealConnection) &#123;</span><br><span class="line">  this.assertThreadHoldsLock()</span><br><span class="line"></span><br><span class="line">  connections.add(connection)</span><br><span class="line">  cleanupQueue.schedule(cleanupTask) &#x2F;&#x2F; 执行清理任务一次</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RealConnectionPool-cleanup"><a href="#RealConnectionPool-cleanup" class="headerlink" title="RealConnectionPool.cleanup"></a>RealConnectionPool.cleanup</h4><p>对连接池的连接进行维护，主要是清理长时间无用的连接（超过空闲连接个数且超过最大空闲时长）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">fun cleanup(now: Long): Long &#123;</span><br><span class="line">    var inUseConnectionCount &#x3D; 0</span><br><span class="line">    var idleConnectionCount &#x3D; 0</span><br><span class="line">    var longestIdleConnection: RealConnection? &#x3D; null</span><br><span class="line">    var longestIdleDurationNs &#x3D; Long.MIN_VALUE</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    synchronized(this) &#123;</span><br><span class="line">      for (connection in connections) &#123;</span><br><span class="line">        &#x2F;&#x2F; 如果该连接正在被使用，则继续遍历，使用连接数+1</span><br><span class="line">        if (pruneAndGetAllocationCount(connection, now) &gt; 0) &#123;</span><br><span class="line">          inUseConnectionCount++</span><br><span class="line">          continue</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F; 空闲连接数+1</span><br><span class="line">        idleConnectionCount++</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 记录最长空闲时长，以及最长空闲时长对应的连接</span><br><span class="line">        val idleDurationNs &#x3D; now - connection.idleAtNanos</span><br><span class="line">        if (idleDurationNs &gt; longestIdleDurationNs) &#123;</span><br><span class="line">          longestIdleDurationNs &#x3D; idleDurationNs</span><br><span class="line">          longestIdleConnection &#x3D; connection</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      when &#123;</span><br><span class="line">        &#x2F;&#x2F; 当连接最长空闲时长大于配置的时长 &amp; 空闲连接个是&gt; 配置的个数</span><br><span class="line">        longestIdleDurationNs &gt;&#x3D; this.keepAliveDurationNs</span><br><span class="line">            || idleConnectionCount &gt; this.maxIdleConnections -&gt; &#123;</span><br><span class="line">          &#x2F;&#x2F; 则移除 最大的那个空闲连接</span><br><span class="line">          connections.remove(longestIdleConnection)</span><br><span class="line">          &#x2F;&#x2F; 如果连接为空了，则停止所有的清除任务</span><br><span class="line">          if (connections.isEmpty()) cleanupQueue.cancelAll()</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F; 其它情况则结束语句</span><br><span class="line">        ...      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; 关闭被移除的连接，释放资源</span><br><span class="line">    longestIdleConnection!!.socket().closeQuietly()</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; Cleanup again immediately.</span><br><span class="line">    return 0L</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="连接"><a href="#连接" class="headerlink" title="连接"></a>连接</h3><h4 id="RealConnection-connect"><a href="#RealConnection-connect" class="headerlink" title="RealConnection.connect"></a>RealConnection.connect</h4><p>连接操作，根据是否代理会做两个逻辑区分，最后都是执行socket连接，然后进行协议的处理</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">fun connect(</span><br><span class="line">    connectTimeout: Int,</span><br><span class="line">    readTimeout: Int,</span><br><span class="line">    writeTimeout: Int,</span><br><span class="line">    pingIntervalMillis: Int,</span><br><span class="line">    connectionRetryEnabled: Boolean,</span><br><span class="line">    call: Call,</span><br><span class="line">    eventListener: EventListener</span><br><span class="line">  ) &#123;</span><br><span class="line">    check(protocol &#x3D;&#x3D; null) &#123; &quot;already connected&quot; &#125;</span><br><span class="line"></span><br><span class="line">    var routeException: RouteException? &#x3D; null</span><br><span class="line">    val connectionSpecs &#x3D; route.address.connectionSpecs</span><br><span class="line">    val connectionSpecSelector &#x3D; ConnectionSpecSelector(connectionSpecs)</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    while (true) &#123;</span><br><span class="line">      try &#123;</span><br><span class="line">        &#x2F;&#x2F; 是否走代理通道， 即一个HTTPS请求 但是其有HTTP的代理通道</span><br><span class="line">        if (route.requiresTunnel()) &#123;</span><br><span class="line">          &#x2F;&#x2F; 通过代理通道建立连接 ，也叫隧道连接</span><br><span class="line">          connectTunnel(connectTimeout, readTimeout, writeTimeout, call, eventListener)</span><br><span class="line">          if (rawSocket &#x3D;&#x3D; null) &#123;</span><br><span class="line">            &#x2F;&#x2F; We were </span><br><span class="line">            break</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">          &#x2F;&#x2F; 建立连接</span><br><span class="line">          connectSocket(connectTimeout, readTimeout, call, eventListener)</span><br><span class="line">        &#125;</span><br><span class="line">        establishProtocol(connectionSpecSelector, pingIntervalMillis, call, eventListener)</span><br><span class="line">        eventListener.connectEnd(call, route.socketAddress, route.proxy, protocol)</span><br><span class="line">        break</span><br><span class="line">      &#125; catch (e: IOException) &#123;</span><br><span class="line">        ... &#x2F;&#x2F; 异常处理</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (route.requiresTunnel() &amp;&amp; rawSocket &#x3D;&#x3D; null) &#123;</span><br><span class="line">      throw RouteException(ProtocolException(</span><br><span class="line">          &quot;Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS&quot;))</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RealConnection-connectSocket"><a href="#RealConnection-connectSocket" class="headerlink" title="RealConnection.connectSocket"></a>RealConnection.connectSocket</h4><ul>
+<li>创建原生Socket</li>
+<li>进行Socket连接，至此对应的底层Socket通道已经建立</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">private fun connectSocket(</span><br><span class="line">   connectTimeout: Int,</span><br><span class="line">   readTimeout: Int,</span><br><span class="line">   call: Call,</span><br><span class="line">   eventListener: EventListener</span><br><span class="line"> ) &#123;</span><br><span class="line">   val proxy &#x3D; route.proxy</span><br><span class="line">   val address &#x3D; route.address</span><br><span class="line">   &#x2F;&#x2F; 创建原生Socket</span><br><span class="line">   val rawSocket &#x3D; when (proxy.type()) &#123;</span><br><span class="line">     Proxy.Type.DIRECT, Proxy.Type.HTTP -&gt; address.socketFactory.createSocket()!!</span><br><span class="line">     else -&gt; Socket(proxy)</span><br><span class="line">   &#125;</span><br><span class="line">   this.rawSocket &#x3D; rawSocket</span><br><span class="line">   &#x2F;&#x2F; 发送开始连接事件</span><br><span class="line">   eventListener.connectStart(call, route.socketAddress, proxy)</span><br><span class="line">   rawSocket.soTimeout &#x3D; readTimeout</span><br><span class="line">   try &#123;</span><br><span class="line">     &#x2F;&#x2F; 找应用对应的平台 进行连接</span><br><span class="line">     Platform.get().connectSocket(rawSocket, route.socketAddress, connectTimeout)</span><br><span class="line">   &#125; catch (e: ConnectException) &#123;</span><br><span class="line">     throw ConnectException(&quot;Failed to connect to $&#123;route.socketAddress&#125;&quot;).apply &#123;</span><br><span class="line">       initCause(e)</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   ...</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RealConnection-establishProtocol"><a href="#RealConnection-establishProtocol" class="headerlink" title="RealConnection.establishProtocol"></a>RealConnection.establishProtocol</h4><p>前面已经建立Socket连接通道，现在是对各个协议进行支持</p>
+<ul>
+<li>非HTTPS，1. 支持HTTP2情况下，优先走HTTP/2协议连接，2. 不支持，则走HTTP/1协议</li>
+<li>HTTPS，则先进行TLS握手，握手成功后，如果是HTTP/2协议，则走HTTP/2连接方式</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">private fun establishProtocol(</span><br><span class="line">  connectionSpecSelector: ConnectionSpecSelector,</span><br><span class="line">  pingIntervalMillis: Int,</span><br><span class="line">  call: Call,</span><br><span class="line">  eventListener: EventListener</span><br><span class="line">) &#123;</span><br><span class="line">  if (route.address.sslSocketFactory &#x3D;&#x3D; null) &#123;</span><br><span class="line">    if (Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols) &#123;</span><br><span class="line">      &#x2F;&#x2F; 非HTTPS，支持HTTP2，优先走HTTP2</span><br><span class="line">      socket &#x3D; rawSocket</span><br><span class="line">      protocol &#x3D; Protocol.H2_PRIOR_KNOWLEDGE</span><br><span class="line">      startHttp2(pingIntervalMillis)</span><br><span class="line">      return</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    socket &#x3D; rawSocket</span><br><span class="line">    protocol &#x3D; Protocol.HTTP_1_1</span><br><span class="line">    return</span><br><span class="line">  &#125;</span><br><span class="line">  &#x2F;&#x2F; 加密连接开始</span><br><span class="line">  eventListener.secureConnectStart(call)</span><br><span class="line">  &#x2F;&#x2F; 开始Tls连接</span><br><span class="line">  connectTls(connectionSpecSelector)</span><br><span class="line">  &#x2F;&#x2F; 加密连接结束</span><br><span class="line">  eventListener.secureConnectEnd(call, handshake)</span><br><span class="line"></span><br><span class="line">  if (protocol &#x3D;&#x3D;&#x3D; Protocol.HTTP_2) &#123;</span><br><span class="line">    startHttp2(pingIntervalMillis)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RealConnection-connectTls"><a href="#RealConnection-connectTls" class="headerlink" title="RealConnection.connectTls"></a>RealConnection.connectTls</h4><p>进行Tls连接</p>
+<ul>
+<li>基于之前的原生Socket建立包装的SSLSocket</li>
+<li>对SSLSocket进行相关安全信息的配置</li>
+<li>通过SSLSocket进行握手，及握手过程中，进行一些证书信息校验</li>
+<li>握手成功，构建对应连接的source及sink读写流</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line">private fun connectTls(connectionSpecSelector: ConnectionSpecSelector) &#123;</span><br><span class="line">  val address &#x3D; route.address</span><br><span class="line">  val sslSocketFactory &#x3D; address.sslSocketFactory</span><br><span class="line">  var success &#x3D; false</span><br><span class="line">  var sslSocket: SSLSocket? &#x3D; null</span><br><span class="line">  try &#123;</span><br><span class="line">    &#x2F;&#x2F; 基于之前创建的原生Socket 建立一个SSLSocket</span><br><span class="line">    sslSocket &#x3D; sslSocketFactory!!.createSocket(</span><br><span class="line">        rawSocket, address.url.host, address.url.port, true &#x2F;* autoClose *&#x2F;) as SSLSocket</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 对sslSocket进行 安全连接的配置 以及Tls的扩展配置</span><br><span class="line">    val connectionSpec &#x3D; connectionSpecSelector.configureSecureSocket(sslSocket)</span><br><span class="line">    if (connectionSpec.supportsTlsExtensions) &#123;</span><br><span class="line">      Platform.get().configureTlsExtensions(sslSocket, address.url.host, address.protocols)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 开始握手</span><br><span class="line">    sslSocket.startHandshake()</span><br><span class="line">    &#x2F;&#x2F; 获取sslSession</span><br><span class="line">    val sslSocketSession &#x3D; sslSocket.session</span><br><span class="line">    val unverifiedHandshake &#x3D; sslSocketSession.handshake()</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 验证证书对主机是否ok </span><br><span class="line">    if (!address.hostnameVerifier!!.verify(address.url.host, sslSocketSession)) &#123;</span><br><span class="line">      val peerCertificates &#x3D; unverifiedHandshake.peerCertificates</span><br><span class="line">      if (peerCertificates.isNotEmpty()) &#123;</span><br><span class="line">        val cert &#x3D; peerCertificates[0] as X509Certificate</span><br><span class="line">        throw SSLPeerUnverifiedException(&quot;&quot;&quot;</span><br><span class="line">            |Hostname $&#123;address.url.host&#125; not verified:</span><br><span class="line">            |    certificate: $&#123;CertificatePinner.pin(cert)&#125;</span><br><span class="line">            |    DN: $&#123;cert.subjectDN.name&#125;</span><br><span class="line">            |    subjectAltNames: $&#123;OkHostnameVerifier.allSubjectAltNames(cert)&#125;</span><br><span class="line">            &quot;&quot;&quot;.trimMargin())</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">        throw SSLPeerUnverifiedException(</span><br><span class="line">            &quot;Hostname $&#123;address.url.host&#125; not verified (no certificates)&quot;)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    val certificatePinner &#x3D; address.certificatePinner!!</span><br><span class="line"></span><br><span class="line">    handshake &#x3D; Handshake(unverifiedHandshake.tlsVersion, unverifiedHandshake.cipherSuite,</span><br><span class="line">        unverifiedHandshake.localCertificates) &#123;</span><br><span class="line">      certificatePinner.certificateChainCleaner!!.clean(unverifiedHandshake.peerCertificates,</span><br><span class="line">          address.url.host)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; Check that the certificate pinner is satisfied by the certificates presented.</span><br><span class="line">    certificatePinner.check(address.url.host) &#123;</span><br><span class="line">      handshake!!.peerCertificates.map &#123; it as X509Certificate &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; Success! Save the handshake and the ALPN protocol.</span><br><span class="line">    val maybeProtocol &#x3D; if (connectionSpec.supportsTlsExtensions) &#123;</span><br><span class="line">      Platform.get().getSelectedProtocol(sslSocket)</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      null</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; 握手成功，获取source和sink流</span><br><span class="line">    socket &#x3D; sslSocket</span><br><span class="line">    source &#x3D; sslSocket.source().buffer()</span><br><span class="line">    sink &#x3D; sslSocket.sink().buffer()</span><br><span class="line">    protocol &#x3D; if (maybeProtocol !&#x3D; null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1</span><br><span class="line">    success &#x3D; true</span><br><span class="line">  &#125; finally &#123;</span><br><span class="line">    if (sslSocket !&#x3D; null) &#123;</span><br><span class="line">      Platform.get().afterHandshake(sslSocket)</span><br><span class="line">    &#125;</span><br><span class="line">    if (!success) &#123;</span><br><span class="line">      sslSocket?.closeQuietly()</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RealConnection-startHttp2"><a href="#RealConnection-startHttp2" class="headerlink" title="RealConnection.startHttp2"></a>RealConnection.startHttp2</h4><p>构建一个Http2Connection，然后启动HTTP/2协议连接，<br>http2连接实现是OkHttp中http2的包模块进行实现的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">private fun startHttp2(pingIntervalMillis: Int) &#123;</span><br><span class="line">  val socket &#x3D; this.socket!!  </span><br><span class="line">  val source &#x3D; this.source!!</span><br><span class="line">  val sink &#x3D; this.sink!!</span><br><span class="line">  socket.soTimeout &#x3D; 0 </span><br><span class="line">  &#x2F;&#x2F; 构建Http2Connection ，然后启动</span><br><span class="line">  val http2Connection &#x3D; Http2Connection.Builder(client &#x3D; true, taskRunner &#x3D; TaskRunner.INSTANCE)</span><br><span class="line">      .socket(socket, route.address.url.host, source, sink)</span><br><span class="line">      .listener(this) &#x2F;&#x2F; 添加RealConnection作为listerner</span><br><span class="line">      .pingIntervalMillis(pingIntervalMillis)</span><br><span class="line">      .build()</span><br><span class="line">  this.http2Connection &#x3D; http2Connection</span><br><span class="line">  this.allocationLimit &#x3D; Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()</span><br><span class="line">  http2Connection.start() </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RealConnection-newCodec"><a href="#RealConnection-newCodec" class="headerlink" title="RealConnection.newCodec"></a>RealConnection.newCodec</h4><p>构造编码器，Http2ExchangeCodec 或者 Http1ExchangeCodec，它们的作用封装了对请求和响应的读写操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">@Throws(SocketException::class)</span><br><span class="line">internal fun newCodec(client: OkHttpClient, chain: Interceptor.Chain): ExchangeCodec &#123;</span><br><span class="line">  val socket &#x3D; this.socket!!</span><br><span class="line">  val source &#x3D; this.source!!</span><br><span class="line">  val sink &#x3D; this.sink!!</span><br><span class="line">  val http2Connection &#x3D; this.http2Connection</span><br><span class="line"></span><br><span class="line">  return if (http2Connection !&#x3D; null) &#123;</span><br><span class="line">    Http2ExchangeCodec(client, this, chain, http2Connection)</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">    socket.soTimeout &#x3D; chain.readTimeoutMillis()</span><br><span class="line">    source.timeout().timeout(chain.readTimeoutMillis().toLong(), MILLISECONDS)</span><br><span class="line">    sink.timeout().timeout(chain.writeTimeoutMillis().toLong(), MILLISECONDS)</span><br><span class="line">    Http1ExchangeCodec(client, this, source, sink)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="HTTP2连接"><a href="#HTTP2连接" class="headerlink" title="HTTP2连接"></a>HTTP2连接</h3><h4 id="Http2Connection-start"><a href="#Http2Connection-start" class="headerlink" title="Http2Connection.start"></a>Http2Connection.start</h4><p>配置HTTP2的请求前置信息，开启线程进行连接前置的信息读取</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">fun start(sendConnectionPreface: Boolean &#x3D; true) &#123;</span><br><span class="line">  if (sendConnectionPreface) &#123; &#x2F;&#x2F; 必为true</span><br><span class="line">    &#x2F;&#x2F; 配置“连接前奏”，每个端点都需要发送连接前奏作为正在使用的协议的最终确认，并建立 HTTP&#x2F;2 连接的初始设置。</span><br><span class="line">    writer.connectionPreface() </span><br><span class="line">    writer.settings(okHttpSettings)</span><br><span class="line">    val windowSize &#x3D; okHttpSettings.initialWindowSize</span><br><span class="line">    if (windowSize !&#x3D; DEFAULT_INITIAL_WINDOW_SIZE) &#123;</span><br><span class="line">      writer.windowUpdate(0, (windowSize - DEFAULT_INITIAL_WINDOW_SIZE).toLong())</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  &#x2F;&#x2F; 开启线程 进行连接前奏的读取工作</span><br><span class="line">  Thread(readerRunnable, connectionName).start() </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Http2Connection-ReaderRunnable"><a href="#Http2Connection-ReaderRunnable" class="headerlink" title="Http2Connection.ReaderRunnable"></a>Http2Connection.ReaderRunnable</h4><p>读取连接前奏信息，确认连接正常</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">inner class ReaderRunnable internal constructor(</span><br><span class="line">  internal val reader: Http2Reader</span><br><span class="line">) : Runnable, Http2Reader.Handler &#123;</span><br><span class="line">  override fun run() &#123;</span><br><span class="line">    var connectionErrorCode &#x3D; ErrorCode.INTERNAL_ERROR</span><br><span class="line">    var streamErrorCode &#x3D; ErrorCode.INTERNAL_ERROR</span><br><span class="line">    var errorException: IOException? &#x3D; null</span><br><span class="line">    try &#123;</span><br><span class="line">      &#x2F;&#x2F; 读取连接前奏信息</span><br><span class="line">      reader.readConnectionPreface(this)</span><br><span class="line">      while (reader.nextFrame(false, this)) &#123;</span><br><span class="line">      &#125;</span><br><span class="line">      connectionErrorCode &#x3D; ErrorCode.NO_ERROR</span><br><span class="line">      streamErrorCode &#x3D; ErrorCode.CANCEL</span><br><span class="line">    &#125; catch (e: IOException) &#123;</span><br><span class="line">      errorException &#x3D; e</span><br><span class="line">      connectionErrorCode &#x3D; ErrorCode.PROTOCOL_ERROR</span><br><span class="line">      streamErrorCode &#x3D; ErrorCode.PROTOCOL_ERROR</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">      close(connectionErrorCode, streamErrorCode, errorException)</span><br><span class="line">      reader.closeQuietly()</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p><a href="https://www.jianshu.com/p/097b1904f580" target="_blank" rel="noopener">下一篇 OkHttp 4源码（5）— 请求和响应 I/O操作</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/OkHttp/" rel="tag"># OkHttp</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/01/13/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%883%EF%BC%89%E2%80%94%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/" rel="prev" title="OkHttp 4源码（3）—缓存机制分析">
+      <i class="fa fa-chevron-left"></i> OkHttp 4源码（3）—缓存机制分析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/01/16/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%885%EF%BC%89%E2%80%94%E8%AF%B7%E6%B1%82%E5%86%99%E5%85%A5%E5%92%8C%E5%93%8D%E5%BA%94%E8%AF%BB%E5%8F%96/" rel="next" title="OkHttp 4源码（5）—请求写入和响应读取">
+      OkHttp 4源码（5）—请求写入和响应读取 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ConnectInterceptor"><span class="nav-number">2.1.</span> <span class="nav-text">ConnectInterceptor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#发射机-Transmitter"><span class="nav-number">2.2.</span> <span class="nav-text">发射机 Transmitter</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Transmitter构造方法"><span class="nav-number">2.2.1.</span> <span class="nav-text">Transmitter构造方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Transmitter-prepareToConnect"><span class="nav-number">2.2.2.</span> <span class="nav-text">Transmitter.prepareToConnect</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#交换器"><span class="nav-number">2.3.</span> <span class="nav-text">交换器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Transmitter-newExchange"><span class="nav-number">2.3.1.</span> <span class="nav-text">Transmitter.newExchange</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ExchangeFinder-find"><span class="nav-number">2.3.2.</span> <span class="nav-text">ExchangeFinder.find</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ExchangeFinder-findHealthyConnection"><span class="nav-number">2.3.3.</span> <span class="nav-text">ExchangeFinder.findHealthyConnection</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ExchangeFinder-findConnection"><span class="nav-number">2.3.4.</span> <span class="nav-text">ExchangeFinder.findConnection</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#连接池"><span class="nav-number">2.4.</span> <span class="nav-text">连接池</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#初始化时机"><span class="nav-number">2.4.1.</span> <span class="nav-text">初始化时机</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ConnectionPool"><span class="nav-number">2.4.2.</span> <span class="nav-text">ConnectionPool</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnectionPool-transmitterAcquirePooledConnection"><span class="nav-number">2.4.3.</span> <span class="nav-text">RealConnectionPool.transmitterAcquirePooledConnection</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnectionPool-acquireConnectionNoEvents"><span class="nav-number">2.4.4.</span> <span class="nav-text">RealConnectionPool.acquireConnectionNoEvents</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnectionPool-put"><span class="nav-number">2.4.5.</span> <span class="nav-text">RealConnectionPool.put</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnectionPool-cleanup"><span class="nav-number">2.4.6.</span> <span class="nav-text">RealConnectionPool.cleanup</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#连接"><span class="nav-number">2.5.</span> <span class="nav-text">连接</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnection-connect"><span class="nav-number">2.5.1.</span> <span class="nav-text">RealConnection.connect</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnection-connectSocket"><span class="nav-number">2.5.2.</span> <span class="nav-text">RealConnection.connectSocket</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnection-establishProtocol"><span class="nav-number">2.5.3.</span> <span class="nav-text">RealConnection.establishProtocol</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnection-connectTls"><span class="nav-number">2.5.4.</span> <span class="nav-text">RealConnection.connectTls</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnection-startHttp2"><span class="nav-number">2.5.5.</span> <span class="nav-text">RealConnection.startHttp2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RealConnection-newCodec"><span class="nav-number">2.5.6.</span> <span class="nav-text">RealConnection.newCodec</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP2连接"><span class="nav-number">2.6.</span> <span class="nav-text">HTTP2连接</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Http2Connection-start"><span class="nav-number">2.6.1.</span> <span class="nav-text">Http2Connection.start</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Http2Connection-ReaderRunnable"><span class="nav-number">2.6.2.</span> <span class="nav-text">Http2Connection.ReaderRunnable</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '3cf8aed74e444af0ae8c070e6621e60c',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

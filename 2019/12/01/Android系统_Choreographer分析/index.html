@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="基于API 23w  图文概述Choreographer 编舞者。统一动画、输入和绘制时机Choreographer 的作用，主要是配合 Vsync ，给上层 App 的渲染提供一个稳定的 Message 处理的时机，即 Vsync 到来的时候 ，系统通过对 Vsync 信号周期的调整，来控制每一帧绘制操作的时机   Choreographer启动流程Window添加流程中，当Activity启">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统_Choreographer分析">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/12/01/Android%E7%B3%BB%E7%BB%9F_Choreographer%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="基于API 23w  图文概述Choreographer 编舞者。统一动画、输入和绘制时机Choreographer 的作用，主要是配合 Vsync ，给上层 App 的渲染提供一个稳定的 Message 处理的时机，即 Vsync 到来的时候 ，系统通过对 Vsync 信号周期的调整，来控制每一帧绘制操作的时机   Choreographer启动流程Window添加流程中，当Activity启">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-cfbb74160f4104d4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-ef306f7cf547c798.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-12-01T03:11:30.582Z">
+<meta property="article:modified_time" content="2020-02-06T17:11:36.629Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta property="article:tag" content="Choreogprapher">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-cfbb74160f4104d4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/12/01/Android%E7%B3%BB%E7%BB%9F_Choreographer%E5%88%86%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Android系统_Choreographer分析 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/12/01/Android%E7%B3%BB%E7%BB%9F_Choreographer%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android系统_Choreographer分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-01 11:11:30" itemprop="dateCreated datePublished" datetime="2019-12-01T11:11:30+08:00">2019-12-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 01:11:36" itemprop="dateModified" datetime="2020-02-07T01:11:36+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>15k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>14 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>基于API 23w</p>
+</blockquote>
+<h3 id="图文概述"><a href="#图文概述" class="headerlink" title="图文概述"></a>图文概述</h3><p>Choreographer 编舞者。统一动画、输入和绘制时机<br>Choreographer 的作用，主要是配合 Vsync ，给上层 App 的渲染提供一个稳定的 Message 处理的时机，即 Vsync 到来的时候 ，系统通过对 Vsync 信号周期的调整，来控制每一帧绘制操作的时机</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-cfbb74160f4104d4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-ef306f7cf547c798.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="Choreographer启动流程"><a href="#Choreographer启动流程" class="headerlink" title="Choreographer启动流程"></a>Choreographer启动流程</h3><p>Window添加流程中，当Activity启动执行onResume后，会执行到创建ViewRootImpt <a href="https://www.jianshu.com/p/6571fbdd1bcb" target="_blank" rel="noopener">Android系统_Window的创建和添加流程分析</a></p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"> public ViewRootImpl(Context context, Display display) &#123;</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F; VoewRootImpl 构造方法 会获取Choreographer实例</span><br><span class="line">    mChoreographer &#x3D; Choreographer.getInstance();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Choreographer构造"><a href="#Choreographer构造" class="headerlink" title="Choreographer构造"></a>Choreographer构造</h4><p>通过单例模式构建，这里是每一个线程有一个Choreographer对象，而这里的线程为应用进程的主线程</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"> public static Choreographer getInstance() &#123;</span><br><span class="line">    return sThreadInstance.get(); &#x2F;&#x2F;单例模式</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private static final ThreadLocal&lt;Choreographer&gt; sThreadInstance &#x3D;</span><br><span class="line">    new ThreadLocal&lt;Choreographer&gt;() &#123;</span><br><span class="line"></span><br><span class="line">    protected Choreographer initialValue() &#123;</span><br><span class="line">        Looper looper &#x3D; Looper.myLooper(); &#x2F;&#x2F;获取当前线程的Looper</span><br><span class="line">        if (looper &#x3D;&#x3D; null) &#123;</span><br><span class="line">            throw new IllegalStateException(&quot;The current thread must have a looper!&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return new Choreographer(looper); 创建</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Choreographer构造方法"><a href="#Choreographer构造方法" class="headerlink" title="Choreographer构造方法"></a>Choreographer构造方法</h4><p> 初始化一个Looper和一个FrameHandler变量用来处理消息，另外创建了一个 FrameDisplayEventReceiver用来请求和接受Vysnc事件</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"> private Choreographer(Looper looper) &#123;</span><br><span class="line">    mLooper &#x3D; looper;</span><br><span class="line">    &#x2F;&#x2F;创建Handler对象</span><br><span class="line">    mHandler &#x3D; new FrameHandler(looper);</span><br><span class="line">    &#x2F;&#x2F;创建用于接收VSync信号的对象 （使用Vsync同步机制情况下创建）</span><br><span class="line">    mDisplayEventReceiver &#x3D; USE_VSYNC ? new FrameDisplayEventReceiver(looper) : null;</span><br><span class="line">    &#x2F;&#x2F;是指上一次帧绘制时间点</span><br><span class="line">    mLastFrameTimeNanos &#x3D; Long.MIN_VALUE;</span><br><span class="line">    &#x2F;&#x2F;帧间时长，默认16.7ms.</span><br><span class="line">    mFrameIntervalNanos &#x3D; (long)(1000000000 &#x2F; getRefreshRate());</span><br><span class="line">    &#x2F;&#x2F;创建回调对象</span><br><span class="line">    mCallbackQueues &#x3D; new CallbackQueue[CALLBACK_LAST + 1];</span><br><span class="line">    for (int i &#x3D; 0; i &lt;&#x3D; CALLBACK_LAST; i++) &#123;</span><br><span class="line">        mCallbackQueues[i] &#x3D; new CallbackQueue();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="创建FrameHandler"><a href="#创建FrameHandler" class="headerlink" title="创建FrameHandler"></a>创建FrameHandler</h4><p> Choreographer 处理绘制的逻辑核心在 Choreographer.doFrame 函数中，doFrame 函数主要做三件事情，计算掉帧逻辑、记录帧绘制信息、<br>执行 CALLBACK_INPUT、CALLBACK_ANIMATION、CALLBACK_INSETS_ANIMATION、CALLBACK_TRAVERSAL、CALLBACK_COMMIT</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"> private final class FrameHandler extends Handler &#123;</span><br><span class="line">    public FrameHandler(Looper looper) &#123;</span><br><span class="line">        super(looper);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void handleMessage(Message msg) &#123;</span><br><span class="line">        switch (msg.what) &#123;</span><br><span class="line">            case MSG_DO_FRAME:</span><br><span class="line">                doFrame(System.nanoTime(), 0);</span><br><span class="line">                break;</span><br><span class="line">            case MSG_DO_SCHEDULE_VSYNC:</span><br><span class="line">                doScheduleVsync();</span><br><span class="line">                break;</span><br><span class="line">            case MSG_DO_SCHEDULE_CALLBACK:</span><br><span class="line">                doScheduleCallback(msg.arg1);</span><br><span class="line">                break;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="创建FrameDisplayEventReceiver"><a href="#创建FrameDisplayEventReceiver" class="headerlink" title="创建FrameDisplayEventReceiver"></a>创建FrameDisplayEventReceiver</h4><p>它继承DisPlayEvetReceiver，调用父类构造方法<br>另外FrameDisplayEventReceiver中三个比较重要的方法</p>
+<ul>
+<li>onVsync – Vsync 信号回调</li>
+<li>run – 执行 doFrame</li>
+<li>scheduleVsync – 请求 Vsync 信号</li>
+</ul>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">private final class FrameDisplayEventReceiver extends DisplayEventReceiver implements Runnable &#123;</span><br><span class="line">            </span><br><span class="line">        public FrameDisplayEventReceiver(Looper looper, int vsyncSource) &#123;</span><br><span class="line">         super(looper, vsyncSource);</span><br><span class="line">        &#125;</span><br><span class="line">            </span><br><span class="line">        @Override</span><br><span class="line">        public void onVsync(long timestampNanos, long physicalDisplayId, int frame) &#123;</span><br><span class="line">           ......</span><br><span class="line">           mTimestampNanos &#x3D; timestampNanos;</span><br><span class="line">           mFrame &#x3D; frame;</span><br><span class="line">           Message msg &#x3D; Message.obtain(mHandler, this);</span><br><span class="line">           msg.setAsynchronous(true);</span><br><span class="line">           mHandler.sendMessageAtTime(msg, timestampNanos &#x2F; TimeUtils.NANOS_PER_MS);</span><br><span class="line">        &#125;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">           mHavePendingVsync &#x3D; false;</span><br><span class="line">           doFrame(mTimestampNanos, mFrame);</span><br><span class="line">        &#125;</span><br><span class="line">            </span><br><span class="line">        public void scheduleVsync() &#123;</span><br><span class="line">           ......  </span><br><span class="line">           nativeScheduleVsync(mReceiverPtr);</span><br><span class="line">           </span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="DisplayEventReceiver构造"><a href="#DisplayEventReceiver构造" class="headerlink" title="DisplayEventReceiver构造"></a>DisplayEventReceiver构造</h4> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public DisplayEventReceiver(Looper looper) &#123;</span><br><span class="line">    mMessageQueue &#x3D; looper.getQueue(); &#x2F;&#x2F;获取主线程的消息队列</span><br><span class="line">    &#x2F;&#x2F; 通过JNI执行native层初始化</span><br><span class="line">    mReceiverPtr &#x3D; nativeInit(new WeakReference&lt;DisplayEventReceiver&gt;(this), mMessageQueue);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="android-view-DisplayEventReceiver-cpp-初始化"><a href="#android-view-DisplayEventReceiver-cpp-初始化" class="headerlink" title="android_view_DisplayEventReceiver.cpp 初始化"></a>android_view_DisplayEventReceiver.cpp 初始化</h4><p> 创建NativeDisplayEventReceiver， 监听mReceiver的所获取的文件句柄，一旦有数据到来，则回调this(此处NativeDisplayEventReceiver)中所复写LooperCallback对象的 handleEvent</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"> static jlong nativeInit(JNIEnv* env, jclass clazz, jobject receiverWeak, jobject messageQueueObj) &#123;</span><br><span class="line">    sp&lt;MessageQueue&gt; messageQueue &#x3D; android_os_MessageQueue_getMessageQueue(env, messageQueueObj);</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;创建NativeDisplayEventReceiver</span><br><span class="line">    sp&lt;NativeDisplayEventReceiver&gt; receiver &#x3D; new NativeDisplayEventReceiver(env,</span><br><span class="line">            receiverWeak, messageQueue);</span><br><span class="line">    &#x2F;&#x2F;初始化</span><br><span class="line">    status_t status &#x3D; receiver-&gt;initialize();</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;获取DisplayEventReceiver对象的引用</span><br><span class="line">    receiver-&gt;incStrong(gDisplayEventReceiverClassInfo.clazz);</span><br><span class="line">    return reinterpret_cast&lt;jlong&gt;(receiver.get());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; NativeDisplayEventReceiver继承于LooperCallback对象，此处mReceiverWeakGlobal记录的是Java层 DisplayEventReceiver对象的全局引用</span><br><span class="line">NativeDisplayEventReceiver::NativeDisplayEventReceiver(JNIEnv* env,</span><br><span class="line">        jobject receiverWeak, const sp&lt;MessageQueue&gt;&amp; messageQueue) :</span><br><span class="line">        mReceiverWeakGlobal(env-&gt;NewGlobalRef(receiverWeak)),</span><br><span class="line">        mMessageQueue(messageQueue), mWaitingForVsync(false) &#123;</span><br><span class="line">    ALOGV(&quot;receiver %p ~ Initializing display event receiver.&quot;, this);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">status_t NativeDisplayEventReceiver::initialize() &#123;</span><br><span class="line">    &#x2F;&#x2F;mReceiver为DisplayEventReceiver类型</span><br><span class="line">    status_t result &#x3D; mReceiver.initCheck();</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;监听mReceiver的所获取的文件句柄。</span><br><span class="line">    int rc &#x3D; mMessageQueue-&gt;getLooper()-&gt;addFd(mReceiver.getFd(), 0, Looper::EVENT_INPUT,</span><br><span class="line">            this, NULL);</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    return OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Callback添加流程"><a href="#Callback添加流程" class="headerlink" title="Callback添加流程"></a>Callback添加流程</h3><p>Choreographer提供postCallback和postFrameCallback两种回调方式及对应的delay两种，其最终执行的内部postCallbackDelayedInternal方法</p>
+<h4 id="Choreographer-postCallbackDelayedInternal"><a href="#Choreographer-postCallbackDelayedInternal" class="headerlink" title="Choreographer.postCallbackDelayedInternal"></a>Choreographer.postCallbackDelayedInternal</h4><p>创建Callback，然后添加到mCallbackQueues队列上，<br>然后根据是否立即执行，决定是发消息还是直接调用<br>最终执行scheduleFrameLocked方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">private void postCallbackDelayedInternal(int callbackType,</span><br><span class="line">       Object action, Object token, long delayMillis) &#123;</span><br><span class="line">   synchronized (mLock) &#123;</span><br><span class="line">       &#x2F;&#x2F;当前时间</span><br><span class="line">       final long now &#x3D; SystemClock.uptimeMillis();</span><br><span class="line">       &#x2F;&#x2F;回调执行时间，&#x3D;当前时间+delay时间</span><br><span class="line">       final long dueTime &#x3D; now + delayMillis;</span><br><span class="line">       &#x2F;&#x2F;添加到callback队列</span><br><span class="line">mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token);</span><br><span class="line"></span><br><span class="line">       if (dueTime &lt;&#x3D; now) &#123;</span><br><span class="line">           scheduleFrameLocked(now); &#x2F;&#x2F; 立即执行</span><br><span class="line">       &#125; else &#123;</span><br><span class="line">           &#x2F;&#x2F; 发送消息执行</span><br><span class="line">           Message msg &#x3D; mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action);</span><br><span class="line">           msg.arg1 &#x3D; callbackType;</span><br><span class="line">           msg.setAsynchronous(true);</span><br><span class="line">           mHandler.sendMessageAtTime(msg, dueTime);</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Choreographer-scheduleFrameLocked"><a href="#Choreographer-scheduleFrameLocked" class="headerlink" title="Choreographer.scheduleFrameLocked"></a>Choreographer.scheduleFrameLocked</h4><p>使用Vsync，按时间执行到scheduleVsyncLocked方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">private void scheduleFrameLocked(long now) &#123;</span><br><span class="line">   if (!mFrameScheduled) &#123;</span><br><span class="line">       mFrameScheduled &#x3D; true;</span><br><span class="line">       if (USE_VSYNC) &#123;</span><br><span class="line">           &#x2F;&#x2F; If running on the Looper thread, then schedule the vsync immediately,</span><br><span class="line">           &#x2F;&#x2F; otherwise post a message to schedule the vsync from the UI thread</span><br><span class="line">           &#x2F;&#x2F; as soon as possible.</span><br><span class="line">           if (isRunningOnLooperThreadLocked()) &#123;</span><br><span class="line">               &#x2F;&#x2F; 请求Vsync信号，最终会调用到native层，natie层处理完成后出发onVsync信号接收回调流程</span><br><span class="line">               scheduleVsyncLocked();</span><br><span class="line">           &#125; else &#123;</span><br><span class="line">               &#x2F;&#x2F; 发送消息，delay后执行此方法</span><br><span class="line">               Message msg &#x3D; mHandler.obtainMessage(MSG_DO_SCHEDULE_VSYNC);</span><br><span class="line">               msg.setAsynchronous(true);</span><br><span class="line">               mHandler.sendMessageAtFrontOfQueue(msg);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125; else &#123;</span><br><span class="line">            &#x2F;&#x2F; 没有使用Vsync 则直接发送msg，然后调用doFrame</span><br><span class="line">           final long nextFrameTime &#x3D; Math.max(</span><br><span class="line">                   mLastFrameTimeNanos &#x2F; TimeUtils.NANOS_PER_MS + sFrameDelay, now);</span><br><span class="line">          </span><br><span class="line">           Message msg &#x3D; mHandler.obtainMessage(MSG_DO_FRAME);</span><br><span class="line">           msg.setAsynchronous(true);</span><br><span class="line">           mHandler.sendMessageAtTime(msg, nextFrameTime);</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Choreographer-scheduleVsyncLocked"><a href="#Choreographer-scheduleVsyncLocked" class="headerlink" title="Choreographer.scheduleVsyncLocked"></a>Choreographer.scheduleVsyncLocked</h4><p>执行FrameDisplayEventReceiver.scheduleVsync<br>di层向SurfaceFlinger服务注册，即下一次Vsync事件会调用DisplayEventReceiver的disptachVsync方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">private void scheduleVsyncLocked() &#123;</span><br><span class="line">   mDisplayEventReceiver.scheduleVsync();</span><br><span class="line">&#125;</span><br><span class="line">    </span><br><span class="line">public void scheduleVsync() &#123;</span><br><span class="line">    nativeScheduleVsync(mReceiverPtr);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="Vsync回调流程"><a href="#Vsync回调流程" class="headerlink" title="Vsync回调流程"></a>Vsync回调流程</h3><p> 当vysnc信号由底层HWC触发后会执行android_view_DisplayEventReceiver的handleEvent方法。<br> JNI层接受HWC的Vysnc信号，过滤处理，分发到Java层DisplayEventReceiver</p>
+<h4 id="android-view-DisplayEventReceiver-handleEvent"><a href="#android-view-DisplayEventReceiver-handleEvent" class="headerlink" title="android_view_DisplayEventReceiver.handleEvent"></a>android_view_DisplayEventReceiver.handleEvent</h4> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">int NativeDisplayEventReceiver::handleEvent(int receiveFd, int events, void* data) &#123;</span><br><span class="line">    ...</span><br><span class="line">    nsecs_t vsyncTimestamp;</span><br><span class="line">    int32_t vsyncDisplayId;</span><br><span class="line">    uint32_t vsyncCount;</span><br><span class="line">    &#x2F;&#x2F;清除所有的pending事件，只保留最后一次vsync</span><br><span class="line">    if (processPendingEvents(&amp;vsyncTimestamp, &amp;vsyncDisplayId, &amp;vsyncCount)) &#123;</span><br><span class="line">        mWaitingForVsync &#x3D; false;</span><br><span class="line">        &#x2F;&#x2F;分发Vsync</span><br><span class="line">        dispatchVsync(vsyncTimestamp, vsyncDisplayId, vsyncCount);</span><br><span class="line">    &#125;</span><br><span class="line">    return 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 遍历所有的事件，当有多个VSync事件到来，则只关注最近一次的事件</span><br><span class="line">bool NativeDisplayEventReceiver::processPendingEvents(</span><br><span class="line">        nsecs_t* outTimestamp, int32_t* outId, uint32_t* outCount) &#123;</span><br><span class="line">    bool gotVsync &#x3D; false;</span><br><span class="line">    DisplayEventReceiver::Event buf[EVENT_BUFFER_SIZE];</span><br><span class="line">    ssize_t n;</span><br><span class="line">    while ((n &#x3D; mReceiver.getEvents(buf, EVENT_BUFFER_SIZE)) &gt; 0) &#123;</span><br><span class="line">        for (ssize_t i &#x3D; 0; i &lt; n; i++) &#123;</span><br><span class="line">            const DisplayEventReceiver::Event&amp; ev &#x3D; buf[i];</span><br><span class="line">            switch (ev.header.type) &#123;</span><br><span class="line">            case DisplayEventReceiver::DISPLAY_EVENT_VSYNC:</span><br><span class="line">                gotVsync &#x3D; true; &#x2F;&#x2F;获取VSync信号</span><br><span class="line">                *outTimestamp &#x3D; ev.header.timestamp;</span><br><span class="line">                *outId &#x3D; ev.header.id;</span><br><span class="line">                *outCount &#x3D; ev.vsync.count;</span><br><span class="line">                break;</span><br><span class="line">            case DisplayEventReceiver::DISPLAY_EVENT_HOTPLUG:</span><br><span class="line">                dispatchHotplug(ev.header.timestamp, ev.header.id, ev.hotplug.connected);</span><br><span class="line">                break;</span><br><span class="line">            default:</span><br><span class="line">                break;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return gotVsync;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 分发Vsync ，DisplayEventReceiver进行接受</span><br><span class="line">void NativeDisplayEventReceiver::dispatchVsync(nsecs_t timestamp, int32_t id, uint32_t count) &#123;</span><br><span class="line">    JNIEnv* env &#x3D; AndroidRuntime::getJNIEnv();</span><br><span class="line"></span><br><span class="line">    ScopedLocalRef&lt;jobject&gt; receiverObj(env, jniGetReferent(env, mReceiverWeakGlobal));</span><br><span class="line">    if (receiverObj.get()) &#123;</span><br><span class="line">        &#x2F;&#x2F; 此处调用到Java层的DisplayEventReceiver对象的dispatchVsync()方法，执行进入Java层</span><br><span class="line">        env-&gt;CallVoidMethod(receiverObj.get(),</span><br><span class="line">                gDisplayEventReceiverClassInfo.dispatchVsync, timestamp, id, count);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mMessageQueue-&gt;raiseAndClearException(env, &quot;dispatchVsync&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="FrameDisplayEventReceiver-onVsync"><a href="#FrameDisplayEventReceiver-onVsync" class="headerlink" title="FrameDisplayEventReceiver.onVsync"></a>FrameDisplayEventReceiver.onVsync</h4><p>Java层接受Vsync事件，通过Handler通信机制发送消息，后续执行到它自身的run方法，然后执行doFrame操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">private final class FrameDisplayEventReceiver extends DisplayEventReceiver</span><br><span class="line">        implements Runnable &#123;</span><br><span class="line">    private boolean mHavePendingVsync;</span><br><span class="line">    private long mTimestampNanos;</span><br><span class="line">    private int mFrame;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        mHavePendingVsync &#x3D; false;</span><br><span class="line">        doFrame(mTimestampNanos, mFrame);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    @Override</span><br><span class="line">    public void onVsync(long timestampNanos, int builtInDisplayId, int frame) &#123;</span><br><span class="line">        ...</span><br><span class="line">        mTimestampNanos &#x3D; timestampNanos;</span><br><span class="line">        mFrame &#x3D; frame;</span><br><span class="line">        &#x2F;&#x2F;该消息的callback为当前对象FrameDisplayEventReceiver</span><br><span class="line">        Message msg &#x3D; Message.obtain(mHandler, this);</span><br><span class="line">        msg.setAsynchronous(true);</span><br><span class="line">        &#x2F;&#x2F;此处mHandler为FrameHandler</span><br><span class="line">        mHandler.sendMessageAtTime(msg, timestampNanos &#x2F; TimeUtils.NANOS_PER_MS);</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Choreographer-doFrame"><a href="#Choreographer-doFrame" class="headerlink" title="Choreographer.doFrame"></a>Choreographer.doFrame</h4><ul>
+<li>先判断Vsync信号间隔时间和刷新时间是否符合</li>
+<li>顺序执行4种时间对应的CallbackQueue队列中注册的回调函数<ol>
+<li>CALLBACK_INPUT : 处理输入事件处理有关</li>
+<li>CALLBACK_ANIMATION ： 处理 Animation 的处理有关</li>
+<li>CALLBACK_INSETS_ANIMATION ： 处理 Insets Animation 的相关回调</li>
+<li>CALLBACK_TRAVERSAL : 处理和 UI 等控件绘制有关</li>
+<li>CALLBACK_COMMIT ： 处理 Commit 相关回调</li>
+</ol>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">void doFrame(long frameTimeNanos, int frame) &#123;</span><br><span class="line">    final long startNanos;</span><br><span class="line">    synchronized (mLock) &#123;</span><br><span class="line">        &#x2F;&#x2F; 每调用一次scheduleFrameLocked()，则mFrameScheduled&#x3D;true，能执行一次doFrame()操作，执行完doFrame()并设置mFrameScheduled&#x3D;false；</span><br><span class="line">        if (!mFrameScheduled) &#123;</span><br><span class="line">            return; &#x2F;&#x2F; mFrameScheduled&#x3D;false，则直接返回。</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;原本计划的绘帧时间点</span><br><span class="line">        long intendedFrameTimeNanos &#x3D; frameTimeNanos;        </span><br><span class="line">        &#x2F;&#x2F;起始时间</span><br><span class="line">        startNanos &#x3D; System.nanoTime();</span><br><span class="line">        &#x2F;&#x2F;计算消息发送与函数调用开始之间所花费的时间</span><br><span class="line">        final long jitterNanos &#x3D; startNanos - frameTimeNanos;</span><br><span class="line">        &#x2F;&#x2F;如果线程处理该消息的时间超过了屏幕刷新周期</span><br><span class="line">        if (jitterNanos &gt;&#x3D; mFrameIntervalNanos) &#123;</span><br><span class="line">            &#x2F;&#x2F; 计算函数调用期间所错过的帧数</span><br><span class="line">            final long skippedFrames &#x3D; jitterNanos &#x2F; mFrameIntervalNanos;</span><br><span class="line">            &#x2F;&#x2F;当掉帧个数超过30，则输出相应log</span><br><span class="line">            if (skippedFrames &gt;&#x3D; SKIPPED_FRAME_WARNING_LIMIT) &#123;</span><br><span class="line">                Log.i(TAG, &quot;Skipped &quot; + skippedFrames + &quot; frames!  &quot;</span><br><span class="line">                        + &quot;The application may be doing too much work on its main thread.&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">            final long lastFrameOffset &#x3D; jitterNanos % mFrameIntervalNanos;</span><br><span class="line">            &#x2F;&#x2F;对齐帧的时间间隔</span><br><span class="line">            frameTimeNanos &#x3D; startNanos - lastFrameOffset; </span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;此处frameTimeNanos是底层VSYNC信号到达的时间戳，如果frameTimeNanos小于一个屏幕刷新周期，则重新请求VSync信号</span><br><span class="line">        if (frameTimeNanos &lt; mLastFrameTimeNanos) &#123;</span><br><span class="line">            scheduleVsyncLocked();</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        mFrameInfo.setVsync(intendedFrameTimeNanos, frameTimeNanos);</span><br><span class="line">        mFrameScheduled &#x3D; false;</span><br><span class="line">        mLastFrameTimeNanos &#x3D; frameTimeNanos;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    try &#123;</span><br><span class="line">        Trace.traceBegin(Trace.TRACE_TAG_VIEW, &quot;Choreographer#doFrame&quot;);</span><br><span class="line"></span><br><span class="line">        mFrameInfo.markInputHandlingStart();</span><br><span class="line">        &#x2F;&#x2F;执行4种事件对应的回调方法</span><br><span class="line">        doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos);</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;标记动画开始时间</span><br><span class="line">        mFrameInfo.markAnimationsStart();</span><br><span class="line">        doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos);</span><br><span class="line"></span><br><span class="line">        mFrameInfo.markPerformTraversalsStart();</span><br><span class="line">        doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos);</span><br><span class="line"></span><br><span class="line">        doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos);</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">        Trace.traceEnd(Trace.TRACE_TAG_VIEW);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Choreographer-doCallbacks"><a href="#Choreographer-doCallbacks" class="headerlink" title="Choreographer.doCallbacks"></a>Choreographer.doCallbacks</h4><ul>
+<li>从队列头mHead查找CallbackRecord对象，当队列头部的callbacks对象为空或者执行时间还没到达，则直接返回；</li>
+<li>开始执行相应回调的run()方法；</li>
+<li>回收callbacks，加入对象池mCallbackPool，就是说callback一旦执行完成，则会被回收。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">void doCallbacks(int callbackType, long frameTimeNanos) &#123;</span><br><span class="line">    CallbackRecord callbacks;</span><br><span class="line">    synchronized (mLock) &#123;</span><br><span class="line">        final long now &#x3D; System.nanoTime();</span><br><span class="line">        &#x2F;&#x2F; 从队列查找相应类型的CallbackRecord对象</span><br><span class="line">        callbacks &#x3D; mCallbackQueues[callbackType].extractDueCallbacksLocked(</span><br><span class="line">                now &#x2F; TimeUtils.NANOS_PER_MS);</span><br><span class="line">        if (callbacks &#x3D;&#x3D; null) &#123;</span><br><span class="line">            return;  &#x2F;&#x2F;当队列为空，则直接返回</span><br><span class="line">        &#125;</span><br><span class="line">        mCallbacksRunning &#x3D; true;</span><br><span class="line"></span><br><span class="line">        if (callbackType &#x3D;&#x3D; Choreographer.CALLBACK_COMMIT) &#123;</span><br><span class="line">            final long jitterNanos &#x3D; now - frameTimeNanos;</span><br><span class="line">            &#x2F;&#x2F;当commit类型回调执行的时间点超过2帧，则更新mLastFrameTimeNanos。</span><br><span class="line">            if (jitterNanos &gt;&#x3D; 2 * mFrameIntervalNanos) &#123;</span><br><span class="line">                final long lastFrameOffset &#x3D; jitterNanos % mFrameIntervalNanos</span><br><span class="line">                        + mFrameIntervalNanos;</span><br><span class="line">                frameTimeNanos &#x3D; now - lastFrameOffset;</span><br><span class="line">                mLastFrameTimeNanos &#x3D; frameTimeNanos;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    try &#123;</span><br><span class="line">        for (CallbackRecord c &#x3D; callbacks; c !&#x3D; null; c &#x3D; c.next) &#123;</span><br><span class="line">            c.run(frameTimeNanos); </span><br><span class="line">        &#125;</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">      synchronized (mLock) &#123;</span><br><span class="line">          mCallbacksRunning &#x3D; false;</span><br><span class="line">          &#x2F;&#x2F;回收callbacks，加入对象池mCallbackPool</span><br><span class="line">          do &#123;</span><br><span class="line">              final CallbackRecord next &#x3D; callbacks.next;</span><br><span class="line">              recycleCallbackLocked(callbacks);</span><br><span class="line">              callbacks &#x3D; next;</span><br><span class="line">          &#125; while (callbacks !&#x3D; null);</span><br><span class="line">      &#125;</span><br><span class="line">      Trace.traceEnd(Trace.TRACE_TAG_VIEW);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="CallbackRecord-run"><a href="#CallbackRecord-run" class="headerlink" title="CallbackRecord.run"></a>CallbackRecord.run</h4><ul>
+<li>当token的数据类型为FRAME_CALLBACK_TOKEN，则执行该对象的doFrame()方法;</li>
+<li>当token为其他类型，则执行该对象的run()方法。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">private static final class CallbackRecord &#123;</span><br><span class="line">    public CallbackRecord next;</span><br><span class="line">    public long dueTime;</span><br><span class="line">    public Object action; &#x2F;&#x2F; Runnable或者 FrameCallback</span><br><span class="line">    public Object token;</span><br><span class="line"></span><br><span class="line">    public void run(long frameTimeNanos) &#123;</span><br><span class="line">        if (token &#x3D;&#x3D; FRAME_CALLBACK_TOKEN) &#123;</span><br><span class="line">            ((FrameCallback)action).doFrame(frameTimeNanos);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            ((Runnable)action).run();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Choreographer-CALLBACK-TRAVERSAL"><a href="#Choreographer-CALLBACK-TRAVERSAL" class="headerlink" title="Choreographer.CALLBACK_TRAVERSAL"></a>Choreographer.CALLBACK_TRAVERSAL</h4><p>这里主要分析Traversal类型，即View的绘制流程</p>
+<ul>
+<li>ViewRootImpl.scheduleTraversals , 添加callback</li>
+<li>回调 TraversalRunnable.run 方法</li>
+<li>开始View的绘制流程</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">void scheduleTraversals() &#123;</span><br><span class="line">    if (!mTraversalScheduled) &#123;</span><br><span class="line">        mTraversalScheduled &#x3D; true;</span><br><span class="line">        &#x2F;&#x2F;为了提高优先级，先 postSyncBarrier</span><br><span class="line">        mTraversalBarrier &#x3D; mHandler.getLooper().getQueue().postSyncBarrier();</span><br><span class="line">        mChoreographer.postCallback(</span><br><span class="line">                Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">final class TraversalRunnable implements Runnable &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        &#x2F;&#x2F; 真正开始执行 measure、layout、draw</span><br><span class="line">        doTraversal();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">void doTraversal() &#123;</span><br><span class="line">    if (mTraversalScheduled) &#123;</span><br><span class="line">        mTraversalScheduled &#x3D; false;</span><br><span class="line">        &#x2F;&#x2F; 这里把 SyncBarrier remove</span><br><span class="line">mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);</span><br><span class="line">        &#x2F;&#x2F; 真正开始</span><br><span class="line">        performTraversals();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">private void performTraversals() &#123;</span><br><span class="line">      &#x2F;&#x2F; measure 操作</span><br><span class="line">      if (focusChangedDueToTouchMode || mWidth !&#x3D; host.getMeasuredWidth() || mHeight !&#x3D; host.getMeasuredHeight() || contentInsetsChanged || updatedConfiguration) &#123;</span><br><span class="line">            performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);</span><br><span class="line">      &#125;</span><br><span class="line">      &#x2F;&#x2F; layout 操作</span><br><span class="line">      if (didLayout) &#123;</span><br><span class="line">          performLayout(lp, mWidth, mHeight);</span><br><span class="line">      &#125;</span><br><span class="line">      &#x2F;&#x2F; draw 操作</span><br><span class="line">      if (!cancelDraw &amp;&amp; !newSurface) &#123;</span><br><span class="line">          performDraw();</span><br><span class="line">      &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<hr>
+<p>推荐阅读：<a href="https://www.jianshu.com/p/238eb0a17760" target="_blank" rel="noopener">图形系统总结</a><br>参考<br><a href="https://www.androidperformance.com/2019/10/22/Android-Choreographer/" target="_blank" rel="noopener">Android 基于 Choreographer 的渲染机制详解</a><br><a href="http://gityuan.com/2017/02/25/choreographer" target="_blank" rel="noopener">Choreographer原理</a><br><a href="https://www.jianshu.com/p/996bca12eb1d" target="_blank" rel="noopener">源码分析</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+              <a href="/blog/tags/Choreogprapher/" rel="tag"># Choreogprapher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/27/Android%E7%B3%BB%E7%BB%9F_%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F%E6%80%BB%E7%BB%9301/" rel="prev" title="Android系统_图形系统总结01">
+      <i class="fa fa-chevron-left"></i> Android系统_图形系统总结01
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/12/01/Android%E7%B3%BB%E7%BB%9F_SurfaceFlinger%E5%88%86%E6%9E%90/" rel="next" title="Android系统_SurfaceFlinger分析">
+      Android系统_SurfaceFlinger分析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#图文概述"><span class="nav-number">1.</span> <span class="nav-text">图文概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Choreographer启动流程"><span class="nav-number">2.</span> <span class="nav-text">Choreographer启动流程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Choreographer构造"><span class="nav-number">2.1.</span> <span class="nav-text">Choreographer构造</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Choreographer构造方法"><span class="nav-number">2.2.</span> <span class="nav-text">Choreographer构造方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建FrameHandler"><span class="nav-number">2.3.</span> <span class="nav-text">创建FrameHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建FrameDisplayEventReceiver"><span class="nav-number">2.4.</span> <span class="nav-text">创建FrameDisplayEventReceiver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DisplayEventReceiver构造"><span class="nav-number">2.5.</span> <span class="nav-text">DisplayEventReceiver构造</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#android-view-DisplayEventReceiver-cpp-初始化"><span class="nav-number">2.6.</span> <span class="nav-text">android_view_DisplayEventReceiver.cpp 初始化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Callback添加流程"><span class="nav-number">3.</span> <span class="nav-text">Callback添加流程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Choreographer-postCallbackDelayedInternal"><span class="nav-number">3.1.</span> <span class="nav-text">Choreographer.postCallbackDelayedInternal</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Choreographer-scheduleFrameLocked"><span class="nav-number">3.2.</span> <span class="nav-text">Choreographer.scheduleFrameLocked</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Choreographer-scheduleVsyncLocked"><span class="nav-number">3.3.</span> <span class="nav-text">Choreographer.scheduleVsyncLocked</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Vsync回调流程"><span class="nav-number">4.</span> <span class="nav-text">Vsync回调流程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#android-view-DisplayEventReceiver-handleEvent"><span class="nav-number">4.1.</span> <span class="nav-text">android_view_DisplayEventReceiver.handleEvent</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FrameDisplayEventReceiver-onVsync"><span class="nav-number">4.2.</span> <span class="nav-text">FrameDisplayEventReceiver.onVsync</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Choreographer-doFrame"><span class="nav-number">4.3.</span> <span class="nav-text">Choreographer.doFrame</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Choreographer-doCallbacks"><span class="nav-number">4.4.</span> <span class="nav-text">Choreographer.doCallbacks</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CallbackRecord-run"><span class="nav-number">4.5.</span> <span class="nav-text">CallbackRecord.run</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Choreographer-CALLBACK-TRAVERSAL"><span class="nav-number">4.6.</span> <span class="nav-text">Choreographer.CALLBACK_TRAVERSAL</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '5616bc8afb5f9d1089def28abc7ca0d5',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

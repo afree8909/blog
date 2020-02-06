@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="SoftReference和WeakReference我们知道这两个类基本功能相似，区别在于当引用对象为空的时候，WeakRefreence对象会在GC回收的时候被回收，而SoftReference则需要更苛刻的条件 SoftReference实现原理总结：GC回收时计算 SoftReference存活时间与剩余内存换算得出的时间进行大小比较（内存剩余空间*设定系数仅过换算规则计算得出），如果大于">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Reference子类源码解析">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/03/10/Reference%E5%AD%90%E7%B1%BB%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="SoftReference和WeakReference我们知道这两个类基本功能相似，区别在于当引用对象为空的时候，WeakRefreence对象会在GC回收的时候被回收，而SoftReference则需要更苛刻的条件 SoftReference实现原理总结：GC回收时计算 SoftReference存活时间与剩余内存换算得出的时间进行大小比较（内存剩余空间*设定系数仅过换算规则计算得出），如果大于">
+<meta property="article:published_time" content="2019-03-10T08:04:25.854Z">
+<meta property="article:modified_time" content="2020-02-06T16:42:16.375Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/03/10/Reference%E5%AD%90%E7%B1%BB%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Reference子类源码解析 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/03/10/Reference%E5%AD%90%E7%B1%BB%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Reference子类源码解析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-03-10 16:04:25" itemprop="dateCreated datePublished" datetime="2019-03-10T16:04:25+08:00">2019-03-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 00:42:16" itemprop="dateModified" datetime="2020-02-07T00:42:16+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Java/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>4.7k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>4 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="SoftReference和WeakReference"><a href="#SoftReference和WeakReference" class="headerlink" title="SoftReference和WeakReference"></a>SoftReference和WeakReference</h3><p>我们知道这两个类基本功能相似，区别在于当引用对象为空的时候，WeakRefreence对象会在GC回收的时候被回收，而SoftReference则需要更苛刻的条件</p>
+<h4 id="SoftReference实现原理"><a href="#SoftReference实现原理" class="headerlink" title="SoftReference实现原理"></a>SoftReference实现原理</h4><p>总结：GC回收时计算 SoftReference存活时间与剩余内存换算得出的时间进行大小比较（内存剩余空间*设定系数仅过换算规则计算得出），如果大于测认为需要回收，反之亦然</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;&#x2F; hotspot&#x2F;src&#x2F;share&#x2F;vm&#x2F;memory&#x2F;referenceProcessor.cpp</span><br><span class="line">if (rt &#x3D;&#x3D; REF_SOFT) &#123;</span><br><span class="line">    &#x2F;&#x2F; 是否需要清除软引用</span><br><span class="line">    if (!_current_soft_ref_policy-&gt;should_clear_reference(obj, _soft_ref_timestamp_clock)) &#123;</span><br><span class="line">      return false;</span><br><span class="line">    &#125;    </span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; should_clear_reference 实现如下</span><br><span class="line">bool LRUMaxHeapPolicy::should_clear_reference(oop p,</span><br><span class="line">                                             jlong timestamp_clock) &#123;</span><br><span class="line">  jlong interval &#x3D; timestamp_clock - java_lang_ref_SoftReference::timestamp(p);</span><br><span class="line">  assert(interval &gt;&#x3D; 0, &quot;Sanity check&quot;);</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; The interval will be zero if the ref was accessed since the last scavenge&#x2F;gc.</span><br><span class="line">  if(interval &lt;&#x3D; _max_interval) &#123; &#x2F;&#x2F; 与_max_interval比较</span><br><span class="line">    return false;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  return true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; Capture state (of-the-VM) information needed to evaluate the policy</span><br><span class="line">void LRUMaxHeapPolicy::setup() &#123;</span><br><span class="line">  size_t max_heap &#x3D; MaxHeapSize;</span><br><span class="line">  max_heap -&#x3D; Universe::get_heap_used_at_last_gc();</span><br><span class="line">  max_heap &#x2F;&#x3D; M;</span><br><span class="line"></span><br><span class="line">  _max_interval &#x3D; max_heap * SoftRefLRUPolicyMSPerMB;</span><br><span class="line">  &#x2F;&#x2F; _max_interval 计算</span><br><span class="line">  assert(_max_interval &gt;&#x3D; 0,&quot;Sanity check&quot;); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; SoftReference对象记录两个时间，目的就是为了GC判断是否需要清除</span><br><span class="line">public class SoftReference&lt;T&gt; extends Reference&lt;T&gt; &#123;</span><br><span class="line">    &#x2F;&#x2F; 由JVM负责更新的，记录了上一次GC发生的时间。</span><br><span class="line">    static private long clock;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 每次调用 get 方法都会更新，记录了当前Reference最后一次被访问的时间。</span><br><span class="line">    private long timestamp;</span><br><span class="line"></span><br><span class="line">    public SoftReference(T referent) &#123;</span><br><span class="line">        super(referent);</span><br><span class="line">        this.timestamp &#x3D; clock;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public SoftReference(T referent, ReferenceQueue&lt;? super T&gt; q) &#123;</span><br><span class="line">        super(referent, q);</span><br><span class="line">        this.timestamp &#x3D; clock;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 和super.get的逻辑最大的不同，就在于每次调用get都会把上次发生GC的时间，也就是</span><br><span class="line">    &#x2F;&#x2F; clock 更新到 timestamp 中去。</span><br><span class="line">    public T get() &#123;</span><br><span class="line">        T o &#x3D; super.get();</span><br><span class="line">        if (o !&#x3D; null &amp;&amp; this.timestamp !&#x3D; clock)</span><br><span class="line">            this.timestamp &#x3D; clock;</span><br><span class="line">        return o;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="PhantomReference和Cleaner"><a href="#PhantomReference和Cleaner" class="headerlink" title="PhantomReference和Cleaner"></a>PhantomReference和Cleaner</h3><ul>
+<li>不能访问到referent</li>
+<li>Cleaner继承PhantomReference，它们本质流程都是Reference流程，有GC标记，ReferenceHandler处理</li>
+<li>Cleaner的clean方法由ReferenceHandler调用，最终到thunk线程进行自定义资源回收处理，以及自己的释放</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public class PhantomReference&lt;T&gt; extends Reference&lt;T&gt; &#123;</span><br><span class="line">    &#x2F;&#x2F; get方法永远是null，所以无法获得referent</span><br><span class="line">    public T get() &#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">    public PhantomReference(T referent, ReferenceQueue&lt;? super T&gt; q) &#123;</span><br><span class="line">        super(referent, q);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line">public class Cleaner extends PhantomReference&lt;Object&gt;&#123;</span><br><span class="line">    &#x2F;&#x2F; Reference需要Queue，但Cleaner自己管理ref，所以虚构个无用Queue</span><br><span class="line">    private static final ReferenceQueue&lt;Object&gt; dummyQueue &#x3D; new ReferenceQueue&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 所有的cleaner都会被加到一个双向链表中去，确保回收前这些Cleaner都是存活的。</span><br><span class="line">    static private Cleaner first &#x3D; null;</span><br><span class="line"></span><br><span class="line">    private Cleaner</span><br><span class="line">        next &#x3D; null,</span><br><span class="line">        prev &#x3D; null;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 构造的时候把自己加到双向链表中去</span><br><span class="line">    private static synchronized Cleaner add(Cleaner cl) &#123;</span><br><span class="line">        if (first !&#x3D; null) &#123;</span><br><span class="line">            cl.next &#x3D; first;</span><br><span class="line">            first.prev &#x3D; cl;</span><br><span class="line">        &#125;</span><br><span class="line">        first &#x3D; cl;</span><br><span class="line">        return cl;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; clean方法会调用remove把当前的cleaner从链表中删除。</span><br><span class="line">    private static synchronized boolean remove(Cleaner cl) &#123;</span><br><span class="line">        &#x2F;&#x2F; If already removed, do nothing</span><br><span class="line">        if (cl.next &#x3D;&#x3D; cl)</span><br><span class="line">            return false;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; Update list</span><br><span class="line">        if (first &#x3D;&#x3D; cl) &#123;</span><br><span class="line">            if (cl.next !&#x3D; null)</span><br><span class="line">                first &#x3D; cl.next;</span><br><span class="line">            else</span><br><span class="line">                first &#x3D; cl.prev;</span><br><span class="line">        &#125;</span><br><span class="line">        if (cl.next !&#x3D; null)</span><br><span class="line">            cl.next.prev &#x3D; cl.prev;</span><br><span class="line">        if (cl.prev !&#x3D; null)</span><br><span class="line">            cl.prev.next &#x3D; cl.next;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; Indicate removal by pointing the cleaner to itself</span><br><span class="line">        cl.next &#x3D; cl;</span><br><span class="line">        cl.prev &#x3D; cl;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 用户自定义的一个Runnable对象，</span><br><span class="line">    private final Runnable thunk;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 私有有构造函数，保证了用户无法单独地使用new来创建Cleaner。</span><br><span class="line">    private Cleaner(Object referent, Runnable thunk) &#123;</span><br><span class="line">        super(referent, dummyQueue);</span><br><span class="line">        this.thunk &#x3D; thunk;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;**</span><br><span class="line">     * 所有的Cleaner都必须通过create方法进行创建。</span><br><span class="line">     *&#x2F;</span><br><span class="line">    public static Cleaner create(Object ob, Runnable thunk) &#123;</span><br><span class="line">        if (thunk &#x3D;&#x3D; null)</span><br><span class="line">            return null;</span><br><span class="line">        return add(new Cleaner(ob, thunk));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;**</span><br><span class="line">     * Reference Handler线程调用，来清理资源。</span><br><span class="line">     *&#x2F;</span><br><span class="line">    public void clean() &#123;</span><br><span class="line">        if (!remove(this))</span><br><span class="line">            return;</span><br><span class="line">        try &#123;</span><br><span class="line">            thunk.run();</span><br><span class="line">        &#125; catch (final Throwable x) &#123;</span><br><span class="line">            AccessController.doPrivileged(new PrivilegedAction&lt;Void&gt;() &#123;</span><br><span class="line">                    public Void run() &#123;</span><br><span class="line">                        if (System.err !&#x3D; null)</span><br><span class="line">                            new Error(&quot;Cleaner terminated abnormally&quot;, x)</span><br><span class="line">                                .printStackTrace();</span><br><span class="line">                        System.exit(1);</span><br><span class="line">                        return null;</span><br><span class="line">                    &#125;&#125;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="FinalReference和Finalizer"><a href="#FinalReference和Finalizer" class="headerlink" title="FinalReference和Finalizer"></a>FinalReference和Finalizer</h3><ul>
+<li>它本质流程依然与Reference类似</li>
+<li>Finalizer的构造是通过标志由JVM构造（JVM构造的时候会判断finalize方法是否非空，最终会调用到register进行构造）</li>
+<li>Finalizer加入的queue会被Finalizer线程进行处理</li>
+<li>finalize方法只会调用一次，通过hasBeenFinalized这个tag保证</li>
+<li>⚠️ finalize可以通过获取referent复活对象，其中存在很多安全隐患</li>
+<li>⚠️ FinalizerThread为守护线程，优先级很低，很有可能抢占不到资源而导致资源无法回收</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/03/05/Reference%E5%92%8CReferenceQueue%E7%9B%B8%E5%85%B3%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/" rel="prev" title="Reference和ReferenceQueue相关源码解析">
+      <i class="fa fa-chevron-left"></i> Reference和ReferenceQueue相关源码解析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/03/16/Android%E7%BA%BF%E7%A8%8B%E6%B6%88%E6%81%AF%E6%9C%BA%E5%88%B6/" rel="next" title="Android线程消息机制">
+      Android线程消息机制 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#SoftReference和WeakReference"><span class="nav-number">1.</span> <span class="nav-text">SoftReference和WeakReference</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#SoftReference实现原理"><span class="nav-number">1.1.</span> <span class="nav-text">SoftReference实现原理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PhantomReference和Cleaner"><span class="nav-number">2.</span> <span class="nav-text">PhantomReference和Cleaner</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FinalReference和Finalizer"><span class="nav-number">3.</span> <span class="nav-text">FinalReference和Finalizer</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '58f294ee9ecbb8a917a577c285a85ecd',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

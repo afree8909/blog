@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="图文概括启动流程 重要成员  Session WMS的成员变量mSessions保存着所有的Session对象,Session继承于IWindowSession.Stub, 作为Binder服务端 每一个应用进程都有一个唯一的 Session 对象与 WMS 通信 ViewRootImpl 和 WMS 之间的通信就是通过 Session 对象完成的   WindowState WMS中，通过mWi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统_WMS启动流程">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/11/20/Android%E7%B3%BB%E7%BB%9F_WMS%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="图文概括启动流程 重要成员  Session WMS的成员变量mSessions保存着所有的Session对象,Session继承于IWindowSession.Stub, 作为Binder服务端 每一个应用进程都有一个唯一的 Session 对象与 WMS 通信 ViewRootImpl 和 WMS 之间的通信就是通过 Session 对象完成的   WindowState WMS中，通过mWi">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-a6e6f84469e58d99.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-726e431873d74004.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-11-20T13:50:52.002Z">
+<meta property="article:modified_time" content="2020-02-06T17:10:53.160Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta property="article:tag" content="WMS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-a6e6f84469e58d99.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/11/20/Android%E7%B3%BB%E7%BB%9F_WMS%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Android系统_WMS启动流程 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/11/20/Android%E7%B3%BB%E7%BB%9F_WMS%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android系统_WMS启动流程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-11-20 21:50:52" itemprop="dateCreated datePublished" datetime="2019-11-20T21:50:52+08:00">2019-11-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 01:10:53" itemprop="dateModified" datetime="2020-02-07T01:10:53+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>9.3k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>8 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="图文概括"><a href="#图文概括" class="headerlink" title="图文概括"></a>图文概括</h3><h4 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-a6e6f84469e58d99.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="重要成员"><a href="#重要成员" class="headerlink" title="重要成员"></a>重要成员</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-726e431873d74004.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<ul>
+<li>Session<ul>
+<li>WMS的成员变量mSessions保存着所有的Session对象,Session继承于IWindowSession.Stub, 作为Binder服务端</li>
+<li>每一个应用进程都有一个唯一的 Session 对象与 WMS 通信</li>
+<li>ViewRootImpl 和 WMS 之间的通信就是通过 Session 对象完成的</li>
+</ul>
+</li>
+<li>WindowState<ul>
+<li>WMS中，通过mWindowMap（WindowHashMap ）保存所有的WindowState对象</li>
+<li>WindowState 中保存了 WMS 对象、WMP 对象、Session 对象和 IWindow对象,一个 WindowState 对象就对应着一个应用进程中的 Window 对象; IWindow -&gt; ViewRootImpl.W extends IWindow.Stub</li>
+</ul>
+</li>
+<li>WindowToken<ul>
+<li>WMS成员变量mTokenMap: 保存所有的WindowToken对象; 以IBinder为key,可以是IAppWindowToken或者其他Binder的Bp端;IBinder -&gt; ActivityRecord.Token extends IApplicationToken.Stub</li>
+<li>一个 WindowToken 就代表着一个应用组件，应用组件包括：Activity、InputMethod 等。在 WMS 中，会将属于同一 WindowToken 的做统一处理，比如在对窗口进行 ZOrder 排序时，会将属于统一 WindowToken 的排在一起</li>
+<li>WindowToken 也具有令牌的作用。应用组件在创建 Window 时都需要提供一个有效的 WindowToken 以表明自己的身份，并且窗口的类型必须与所持有的 WindowToken 类型保持一致。</li>
+</ul>
+</li>
+</ul>
+<h3 id="源码分析—启动流程"><a href="#源码分析—启动流程" class="headerlink" title="源码分析—启动流程"></a>源码分析—启动流程</h3><blockquote>
+<p>基于API23 </p>
+</blockquote>
+<h4 id="SystemServer启动WMS"><a href="#SystemServer启动WMS" class="headerlink" title="SystemServer启动WMS"></a>SystemServer启动WMS</h4><ul>
+<li>执行WMS的main方法，进行WMS创建及初始化</li>
+<li>执行WMS的displayReady方法，初始化显示信息</li>
+<li>执行WMS的systemReady方法，通知 WMS 系统的初始化工作完成</li>
+</ul>
+<p>参考：<a href="https://www.jianshu.com/p/0556e0940115" target="_blank" rel="noopener">Android系统_SystemServer启动流程分析
+</a></p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> &#x2F;&#x2F; system server 执行启动其它系统服务</span><br><span class="line"> private void startOtherServices() &#123;</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F; 执行 WMS的main方法</span><br><span class="line">    WindowManagerService wm &#x3D; WindowManagerService.main(context, inputManager,</span><br><span class="line">    mFactoryTestMode !&#x3D; FactoryTest.FACTORY_TEST_LOW_LEVEL,</span><br><span class="line">    !mFirstBoot, mOnlyCore);</span><br><span class="line">    </span><br><span class="line">    wm.displayReady(); </span><br><span class="line">    ...</span><br><span class="line">    wm.systemReady(); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="main方法"><a href="#main方法" class="headerlink" title="main方法"></a>main方法</h4><ul>
+<li>WMS为单例模式</li>
+<li>WMS的main方法，通过DisplayThread创建了一个WMS单例对象</li>
+<li>运行在”android.display”线程，DisplayThread 线程是一个系统前台线程，用于执行一些延时要非常小的关于显示的操作，一般只会在 WindowManager、DisplayManager 和 InputManager 中使用</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">public class WindowManagerService extends IWindowManager.Stub</span><br><span class="line">        implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs &#123;</span><br><span class="line"></span><br><span class="line">    private static WindowManagerService sInstance;</span><br><span class="line">    static WindowManagerService getInstance() &#123;</span><br><span class="line">        return sInstance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static WindowManagerService main(final Context context, final InputManagerService im,</span><br><span class="line">            final boolean haveInputMethods, final boolean showBootMsgs, final boolean onlyCore,</span><br><span class="line">            WindowManagerPolicy policy) &#123;</span><br><span class="line">        &#x2F;&#x2F; &quot;android.display&quot;线程</span><br><span class="line">        DisplayThread.getHandler().runWithScissors(() -&gt;</span><br><span class="line">                sInstance &#x3D; new WindowManagerService(context, im, haveInputMethods, showBootMsgs,</span><br><span class="line">                        onlyCore, policy), 0);</span><br><span class="line">        return sInstance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="构造方法"><a href="#构造方法" class="headerlink" title="构造方法"></a>构造方法</h4><ol>
+<li>赋值及初始化成员变量（context、inputManager、policy）等</li>
+<li>创建一个 WindowAnimator 对象，用于管理所有窗口的动画</li>
+<li>初始化 mPolicy ，具体的实现类是 PhoneWindowManager，WMS 的许多操作都是需要 WMP 规定的，比如：多个窗口的上下顺序，监听屏幕旋转的状态，预处理一些系统按键事件（例如HOME、BACK键等的默认行为就是在这里实现的）</li>
+<li>将 WMS 实例对象本身添加到 Watchdog 中，WMS 类实现了 Watchdog.Monitor 接口。Watchdog 用于监控系统的一些关键服务</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">private WindowManagerService(Context context, InputManagerService inputManager, boolean haveInputMethods, boolean showBootMsgs, boolean onlyCore) &#123;</span><br><span class="line">    mContext &#x3D; context;</span><br><span class="line">    mHaveInputMethods &#x3D; haveInputMethods;</span><br><span class="line">    mAllowBootMessages &#x3D; showBootMsgs;</span><br><span class="line">    mOnlyCore &#x3D; onlyCore;</span><br><span class="line">    ...</span><br><span class="line">    mInputManager &#x3D; inputManager; </span><br><span class="line">    mDisplayManagerInternal &#x3D; LocalServices.getService(DisplayManagerInternal.class);</span><br><span class="line">    mDisplaySettings &#x3D; new DisplaySettings();</span><br><span class="line">    mDisplaySettings.readSettingsLocked();</span><br><span class="line"></span><br><span class="line">    LocalServices.addService(WindowManagerPolicy.class, mPolicy);</span><br><span class="line">    mPointerEventDispatcher &#x3D; new PointerEventDispatcher(mInputManager.monitorInput(TAG));</span><br><span class="line"></span><br><span class="line">    mFxSession &#x3D; new SurfaceSession();</span><br><span class="line">    mDisplayManager &#x3D; (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE);</span><br><span class="line">    mDisplays &#x3D; mDisplayManager.getDisplays();</span><br><span class="line"></span><br><span class="line">    for (Display display : mDisplays) &#123;</span><br><span class="line">        createDisplayContentLocked(display);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mKeyguardDisableHandler &#x3D; new KeyguardDisableHandler(mContext, mPolicy);</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    mAppTransition &#x3D; new AppTransition(context, mH);</span><br><span class="line">    mAppTransition.registerListenerLocked(mActivityManagerAppTransitionNotifier);</span><br><span class="line">    mActivityManager &#x3D; ActivityManagerNative.getDefault();</span><br><span class="line">    ...</span><br><span class="line">    mAnimator &#x3D; new WindowAnimator(this);</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line">    LocalServices.addService(WindowManagerInternal.class, new LocalService());</span><br><span class="line">    &#x2F;&#x2F;初始化策略</span><br><span class="line">    initPolicy();</span><br><span class="line"></span><br><span class="line">    Watchdog.getInstance().addMonitor(this);</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="initPolicy"><a href="#initPolicy" class="headerlink" title="initPolicy"></a>initPolicy</h4><ul>
+<li>UiThread进行policy的初始化，此过程为同步阻塞过程，运行在android.ui线程</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">private void initPolicy() &#123;</span><br><span class="line">    &#x2F;&#x2F; 切换到 UiThread 执行，运行在&quot;android.ui&quot;线程，runWithScissors会判断当前执行线程，来决定是直接执行还是等待执行</span><br><span class="line">    UiThread.getHandler().runWithScissors(new Runnable() &#123;</span><br><span class="line">        public void run() &#123;</span><br><span class="line">    WindowManagerPolicyThread.set(Thread.currentThread(), Looper.myLooper());</span><br><span class="line">            &#x2F;&#x2F; 初始化</span><br><span class="line">            mPolicy.init(mContext, WindowManagerService.this, WindowManagerService.this);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;, 0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="displayReady"><a href="#displayReady" class="headerlink" title="displayReady"></a>displayReady</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">public void displayReady() &#123;</span><br><span class="line">    for (Display display : mDisplays) &#123;</span><br><span class="line">        displayReady(display.getDisplayId());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    synchronized(mWindowMap) &#123;</span><br><span class="line">        final DisplayContent displayContent &#x3D; getDefaultDisplayContentLocked();</span><br><span class="line">        readForcedDisplayPropertiesLocked(displayContent);</span><br><span class="line">        mDisplayReady &#x3D; true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mActivityManager.updateConfiguration(null);</span><br><span class="line"></span><br><span class="line">    synchronized(mWindowMap) &#123;</span><br><span class="line">        mIsTouchDevice &#x3D; mContext.getPackageManager().hasSystemFeature(</span><br><span class="line">                PackageManager.FEATURE_TOUCHSCREEN);</span><br><span class="line">        configureDisplayPolicyLocked(getDefaultDisplayContentLocked());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mActivityManager.updateConfiguration(null);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="systemReady"><a href="#systemReady" class="headerlink" title="systemReady"></a>systemReady</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public void systemReady() &#123;</span><br><span class="line">    mPolicy.systemReady();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">public void systemReady() &#123;</span><br><span class="line">    mKeyguardDelegate &#x3D; new KeyguardServiceDelegate(mContext);</span><br><span class="line">    mKeyguardDelegate.onSystemReady();</span><br><span class="line"></span><br><span class="line">    readCameraLensCoverState();</span><br><span class="line">    updateUiMode();</span><br><span class="line">    boolean bindKeyguardNow;</span><br><span class="line">    synchronized (mLock) &#123;</span><br><span class="line">        updateOrientationListenerLp();</span><br><span class="line">        mSystemReady &#x3D; true;</span><br><span class="line">        </span><br><span class="line">        mHandler.post(new Runnable() &#123;</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                updateSettings();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        bindKeyguardNow &#x3D; mDeferBindKeyguard;</span><br><span class="line">        if (bindKeyguardNow) &#123;</span><br><span class="line">            mDeferBindKeyguard &#x3D; false;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (bindKeyguardNow) &#123;</span><br><span class="line">        mKeyguardDelegate.bindService(mContext);</span><br><span class="line">        mKeyguardDelegate.onBootCompleted();</span><br><span class="line">    &#125;</span><br><span class="line">    mSystemGestures.systemReady();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="源码分析—重要成员"><a href="#源码分析—重要成员" class="headerlink" title="源码分析—重要成员"></a>源码分析—重要成员</h3><h4 id="Session"><a href="#Session" class="headerlink" title="Session"></a>Session</h4><ul>
+<li>WMS的成员变量mSessions保存着所有的Session对象,Session继承于IWindowSession.Stub, 作为Binder服务端;</li>
+<li>每一个应用进程都有一个唯一的 Session 对象与 WMS 通信</li>
+<li>ViewRootImpl 和 WMS 之间的通信就是通过 Session 对象完成的。</li>
+</ul>
+<h5 id="WMS-mSessions"><a href="#WMS-mSessions" class="headerlink" title="WMS.mSessions"></a>WMS.mSessions</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public class WindowManagerService extends IWindowManager.Stub</span><br><span class="line">        implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs &#123;</span><br><span class="line">        &#x2F;&#x2F; All currently active sessions with clients.</span><br><span class="line">        final ArraySet&lt;Session&gt; mSessions &#x3D; new ArraySet&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public IWindowSession openSession(IWindowSessionCallback callback, IInputMethodClient client,</span><br><span class="line">            IInputContext inputContext) &#123;</span><br><span class="line">            </span><br><span class="line">            Session session &#x3D; new Session(this, callback, client, inputContext);</span><br><span class="line">            return session;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">public class Session extends IWindowSession.Stub</span><br><span class="line">        implements IBinder.DeathRecipient &#123;</span><br><span class="line">    final WindowManagerService mService; &#x2F;&#x2F; 持有WMS</span><br><span class="line">    private int mNumWindow &#x3D; 0; </span><br><span class="line">    </span><br><span class="line">    public Session(WindowManagerService service, IWindowSessionCallback callback,</span><br><span class="line">            IInputMethodClient client, IInputContext inputContext) &#123;</span><br><span class="line">        mService &#x3D; service; &#x2F;&#x2F; 赋值</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; 添加</span><br><span class="line">    void windowAddedLocked(String packageName) &#123;</span><br><span class="line">        if (mSurfaceSession &#x3D;&#x3D; null) &#123;</span><br><span class="line">            mService.mSessions.add(this);</span><br><span class="line">        &#125;</span><br><span class="line">        mNumWindow++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 移除</span><br><span class="line">    void windowRemovedLocked() &#123;</span><br><span class="line">        mNumWindow--;</span><br><span class="line">        killSessionLocked();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void killSessionLocked() &#123;</span><br><span class="line">        if (mNumWindow &gt; 0 || !mClientDead) &#123;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        mService.mSessions.remove(this);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h4 id="WindowState"><a href="#WindowState" class="headerlink" title="WindowState"></a>WindowState</h4><ul>
+<li>WMS中，通过mWindowMap（WindowHashMap ）保存所有的WindowState对象</li>
+<li>WindowState 中保存了 WMS 对象、WMP 对象、Session 对象和 IWindow对象,一个 WindowState 对象就对应着一个应用进程中的 Window 对象; IWindow -&gt; ViewRootImpl.W extends IWindow.Stub</li>
+</ul>
+<h5 id="WindowManagerService-addWindowToken"><a href="#WindowManagerService-addWindowToken" class="headerlink" title="WindowManagerService.addWindowToken"></a>WindowManagerService.addWindowToken</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">final HashMap&lt;IBinder, WindowToken&gt; mTokenMap &#x3D; new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">public void addWindowToken(IBinder token, int type) &#123;</span><br><span class="line">   synchronized(mWindowMap) &#123;</span><br><span class="line">       WindowToken wtoken &#x3D; mTokenMap.get(token);</span><br><span class="line">       wtoken &#x3D; new WindowToken(this, token, type, true);</span><br><span class="line">       mTokenMap.put(token, wtoken);</span><br><span class="line">       if (type &#x3D;&#x3D; TYPE_WALLPAPER) &#123;</span><br><span class="line">           mWallpaperTokens.add(wtoken);</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">class WindowState extends WindowContainer&lt;WindowState&gt; implements WindowManagerPolicy.WindowState &#123;</span><br><span class="line">    final WindowManagerService mService; &#x2F;&#x2F; WMS</span><br><span class="line">    final WindowManagerPolicy mPolicy; &#x2F;&#x2F; WMP</span><br><span class="line">    final Context mContext; &#x2F;&#x2F;ctx</span><br><span class="line">    final Session mSession; &#x2F;&#x2F; session </span><br><span class="line">    final IWindow mClient;  &#x2F;&#x2F; 应用进程中的 Window 对象</span><br><span class="line"></span><br><span class="line">    WindowState(WindowManagerService service, Session s, IWindow c, WindowToken token,</span><br><span class="line">           WindowState parentWindow, int appOp, int seq, WindowManager.LayoutParams a,</span><br><span class="line">           int viewVisibility, int ownerId, boolean ownerCanAddInternalSystemWindow) &#123;</span><br><span class="line">        mService &#x3D; service;</span><br><span class="line">        mSession &#x3D; s;</span><br><span class="line">        mClient &#x3D; c;</span><br><span class="line">        mAppOp &#x3D; appOp;</span><br><span class="line">        mToken &#x3D; token;</span><br><span class="line">        mAppToken &#x3D; mToken.asAppWindowToken();</span><br><span class="line"></span><br><span class="line">        ......</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    void attach() &#123;</span><br><span class="line">        mSession.windowAddedLocked(mAttrs.packageName);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; IWindow mClient 就是 ViewRootImpl 中的 final W mWindow 成员</span><br><span class="line">public final class ViewRootImpl implements ViewParent,</span><br><span class="line">        View.AttachInfo.Callbacks, ThreadedRenderer.DrawCallbacks &#123;</span><br><span class="line">    final W mWindow;</span><br><span class="line"></span><br><span class="line">    static class W extends IWindow.Stub &#123;</span><br><span class="line">        ......</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="WindowToken"><a href="#WindowToken" class="headerlink" title="WindowToken"></a>WindowToken</h4><ul>
+<li>WMS成员变量mTokenMap: 保存所有的WindowToken对象; 以IBinder为key,可以是IAppWindowToken或者其他Binder的Bp端;IBinder -&gt; ActivityRecord.Token extends IApplicationToken.Stub</li>
+<li>一个 WindowToken 就代表着一个应用组件，应用组件包括：Activity、InputMethod 等。在 WMS 中，会将属于同一 WindowToken 的做统一处理，比如在对窗口进行 ZOrder 排序时，会将属于统一 WindowToken 的排在一起</li>
+<li>WindowToken 也具有令牌的作用。应用组件在创建 Window 时都需要提供一个有效的 WindowToken 以表明自己的身份，并且窗口的类型必须与所持有的 WindowToken 类型保持一致。</li>
+</ul>
+<h5 id="WMS-mTokenMap相关"><a href="#WMS-mTokenMap相关" class="headerlink" title="WMS.mTokenMap相关"></a>WMS.mTokenMap相关</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">final HashMap&lt;IBinder, WindowToken&gt; mTokenMap &#x3D; new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">public void addWindowToken(IBinder token, int type) &#123;</span><br><span class="line">     synchronized(mWindowMap) &#123;</span><br><span class="line">       WindowToken wtoken &#x3D; mTokenMap.get(token);</span><br><span class="line">       wtoken &#x3D; new WindowToken(this, token, type, true);</span><br><span class="line">       mTokenMap.put(token, wtoken);</span><br><span class="line">       if (type &#x3D;&#x3D; TYPE_WALLPAPER) &#123;</span><br><span class="line">           mWallpaperTokens.add(wtoken);</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>推荐阅读：<a href="https://www.jianshu.com/p/238eb0a17760" target="_blank" rel="noopener">图形系统总结</a><br>参考：<br><a href="http://gityuan.com/2017/01/08/windowmanger/" target="_blank" rel="noopener">WMS—启动过程</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+              <a href="/blog/tags/WMS/" rel="tag"># WMS</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/20/Android%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F%E2%80%94View.draw%E8%A7%A3%E6%9E%90/" rel="prev" title="Android图形系统—View.draw解析">
+      <i class="fa fa-chevron-left"></i> Android图形系统—View.draw解析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/22/%E5%A6%82%E4%BD%95%E5%86%99%E5%A5%BD%E4%B8%AA%E4%BA%BA%E5%91%A8%E6%8A%A5%EF%BC%881%EF%BC%89/" rel="next" title="如何写好个人周报（1）">
+      如何写好个人周报（1） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#图文概括"><span class="nav-number">1.</span> <span class="nav-text">图文概括</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#启动流程"><span class="nav-number">1.1.</span> <span class="nav-text">启动流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重要成员"><span class="nav-number">1.2.</span> <span class="nav-text">重要成员</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#源码分析—启动流程"><span class="nav-number">2.</span> <span class="nav-text">源码分析—启动流程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#SystemServer启动WMS"><span class="nav-number">2.1.</span> <span class="nav-text">SystemServer启动WMS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#main方法"><span class="nav-number">2.2.</span> <span class="nav-text">main方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#构造方法"><span class="nav-number">2.3.</span> <span class="nav-text">构造方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#initPolicy"><span class="nav-number">2.4.</span> <span class="nav-text">initPolicy</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#displayReady"><span class="nav-number">2.5.</span> <span class="nav-text">displayReady</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#systemReady"><span class="nav-number">2.6.</span> <span class="nav-text">systemReady</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#源码分析—重要成员"><span class="nav-number">3.</span> <span class="nav-text">源码分析—重要成员</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Session"><span class="nav-number">3.1.</span> <span class="nav-text">Session</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#WMS-mSessions"><span class="nav-number">3.1.1.</span> <span class="nav-text">WMS.mSessions</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WindowState"><span class="nav-number">3.2.</span> <span class="nav-text">WindowState</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#WindowManagerService-addWindowToken"><span class="nav-number">3.2.1.</span> <span class="nav-text">WindowManagerService.addWindowToken</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WindowToken"><span class="nav-number">3.3.</span> <span class="nav-text">WindowToken</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#WMS-mTokenMap相关"><span class="nav-number">3.3.1.</span> <span class="nav-text">WMS.mTokenMap相关</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '0d5f7f737cf6f5e3b6120d8afacb81e7',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

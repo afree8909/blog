@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本文基于Okio 2.4.3源码分析Okio - 官方地址Okio - GitHub代码地址  Okio 介绍Okio是什么Okio来源Square公司，它是对java.io和java.nio的进一步封装实现，使得更容易处理、访问、缓存数据。它最初是作为OkHttp网络库的组件 Okio 特点Buffer and ByteString目标：更好的CPU和Memory综合表现  Buffer：通过">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OkHttp 4源码（6）—Okio分析.">
+<meta property="og:url" content="https://afree8909.github.io/blog/2020/01/19/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%886%EF%BC%89%E2%80%94Okio%E5%88%86%E6%9E%90./index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="本文基于Okio 2.4.3源码分析Okio - 官方地址Okio - GitHub代码地址  Okio 介绍Okio是什么Okio来源Square公司，它是对java.io和java.nio的进一步封装实现，使得更容易处理、访问、缓存数据。它最初是作为OkHttp网络库的组件 Okio 特点Buffer and ByteString目标：更好的CPU和Memory综合表现  Buffer：通过">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-70458cdb60301a91.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-a8366af16cf02cb6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2020-01-19T02:19:50.056Z">
+<meta property="article:modified_time" content="2020-02-06T16:59:04.000Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="OkHttp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-70458cdb60301a91.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2020/01/19/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%886%EF%BC%89%E2%80%94Okio%E5%88%86%E6%9E%90./">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>OkHttp 4源码（6）—Okio分析. | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2020/01/19/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%886%EF%BC%89%E2%80%94Okio%E5%88%86%E6%9E%90./">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OkHttp 4源码（6）—Okio分析.
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-01-19 10:19:50" itemprop="dateCreated datePublished" datetime="2020-01-19T10:19:50+08:00">2020-01-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 00:59:04" itemprop="dateModified" datetime="2020-02-07T00:59:04+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index">
+                    <span itemprop="name">框架</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>15k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>14 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>本文基于Okio 2.4.3源码分析<br><a href="https://square.github.io/okio/" target="_blank" rel="noopener">Okio - 官方地址</a><br><a href="https://github.com/square/okio" target="_blank" rel="noopener">Okio - GitHub代码地址</a></p>
+</blockquote>
+<h2 id="Okio-介绍"><a href="#Okio-介绍" class="headerlink" title="Okio 介绍"></a>Okio 介绍</h2><h3 id="Okio是什么"><a href="#Okio是什么" class="headerlink" title="Okio是什么"></a>Okio是什么</h3><p>Okio来源Square公司，它是对java.io和java.nio的进一步封装实现，使得更容易处理、访问、缓存数据。它最初是作为OkHttp网络库的组件</p>
+<h3 id="Okio-特点"><a href="#Okio-特点" class="headerlink" title="Okio 特点"></a>Okio 特点</h3><h4 id="Buffer-and-ByteString"><a href="#Buffer-and-ByteString" class="headerlink" title="Buffer and ByteString"></a>Buffer and ByteString</h4><p>目标：更好的CPU和Memory综合表现</p>
+<ul>
+<li>Buffer：通过双向链表的Segment缓存结构，当从一个Buffer转移数据到另一个Buffer的时候，提供重新分配拥有权达到无需拷贝，相比一次深拷贝，效率大大增加。</li>
+<li>ByteString：Encode UTF-8 String到byteString过程会缓存原string，Decode过程中则可以直接使用</li>
+</ul>
+<h4 id="Source-and-Sink"><a href="#Source-and-Sink" class="headerlink" title="Source and Sink"></a>Source and Sink</h4><ul>
+<li>支持超时机制</li>
+<li>非常轻便，便于实现、使用、测试</li>
+</ul>
+<h3 id="Okio-图文概括"><a href="#Okio-图文概括" class="headerlink" title="Okio 图文概括"></a>Okio 图文概括</h3><p><img src="https://upload-images.jianshu.io/upload_images/9696036-70458cdb60301a91.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-a8366af16cf02cb6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><h3 id="测试代码示例"><a href="#测试代码示例" class="headerlink" title="测试代码示例"></a>测试代码示例</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public final class OkioTest &#123;</span><br><span class="line">  @Rule public TemporaryFolder temporaryFolder &#x3D; new TemporaryFolder();</span><br><span class="line"></span><br><span class="line">  @Test public void readWriteFile() throws Exception &#123;</span><br><span class="line">    File file &#x3D; temporaryFolder.newFile();</span><br><span class="line">    &#x2F;&#x2F; 写</span><br><span class="line">    BufferedSink sink &#x3D; Okio.buffer(Okio.sink(file));</span><br><span class="line">    sink.writeUtf8(&quot;Hello, java.io file!&quot;);</span><br><span class="line">    sink.close();</span><br><span class="line">    assertTrue(file.exists());</span><br><span class="line">    assertEquals(20, file.length());</span><br><span class="line">    &#x2F;&#x2F; 读</span><br><span class="line">    BufferedSource source &#x3D; Okio.buffer(Okio.source(file));</span><br><span class="line">    assertEquals(&quot;Hello, java.io file!&quot;, source.readUtf8());</span><br><span class="line">    source.close();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据写入-Sink"><a href="#数据写入-Sink" class="headerlink" title="数据写入 Sink"></a>数据写入 Sink</h3><ul>
+<li>实现类：OutputStreamSink</li>
+<li>实现原理：依旧是借助OutputStream进行写入操作</li>
+<li>写入流程<ol>
+<li>超时判断</li>
+<li>根据入参的所需写入数据大小，循环写入数据</li>
+<li>取Buffer中第一个Segment，计算可读取的数据，写入到目标输出流中</li>
+<li>每次循环写入的数据大小=min（剩余要写入数据大小，此次循环取到的Segment中的可读取数据大小），直至完成目标数据大小的写入</li>
+<li>每次写入完毕，对Segment进行移除和回收</li>
+</ol>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 返回一个Sink</span><br><span class="line">fun File.sink(append: Boolean &#x3D; false): Sink &#x3D; FileOutputStream(this, append).sink()</span><br><span class="line"></span><br><span class="line">fun OutputStream.sink(): Sink &#x3D; OutputStreamSink(this, Timeout())</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; Sink实现类</span><br><span class="line">private class OutputStreamSink(</span><br><span class="line">  private val out: OutputStream, &#x2F;&#x2F; java底层输出流</span><br><span class="line">  private val timeout: Timeout &#x2F;&#x2F; 超时机制</span><br><span class="line">) : Sink &#123;</span><br><span class="line">  &#x2F;&#x2F;  buffer写入到输出流</span><br><span class="line">  override fun write(source: Buffer, byteCount: Long) &#123;</span><br><span class="line">    checkOffsetAndCount(source.size, 0, byteCount)</span><br><span class="line">    var remaining &#x3D; byteCount</span><br><span class="line">    &#x2F;&#x2F; 循环读取 所需读取数据大小</span><br><span class="line">    while (remaining &gt; 0) &#123;</span><br><span class="line">      timeout.throwIfReached() &#x2F;&#x2F; 是否超时</span><br><span class="line">      &#x2F;&#x2F; Buffer的缓存数据是由 Segment双向链表数据结构缓存</span><br><span class="line">      &#x2F;&#x2F; 取Buffer的第一个Segment（缓存片段）</span><br><span class="line">      val head &#x3D; source.head!!</span><br><span class="line">      &#x2F;&#x2F; segment中limit-pos即数据大小，这里取两者最小的那个数据大小</span><br><span class="line">      val toCopy &#x3D; minOf(remaining, head.limit - head.pos).toInt()</span><br><span class="line">      &#x2F;&#x2F; 将目标读取数据 写入到 OutputStream中</span><br><span class="line">      out.write(head.data, head.pos, toCopy)</span><br><span class="line">      &#x2F;&#x2F; segment 读指针迁移 写入数据大小</span><br><span class="line">      head.pos +&#x3D; toCopy</span><br><span class="line">      &#x2F;&#x2F; 读取数据大小减少 写入数据大小</span><br><span class="line">      remaining -&#x3D; toCopy</span><br><span class="line">      &#x2F;&#x2F; source即buffer中数据大小减少 写入数据大小</span><br><span class="line">      source.size -&#x3D; toCopy</span><br><span class="line">      &#x2F;&#x2F; 如果读数据指针等于写数据指针，证明segment无有效数据，则脸表移除该Segment，并执行Segment回收方法</span><br><span class="line">      if (head.pos &#x3D;&#x3D; head.limit) &#123;</span><br><span class="line">        source.head &#x3D; head.pop()</span><br><span class="line">        SegmentPool.recycle(head)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  &#x2F;&#x2F; flush 执行OutputStream的flush方法</span><br><span class="line">  override fun flush() &#x3D; out.flush()</span><br><span class="line">  &#x2F;&#x2F; close 执行OutputStream的close方法</span><br><span class="line">  override fun close() &#x3D; out.close()</span><br><span class="line">  &#x2F;&#x2F; 超时机制</span><br><span class="line">  override fun timeout() &#x3D; timeout</span><br><span class="line"></span><br><span class="line">  override fun toString() &#x3D; &quot;sink($out)&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据读取-Source"><a href="#数据读取-Source" class="headerlink" title="数据读取 Source"></a>数据读取 Source</h3><ul>
+<li>实现类：InputStreamSource</li>
+<li>实现原理：依旧是借助InputStream进行写入操作</li>
+<li>读取流程<ol>
+<li>超时判断，目标读取数据大小合法判断</li>
+<li>获取Buffer的尾部Segment，并计算该Segment可写入的数据最大值 ，与目标读取数据大小值进行比较，取其中小的一个</li>
+<li>读取数据到Buffer中</li>
+<li>返回读取数据大小</li>
+</ol>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 返回File的一个Source</span><br><span class="line">fun File.source(): Source &#x3D; inputStream().source()</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 创建InputStreamSource作为Source返回</span><br><span class="line">fun InputStream.source(): Source &#x3D; InputStreamSource(this, Timeout())</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; InputStreamSource实现类</span><br><span class="line">private class InputStreamSource(</span><br><span class="line">  private val input: InputStream,</span><br><span class="line">  private val timeout: Timeout</span><br><span class="line">) : Source &#123;</span><br><span class="line">  &#x2F;&#x2F; 核心read方法实现</span><br><span class="line">  override fun read(sink: Buffer, byteCount: Long): Long &#123;</span><br><span class="line">    if (byteCount &#x3D;&#x3D; 0L) return 0</span><br><span class="line">    require(byteCount &gt;&#x3D; 0) &#123; &quot;byteCount &lt; 0: $byteCount&quot; &#125;</span><br><span class="line">    try &#123;</span><br><span class="line">      &#x2F;&#x2F; 是否超时</span><br><span class="line">      timeout.throwIfReached()</span><br><span class="line">      &#x2F;&#x2F; 获取一个可写入数据的 Segment</span><br><span class="line">      val tail &#x3D; sink.writableSegment(1)</span><br><span class="line">      &#x2F;&#x2F; 最大可写入到Buffer中的大小（一个Segment数据最大大小 减去 该Segment已经写入的数据大小）</span><br><span class="line">      val maxToCopy &#x3D; minOf(byteCount, Segment.SIZE - tail.limit).toInt()</span><br><span class="line">      &#x2F;&#x2F; 从目标读取流中 ，读取制定大小数据到Segment中</span><br><span class="line">      val bytesRead &#x3D; input.read(tail.data, tail.limit, maxToCopy)</span><br><span class="line">      &#x2F;&#x2F; 读取大小-1异常情况处理</span><br><span class="line">      if (bytesRead &#x3D;&#x3D; -1) &#123;</span><br><span class="line">        if (tail.pos &#x3D;&#x3D; tail.limit) &#123;</span><br><span class="line">          &#x2F;&#x2F; 没有数据，移除Segment并回收</span><br><span class="line">          sink.head &#x3D; tail.pop()</span><br><span class="line">          SegmentPool.recycle(tail)</span><br><span class="line">        &#125;</span><br><span class="line">        return -1</span><br><span class="line">      &#125;</span><br><span class="line">      &#x2F;&#x2F; Segment的limit增加读取的数据大小</span><br><span class="line">      tail.limit +&#x3D; bytesRead</span><br><span class="line">      &#x2F;&#x2F; buffer数据大小增加 读取的数据大小</span><br><span class="line">      sink.size +&#x3D; bytesRead</span><br><span class="line">      &#x2F;&#x2F; 返回本次读取数据的大小</span><br><span class="line">      return bytesRead.toLong() </span><br><span class="line">    &#125; catch (e: AssertionError) &#123;</span><br><span class="line">      if (e.isAndroidGetsocknameError) throw IOException(e)</span><br><span class="line">      throw e</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  override fun close() &#x3D; input.close()</span><br><span class="line"></span><br><span class="line">  override fun timeout() &#x3D; timeout</span><br><span class="line"></span><br><span class="line">  override fun toString() &#x3D; &quot;source($input)&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据缓存-Buffer"><a href="#数据缓存-Buffer" class="headerlink" title="数据缓存 Buffer"></a>数据缓存 Buffer</h3><h4 id="写入缓存"><a href="#写入缓存" class="headerlink" title="写入缓存"></a>写入缓存</h4><h5 id="BufferedSink-接口"><a href="#BufferedSink-接口" class="headerlink" title="BufferedSink 接口"></a>BufferedSink 接口</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">actual interface BufferedSink : Sink, WritableByteChannel &#123;</span><br><span class="line">  &#x2F;&#x2F; Buffer</span><br><span class="line">  actual val buffer: Buffer</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 一系列 write方法</span><br><span class="line">  actual fun writeXXX(...): BufferedSink</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 将Buffer中数据写入到Sink中</span><br><span class="line">  actual fun emitCompleteSegments(): BufferedSink</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="RealBufferedSink-实现类"><a href="#RealBufferedSink-实现类" class="headerlink" title="RealBufferedSink 实现类"></a>RealBufferedSink 实现类</h5><ul>
+<li>BufferedSink实现类，含有两个重要成员Sink和Buffer</li>
+<li>接口方法基本上都经过 internal/RealBufferedSink一层封装，方法实现皆借助Buffer进行写入操作</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">internal actual class RealBufferedSink actual constructor(</span><br><span class="line">  @JvmField actual val sink: Sink &#x2F;&#x2F; 目标写入Sink</span><br><span class="line">) : BufferedSink &#123;</span><br><span class="line"></span><br><span class="line">  @JvmField val bufferField &#x3D; Buffer() &#x2F;&#x2F; 创建Buffer，buffer逻辑实现核心类</span><br><span class="line"></span><br><span class="line">  @JvmField actual var closed: Boolean &#x3D; false &#x2F;&#x2F; 是否关闭</span><br><span class="line"></span><br><span class="line">  @Suppress(&quot;OVERRIDE_BY_INLINE&quot;) &#x2F;&#x2F; 重载父类buffer getter方法</span><br><span class="line">   override val buffer: Buffer</span><br><span class="line">    inline get() &#x3D; bufferField</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 一系列 write方法 。实现逻辑都是通过internal&#x2F;RealBufferSink进行实现，里面都是通过Buffer进行写操作</span><br><span class="line">  override fun writeAll(source: Source) &#x3D; commonWriteAll(source)</span><br><span class="line">  override fun write(source: Source, byteCount: Long): BufferedSink &#x3D; commonWrite(source, byteCount)</span><br><span class="line">  override fun writeByte(b: Int) &#x3D; commonWriteByte(b)</span><br><span class="line">  override fun writeShort(s: Int) &#x3D; commonWriteShort(s)</span><br><span class="line">  override fun writeShortLe(s: Int) &#x3D; commonWriteShortLe(s)</span><br><span class="line">  override fun writeInt(i: Int) &#x3D; commonWriteInt(i)</span><br><span class="line">  override fun writeIntLe(i: Int) &#x3D; commonWriteIntLe(i)</span><br><span class="line">  override fun writeLong(v: Long) &#x3D; commonWriteLong(v)</span><br><span class="line">  override fun writeLongLe(v: Long) &#x3D; commonWriteLongLe(v)</span><br><span class="line">  override fun writeDecimalLong(v: Long) &#x3D; commonWriteDecimalLong(v)</span><br><span class="line">  override fun writeHexadecimalUnsignedLong(v: Long) &#x3D; commonWriteHexadecimalUnsignedLong(v)</span><br><span class="line">  override fun emitCompleteSegments() &#x3D; commonEmitCompleteSegments()</span><br><span class="line">  override fun emit() &#x3D; commonEmit()</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="读取缓存"><a href="#读取缓存" class="headerlink" title="读取缓存"></a>读取缓存</h4><h5 id="BufferedSource-接口"><a href="#BufferedSource-接口" class="headerlink" title="BufferedSource 接口"></a>BufferedSource 接口</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">actual interface BufferedSource : Source, ReadableByteChannel &#123;</span><br><span class="line">  &#x2F;&#x2F; Buffer</span><br><span class="line">  actual val buffer: Buffer</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 一系列 read方法</span><br><span class="line">  actual fun readXXX(...): XXX</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="RealBufferedSource-实现类"><a href="#RealBufferedSource-实现类" class="headerlink" title="RealBufferedSource 实现类"></a>RealBufferedSource 实现类</h5><ul>
+<li>BufferedSource实现类，含有两个重要成员Source和Buffer</li>
+<li>接口方法基本上都经过 internal/RealBufferedSource一层封装，方法实现皆借助Buffer进行读取操作</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">internal actual class RealBufferedSource actual constructor(</span><br><span class="line">  @JvmField actual val source: Source</span><br><span class="line">) : BufferedSource &#123;</span><br><span class="line">  @JvmField val bufferField &#x3D; Buffer() &#x2F;&#x2F; 创建一个Buffer</span><br><span class="line">  @JvmField actual var closed: Boolean &#x3D; false</span><br><span class="line"></span><br><span class="line">  @Suppress(&quot;OVERRIDE_BY_INLINE&quot;) &#x2F;&#x2F; 重载父类buffer getter方法</span><br><span class="line">  override val buffer: Buffer</span><br><span class="line">    inline get() &#x3D; bufferField</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 一系列 read方法 。实现逻辑都是通过internal&#x2F;RealBufferSource进行实现，里面都是通过Buffer进行写操作</span><br><span class="line">  override fun readByte(): Byte &#x3D; commonReadByte()</span><br><span class="line">  override fun readByteString(): ByteString &#x3D; commonReadByteString()</span><br><span class="line">  override fun readByteString(byteCount: Long): ByteString &#x3D; commonReadByteString(byteCount)</span><br><span class="line">  override fun readFully(sink: Buffer, byteCount: Long): Unit &#x3D; commonReadFully(sink, byteCount)</span><br><span class="line">  override fun readAll(sink: Sink): Long &#x3D; commonReadAll(sink)</span><br><span class="line">  override fun readUtf8(): String &#x3D; commonReadUtf8()</span><br><span class="line">  override fun readUtf8(byteCount: Long): String &#x3D; commonReadUtf8(byteCount)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="缓存实现类-Buffer"><a href="#缓存实现类-Buffer" class="headerlink" title="缓存实现类 Buffer"></a>缓存实现类 Buffer</h4><p>缓存逻辑实现核心类，对RealBufferedSource和RealBufferedSink中暴露的Api进行了实现，重点看下Buffer的读写方法，其核心设计原则就是兼顾CPU（时间）和Memory（空间）</p>
+<ul>
+<li>每一个Buffer中，包含Segment双向链表结构，进行缓存数据存储，多个固定的Segment有助于避免内存的申请和回收，减少内存片段</li>
+<li>Buffer既充当了缓存写入角色，又充当了缓存读取角色，更有利于实现buffer平滑实现一次拷贝</li>
+<li>读Buffer数据转移到写Buffer，1. 如果写Buffer可以容纳，则直接拷贝存储；2.如果写Buffer不可以容纳，则通过split方法在来一个Segment进行存储</li>
+</ul>
+<p>Buffer、Segment、SegmentPool巧妙的设计，兼顾了CPU和Memory的平衡</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">internal inline fun Buffer.commonRead(sink: Buffer, byteCount: Long): Long &#123;</span><br><span class="line">  var byteCount &#x3D; byteCount</span><br><span class="line">  require(byteCount &gt;&#x3D; 0) &#123; &quot;byteCount &lt; 0: $byteCount&quot; &#125;</span><br><span class="line"></span><br><span class="line">  if (size &#x3D;&#x3D; 0L) return -1L</span><br><span class="line">  if (byteCount &gt; size) byteCount &#x3D; size</span><br><span class="line">  &#x2F;&#x2F; 执行 Buffer的write方法</span><br><span class="line">  sink.write(this, byteCount)</span><br><span class="line">  return byteCount</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">internal inline fun Buffer.commonWrite(source: Buffer, byteCount: Long) &#123;</span><br><span class="line">  var byteCount &#x3D; byteCount &#x2F;&#x2F; 写入大小</span><br><span class="line">  &#x2F;&#x2F; 逻辑判断</span><br><span class="line">  require(source !&#x3D;&#x3D; this) &#123; &quot;source &#x3D;&#x3D; this&quot; &#125;</span><br><span class="line">  checkOffsetAndCount(source.size, 0, byteCount)</span><br><span class="line"></span><br><span class="line">  while (byteCount &gt; 0L) &#123;</span><br><span class="line">    &#x2F;&#x2F; source对应的Segment数据大小是否 大于 目标写入大小，大于则只写入一部分数据</span><br><span class="line">    if (byteCount &lt; source.head!!.limit - source.head!!.pos) &#123;</span><br><span class="line">      &#x2F;&#x2F; 取尾部Segment</span><br><span class="line">      val tail &#x3D; if (head !&#x3D; null) head!!.prev else null</span><br><span class="line">      &#x2F;&#x2F; 尾部不为空，且拥有数据写入权 且 拥有足够写入的空间</span><br><span class="line">      if (tail !&#x3D; null &amp;&amp; tail.owner &amp;&amp;</span><br><span class="line">        byteCount + tail.limit - (if (tail.shared) 0 else tail.pos) &lt;&#x3D; Segment.SIZE) &#123;</span><br><span class="line">        &#x2F;&#x2F; 将读取Buffer的数据写入到 本Buffer的尾部Segment中</span><br><span class="line">        &#x2F;&#x2F; writeTo方法 可能是深拷贝或者是浅拷贝，后面有分析</span><br><span class="line">        source.head!!.writeTo(tail, byteCount.toInt())</span><br><span class="line">        &#x2F;&#x2F; 重置source的size 和本Buffer的size</span><br><span class="line">        source.size -&#x3D; byteCount</span><br><span class="line">        size +&#x3D; byteCount</span><br><span class="line">        return</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">        &#x2F;&#x2F; 装不下读取的数据，则需要新的Segment来写入 ，新的segement可能通过shareCopy或者SegemntPool来（见Segment分析）</span><br><span class="line">        source.head &#x3D; source.head!!.split(byteCount.toInt())</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; Remove the source&#39;s head segment and append it to our tail.</span><br><span class="line">    &#x2F;&#x2F; source对应Buffer中的head Segment数据读取完毕，对Buffer中的Segment进行移除</span><br><span class="line">    val segmentToMove &#x3D; source.head</span><br><span class="line">    val movedByteCount &#x3D; (segmentToMove!!.limit - segmentToMove.pos).toLong()</span><br><span class="line">    source.head &#x3D; segmentToMove.pop()</span><br><span class="line">    &#x2F;&#x2F; 移除后，因为它有可能含有共享的数据（见Segment），所以将其加入本Buffer的tail</span><br><span class="line">    &#x2F;&#x2F; 从而巧妙实现 Buffer 读写的复用</span><br><span class="line">    if (head &#x3D;&#x3D; null) &#123; &#x2F;&#x2F; head为空，直接赋值head</span><br><span class="line">      head &#x3D; segmentToMove</span><br><span class="line">      segmentToMove.prev &#x3D; segmentToMove</span><br><span class="line">      segmentToMove.next &#x3D; segmentToMove.prev</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      &#x2F;&#x2F; head不为空，赋值到尾部</span><br><span class="line">      var tail &#x3D; head!!.prev</span><br><span class="line">      tail &#x3D; tail!!.push(segmentToMove)</span><br><span class="line">      &#x2F;&#x2F; 新的tail加入，确认是否需要压缩</span><br><span class="line">      tail.compact()</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; 重置source大小，和本Buffer的size大小</span><br><span class="line">    source.size -&#x3D; movedByteCount</span><br><span class="line">    size +&#x3D; movedByteCount</span><br><span class="line">    byteCount -&#x3D; movedByteCount</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="缓存数据片段-Segment"><a href="#缓存数据片段-Segment" class="headerlink" title="缓存数据片段 Segment"></a>缓存数据片段 Segment</h3><p>Buffer数据存储片段，目标数据都存储在Segment中的data字段中，Segment双向链表结构，提供pop、push进行Segment的增加和移除。split和compact对Segment进行拆分和合并，shareCopy为共享数据提供一次拷贝便利等</p>
+<h4 id="共享机制"><a href="#共享机制" class="headerlink" title="共享机制"></a>共享机制</h4><p>两个字段（shared、owner）和两个方法（sharedCopy、unsharedCopy）来实现<br>浅拷贝的应用会直接减少一次I/O操作，大大提高I/O效率</p>
+<ul>
+<li>shared：代表该Segment的数据是否共享</li>
+<li>owner：代表该Segment是否拥有对数据的写入权利</li>
+<li>sharedCopy：data浅拷贝，共享复制的Segment中的data数据，其中owner为false（即拷贝的Segment只能读不能写）</li>
+<li>unsharedCopy：data深拷贝，完全复制一个Segment</li>
+</ul>
+<h4 id="拆分与合并"><a href="#拆分与合并" class="headerlink" title="拆分与合并"></a>拆分与合并</h4><p>为了Segment的回收，以及更加合理化存储数据，提供两个方法</p>
+<ul>
+<li>compact：合并，如果本Segment与前一个Segment两者数据可以合为一个，则可以通过compact方法合并为一个Segment，然后回收本Segment</li>
+<li>split：分割，当存储的数据大于当前Segment的容量时，则需要一个新的Segment，此时会有两种情况，1.如果数据量大于1024则浅拷贝一个Segment来装数据，如果不是，则直接深拷贝数据创建一个新的Segment</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><span class="line">internal class Segment &#123;</span><br><span class="line">  &#x2F;&#x2F; 缓存的数据</span><br><span class="line">  @JvmField val data: ByteArray</span><br><span class="line"></span><br><span class="line">  &#x2F;** 读取数据的指针  *&#x2F;</span><br><span class="line">  @JvmField var pos: Int &#x3D; 0</span><br><span class="line"></span><br><span class="line">  &#x2F;** 写入数据的的指针 *&#x2F;</span><br><span class="line">  @JvmField var limit: Int &#x3D; 0</span><br><span class="line"></span><br><span class="line">  &#x2F;** 数据是否共享  *&#x2F;</span><br><span class="line">  @JvmField var shared: Boolean &#x3D; false</span><br><span class="line"></span><br><span class="line">  &#x2F;** limit扩展字段，数据是否属于当前的Segment，true即可以写入 *&#x2F;</span><br><span class="line">  @JvmField var owner: Boolean &#x3D; false</span><br><span class="line"></span><br><span class="line">  &#x2F;** 链表数据结构的next字段 *&#x2F;</span><br><span class="line">  @JvmField var next: Segment? &#x3D; null</span><br><span class="line"></span><br><span class="line">  &#x2F;** 链表数据结构的prev字段  *&#x2F;</span><br><span class="line">  @JvmField var prev: Segment? &#x3D; null</span><br><span class="line"></span><br><span class="line">  constructor() &#123;</span><br><span class="line">    this.data &#x3D; ByteArray(SIZE)</span><br><span class="line">    this.owner &#x3D; true</span><br><span class="line">    this.shared &#x3D; false</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  constructor(data: ByteArray, pos: Int, limit: Int, shared: Boolean, owner: Boolean) &#123;</span><br><span class="line">    this.data &#x3D; data</span><br><span class="line">    this.pos &#x3D; pos</span><br><span class="line">    this.limit &#x3D; limit</span><br><span class="line">    this.shared &#x3D; shared</span><br><span class="line">    this.owner &#x3D; owner</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; data浅拷贝，创建一个共享的Segment，owner为false</span><br><span class="line">  fun sharedCopy(): Segment &#123;</span><br><span class="line">    shared &#x3D; true</span><br><span class="line">    return Segment(data, pos, limit, true, false)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; data深拷贝，创建一个非共享的Segment，</span><br><span class="line">  fun unsharedCopy() &#x3D; Segment(data.copyOf(), pos, limit, false, true)</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 移除本Segment对象</span><br><span class="line">  fun pop(): Segment? &#123;</span><br><span class="line">    val result &#x3D; if (next !&#x3D;&#x3D; this) next else null</span><br><span class="line">    prev!!.next &#x3D; next</span><br><span class="line">    next!!.prev &#x3D; prev</span><br><span class="line">    next &#x3D; null</span><br><span class="line">    prev &#x3D; null</span><br><span class="line">    return result</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 添加一个segment到链表中</span><br><span class="line">  fun push(segment: Segment): Segment &#123;</span><br><span class="line">    segment.prev &#x3D; this</span><br><span class="line">    segment.next &#x3D; next</span><br><span class="line">    next!!.prev &#x3D; segment</span><br><span class="line">    next &#x3D; segment</span><br><span class="line">    return segment</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 分割为两个Segment，数据起始点分别为 &#96;[pos..pos+byteCount)&#96;、&#96;[pos+byteCount..limit)&#96;</span><br><span class="line">  fun split(byteCount: Int): Segment &#123;</span><br><span class="line">    require(byteCount &gt; 0 &amp;&amp; byteCount &lt;&#x3D; limit - pos) &#123; &quot;byteCount out of range&quot; &#125;</span><br><span class="line">    val prefix: Segment</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 1\. 尽量减少二次拷贝；2\. 共享拷贝在一定大小才执行，避免过多的短小的Segment</span><br><span class="line">    if (byteCount &gt;&#x3D; SHARE_MINIMUM) &#123;</span><br><span class="line">      prefix &#x3D; sharedCopy() &#x2F;&#x2F; 共享拷贝</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      prefix &#x3D; SegmentPool.take() &#x2F;&#x2F; 直接拷贝</span><br><span class="line">      data.copyInto(prefix.data, startIndex &#x3D; pos, endIndex &#x3D; pos + byteCount)</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; prefix赋值 limit pos</span><br><span class="line">    prefix.limit &#x3D; prefix.pos + byteCount</span><br><span class="line">    pos +&#x3D; byteCount</span><br><span class="line">    prev!!.push(prefix)</span><br><span class="line">    return prefix</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 合并压缩</span><br><span class="line">  fun compact() &#123;</span><br><span class="line">    check(prev !&#x3D;&#x3D; this) &#123; &quot;cannot compact&quot; &#125;</span><br><span class="line">    if (!prev!!.owner) return </span><br><span class="line">    &#x2F;&#x2F; 本Segment数据大小</span><br><span class="line">    val byteCount &#x3D; limit - pos</span><br><span class="line">    &#x2F;&#x2F; 前一个Segment剩余可写入空间大小</span><br><span class="line">    val availableByteCount &#x3D; SIZE - prev!!.limit + if (prev!!.shared) 0 else prev!!.pos</span><br><span class="line">    if (byteCount &gt; availableByteCount) return     </span><br><span class="line">    &#x2F;&#x2F; 如果有足够的空间，则将本Segment数据写入到前一个Segment</span><br><span class="line">    writeTo(prev!!, byteCount)</span><br><span class="line">    &#x2F;&#x2F; pop，然后执行回收</span><br><span class="line">    pop()</span><br><span class="line">    SegmentPool.recycle(this)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;** 将数据写入到buffer的segment中 *&#x2F;</span><br><span class="line">  fun writeTo(sink: Segment, byteCount: Int) &#123;</span><br><span class="line">    &#x2F;&#x2F; 只有owner为true才能写入数据</span><br><span class="line">    check(sink.owner) &#123; &quot;only owner can write&quot; &#125;</span><br><span class="line">    &#x2F;&#x2F; 如果被写入的sink limit+byteCount大于了最大值，则需要先充值下pos和limit</span><br><span class="line">    if (sink.limit + byteCount &gt; SIZE) &#123;</span><br><span class="line">      if (sink.shared) throw IllegalArgumentException()</span><br><span class="line">      &#x2F;&#x2F; 如果所有空闲都容纳不下 ，则抛出异常</span><br><span class="line">      if (sink.limit + byteCount - sink.pos &gt; SIZE) throw IllegalArgumentException()</span><br><span class="line">      &#x2F;&#x2F; 将被写入的segment中的数据复制到 [ 0,limit-pos)</span><br><span class="line">      sink.data.copyInto(sink.data, startIndex &#x3D; sink.pos, endIndex &#x3D; sink.limit)</span><br><span class="line">      &#x2F;&#x2F; 重置 pos和limit</span><br><span class="line">      sink.limit -&#x3D; sink.pos</span><br><span class="line">      sink.pos &#x3D; 0</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; 将本Segment的data复制到sink的data中，偏移大小为limit，起点为pos</span><br><span class="line">    data.copyInto(sink.data, destinationOffset &#x3D; sink.limit, startIndex &#x3D; pos,</span><br><span class="line">        endIndex &#x3D; pos + byteCount)</span><br><span class="line">    sink.limit +&#x3D; byteCount</span><br><span class="line">    pos +&#x3D; byteCount</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  companion object &#123;</span><br><span class="line">    &#x2F;** Segment 大小 bytes  *&#x2F;</span><br><span class="line">    const val SIZE &#x3D; 8192</span><br><span class="line"></span><br><span class="line">    &#x2F;** 共享数据大小  *&#x2F;</span><br><span class="line">    const val SHARE_MINIMUM &#x3D; 1024</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="缓存片段池-SegmentPool"><a href="#缓存片段池-SegmentPool" class="headerlink" title="缓存片段池 SegmentPool"></a>缓存片段池 SegmentPool</h3><ul>
+<li>大小：64 * 1024 Kib，一个Segment大小8192，相当于8个Segment</li>
+<li>结构：单链表结构，提供take（取）和recycle（存）Segment方法，且线程安全</li>
+<li>作用：防止已申请的资源被回收，增加资源的重复利用，提高效率，减少GC,避免内存抖动</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">internal object SegmentPool &#123;</span><br><span class="line">  &#x2F;&#x2F; 缓存Segment池总大小 </span><br><span class="line">  const val MAX_SIZE &#x3D; 64 * 1024L &#x2F;&#x2F; 64 KiB.</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 单链表next指针</span><br><span class="line">  var next: Segment? &#x3D; null</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; segment缓存池使用大小</span><br><span class="line">  var byteCount &#x3D; 0L</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 取 segment方法  （线程安全） </span><br><span class="line">  fun take(): Segment &#123;</span><br><span class="line">    synchronized(this) &#123;</span><br><span class="line">      &#x2F;&#x2F; 先从链表中获取</span><br><span class="line">      next?.let &#123; result -&gt;</span><br><span class="line">        &#x2F;&#x2F; 将缓存池next指针后移到下一个next</span><br><span class="line">        next &#x3D; result.next </span><br><span class="line">        &#x2F;&#x2F; 目标segment中next指引为null</span><br><span class="line">        result.next &#x3D; null</span><br><span class="line">        &#x2F;&#x2F; 总大小 减去</span><br><span class="line">        byteCount -&#x3D; Segment.SIZE</span><br><span class="line">        return result</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return Segment() &#x2F;&#x2F; 创建一个新的segment</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 存（回收） segment方法</span><br><span class="line">  fun recycle(segment: Segment) &#123;</span><br><span class="line">    require(segment.next &#x3D;&#x3D; null &amp;&amp; segment.prev &#x3D;&#x3D; null)</span><br><span class="line">    if (segment.shared) return &#x2F;&#x2F; 共用segment，不可回收使用</span><br><span class="line"></span><br><span class="line">    synchronized(this) &#123;</span><br><span class="line">      &#x2F;&#x2F; 目前segment池大小已经满了，不在回收</span><br><span class="line">      if (byteCount + Segment.SIZE &gt; MAX_SIZE) return &#x2F;&#x2F; Pool is full.</span><br><span class="line">      &#x2F;&#x2F; 回收目标segment，增加大小、更换next指引、重置segment</span><br><span class="line">      byteCount +&#x3D; Segment.SIZE</span><br><span class="line">      segment.next &#x3D; next</span><br><span class="line">      segment.limit &#x3D; 0</span><br><span class="line">      segment.pos &#x3D; segment.limit</span><br><span class="line">      next &#x3D; segment</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href="https://www.jianshu.com/p/c988d0416020" target="_blank" rel="noopener">下一篇 OkHttp 4源码（7）— 总结</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/OkHttp/" rel="tag"># OkHttp</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/01/16/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%885%EF%BC%89%E2%80%94%E8%AF%B7%E6%B1%82%E5%86%99%E5%85%A5%E5%92%8C%E5%93%8D%E5%BA%94%E8%AF%BB%E5%8F%96/" rel="prev" title="OkHttp 4源码（5）—请求写入和响应读取">
+      <i class="fa fa-chevron-left"></i> OkHttp 4源码（5）—请求写入和响应读取
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/01/30/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%887%EF%BC%89%E2%80%94%20%E6%80%BB%E7%BB%93/" rel="next" title="OkHttp 4源码（7）— 总结">
+      OkHttp 4源码（7）— 总结 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Okio-介绍"><span class="nav-number">1.</span> <span class="nav-text">Okio 介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Okio是什么"><span class="nav-number">1.1.</span> <span class="nav-text">Okio是什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Okio-特点"><span class="nav-number">1.2.</span> <span class="nav-text">Okio 特点</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Buffer-and-ByteString"><span class="nav-number">1.2.1.</span> <span class="nav-text">Buffer and ByteString</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Source-and-Sink"><span class="nav-number">1.2.2.</span> <span class="nav-text">Source and Sink</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Okio-图文概括"><span class="nav-number">1.3.</span> <span class="nav-text">Okio 图文概括</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#测试代码示例"><span class="nav-number">2.1.</span> <span class="nav-text">测试代码示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据写入-Sink"><span class="nav-number">2.2.</span> <span class="nav-text">数据写入 Sink</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据读取-Source"><span class="nav-number">2.3.</span> <span class="nav-text">数据读取 Source</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据缓存-Buffer"><span class="nav-number">2.4.</span> <span class="nav-text">数据缓存 Buffer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#写入缓存"><span class="nav-number">2.4.1.</span> <span class="nav-text">写入缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#BufferedSink-接口"><span class="nav-number">2.4.1.1.</span> <span class="nav-text">BufferedSink 接口</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#RealBufferedSink-实现类"><span class="nav-number">2.4.1.2.</span> <span class="nav-text">RealBufferedSink 实现类</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#读取缓存"><span class="nav-number">2.4.2.</span> <span class="nav-text">读取缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#BufferedSource-接口"><span class="nav-number">2.4.2.1.</span> <span class="nav-text">BufferedSource 接口</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#RealBufferedSource-实现类"><span class="nav-number">2.4.2.2.</span> <span class="nav-text">RealBufferedSource 实现类</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缓存实现类-Buffer"><span class="nav-number">2.4.3.</span> <span class="nav-text">缓存实现类 Buffer</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#缓存数据片段-Segment"><span class="nav-number">2.5.</span> <span class="nav-text">缓存数据片段 Segment</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#共享机制"><span class="nav-number">2.5.1.</span> <span class="nav-text">共享机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#拆分与合并"><span class="nav-number">2.5.2.</span> <span class="nav-text">拆分与合并</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#缓存片段池-SegmentPool"><span class="nav-number">2.6.</span> <span class="nav-text">缓存片段池 SegmentPool</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '19db92baf0493419dbc40188e6fb7980',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

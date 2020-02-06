@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="为什么需要引用？我们知道在最早的JVM实现里，是使用“跟踪回收”算法从GC ROOTS出发，按照BFS或者DFS遍历所有可达对象，针对不不可达对象进行回收。但随着Java演进，暴露出一些不能覆盖的场景，例如：某些场景下使用方希望在回收具体对象的同时还能辅助回收这个对象绑定的一些资源（如socket、堆外内存等）、某些场景下希望使用堆内缓存尽可能缓存更多更久的数据但不OOM。基于此，JDK在1.2引">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Reference和ReferenceQueue相关源码解析">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/03/05/Reference%E5%92%8CReferenceQueue%E7%9B%B8%E5%85%B3%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="为什么需要引用？我们知道在最早的JVM实现里，是使用“跟踪回收”算法从GC ROOTS出发，按照BFS或者DFS遍历所有可达对象，针对不不可达对象进行回收。但随着Java演进，暴露出一些不能覆盖的场景，例如：某些场景下使用方希望在回收具体对象的同时还能辅助回收这个对象绑定的一些资源（如socket、堆外内存等）、某些场景下希望使用堆内缓存尽可能缓存更多更久的数据但不OOM。基于此，JDK在1.2引">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-fec84bdd662d2c10.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-78514b107996e4a8.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-0bd5881d52164f6e.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-03-05T13:33:49.917Z">
+<meta property="article:modified_time" content="2020-02-06T16:41:41.986Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-fec84bdd662d2c10.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/03/05/Reference%E5%92%8CReferenceQueue%E7%9B%B8%E5%85%B3%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Reference和ReferenceQueue相关源码解析 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/03/05/Reference%E5%92%8CReferenceQueue%E7%9B%B8%E5%85%B3%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Reference和ReferenceQueue相关源码解析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-03-05 21:33:49" itemprop="dateCreated datePublished" datetime="2019-03-05T21:33:49+08:00">2019-03-05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 00:41:41" itemprop="dateModified" datetime="2020-02-07T00:41:41+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Java/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>3.7k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>3 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="为什么需要引用？"><a href="#为什么需要引用？" class="headerlink" title="为什么需要引用？"></a>为什么需要引用？</h3><p>我们知道在最早的JVM实现里，是使用“跟踪回收”算法从GC ROOTS出发，按照BFS或者DFS遍历所有可达对象，针对不不可达对象进行回收。但随着Java演进，暴露出一些不能覆盖的场景，例如：某些场景下使用方希望在回收具体对象的同时还能辅助回收这个对象绑定的一些资源（如socket、堆外内存等）、某些场景下希望使用堆内缓存尽可能缓存更多更久的数据但不OOM。基于此，JDK在1.2引入了Refreence及其子类来支持一些新特性和功能</p>
+<h3 id="Reference介绍"><a href="#Reference介绍" class="headerlink" title="Reference介绍"></a>Reference介绍</h3><h5 id="Reference类图"><a href="#Reference类图" class="headerlink" title="Reference类图"></a>Reference类图</h5><p><img src="https://upload-images.jianshu.io/upload_images/9696036-fec84bdd662d2c10.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<ul>
+<li><strong>FinalReference</strong>，一种保底策略，因为GC只能管理自动内存资源而无法管理其它资源（如堆外内存、file handle、socket等），这些需要使用方手动对资源进行管理</li>
+<li><strong>SoftReference</strong>，软引用，只有在堆内存不足时，垃圾回收器会回收对应引用。所以比较适合用来实现不是特别重要的缓存</li>
+<li><strong>WeakReference</strong>，弱引用，每次垃圾回收都会回收其引用，一般在需要控制内存但又又想要尽量用到内存的场景下使用</li>
+<li><strong>PhantomReference</strong>，虚引用，对引用无影响，只用于获取对象被回收的通知。和软引用以及弱引用不同的是幻影引用指向的对象没有其他强引用、软引用指向时不会自动被GC清理。</li>
+</ul>
+<p>⚠️ 因为默认的引用就是强引用，所以没有强引用的Reference实现类。<br>详情：<a href="https://www.jianshu.com/p/7ff38dfbb5a8" target="_blank" rel="noopener">Reference子类源码解析</a></p>
+<h4 id="Reference生命周期"><a href="#Reference生命周期" class="headerlink" title="Reference生命周期"></a>Reference生命周期</h4><p>Referent被GC回收，则会根据是持有ReferenceQueue，而加入到对应到ReferenceQueue中，这样可以通过RQ来监听reference是否回收状态</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-78514b107996e4a8.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="Reference运行结构"><a href="#Reference运行结构" class="headerlink" title="Reference运行结构"></a>Reference运行结构</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-0bd5881d52164f6e.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="Reference源码"><a href="#Reference源码" class="headerlink" title="Reference源码"></a>Reference源码</h4><h6 id="字段"><a href="#字段" class="headerlink" title="字段"></a>字段</h6><ul>
+<li>referent：  引用指向的对象</li>
+<li>queue： ReferenceQueue，Reference构造的时候传入，其内部封装了单向链表的添加，删除和遍历等操作。用于Reference状态监听及管理</li>
+<li>discovered：单向链表，由JVM维护</li>
+<li>next：指向ReferenceQueue中下一个元素，ReferenceQueue链表指针</li>
+<li>pending：discovered链表表头，在referent被回收后的reference<br>将有JVM标记，等待入队处理</li>
+</ul>
+<h6 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h6><ul>
+<li>static代码块：构造ReferenceHandler线程，循环执行tryHandlePending方法</li>
+<li>tryHandlePending：循环处理pending链表头，维护discovered链表，如果pending不为空，则进行插入ReferenceQueue进行后续操作。（这里如果是cleaner，则先进行clean操作）</li>
+</ul>
+<h6 id="内部类"><a href="#内部类" class="headerlink" title="内部类"></a>内部类</h6><ul>
+<li>ReferenceHandler，线程实现类，run方法中循环调用Refreence的静态方法tryHandlePending</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 用于控制垃圾回收器操作与Pending状态的Reference入队操作不冲突执行的全局锁</span><br><span class="line">&#x2F;&#x2F; 垃圾回收器开始一轮垃圾回收前要获取此锁</span><br><span class="line">&#x2F;&#x2F; 所以所有占用这个锁的代码必须尽快完成，不能生成新对象，也不能调用用户代码</span><br><span class="line">static private class Lock &#123; &#125;;</span><br><span class="line">private static Lock lock &#x3D; new Lock();</span><br><span class="line"></span><br><span class="line">private static class ReferenceHandler extends Thread &#123;</span><br><span class="line"></span><br><span class="line">    ReferenceHandler(ThreadGroup g, String name) &#123;</span><br><span class="line">        super(g, name);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void run() &#123;</span><br><span class="line">        &#x2F;&#x2F; 这个线程一直执行</span><br><span class="line">        for (;;) &#123;</span><br><span class="line">            Reference&lt;Object&gt; r;</span><br><span class="line">            &#x2F;&#x2F; 获取锁，避免与垃圾回收器同时操作</span><br><span class="line">            synchronized (lock) &#123;</span><br><span class="line">                &#x2F;&#x2F; 判断pending-Reference链表是否有数据</span><br><span class="line">                if (pending !&#x3D; null) &#123;</span><br><span class="line">                    &#x2F;&#x2F; 如果有Pending Reference，从列表中取出</span><br><span class="line">                    r &#x3D; pending;</span><br><span class="line">                    pending &#x3D; r.discovered;</span><br><span class="line">                    r.discovered &#x3D; null;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    &#x2F;&#x2F; 如果没有Pending Reference，调用wait等待</span><br><span class="line">                    &#x2F;&#x2F; </span><br><span class="line">                    &#x2F;&#x2F; wait等待锁，是可能抛出OOME的，</span><br><span class="line">                    &#x2F;&#x2F; 因为可能发生InterruptedException异常，然后就需要实例化这个异常对象，</span><br><span class="line">                    &#x2F;&#x2F; 如果此时内存不足，就可能抛出OOME，所以这里需要捕获OutOfMemoryError，</span><br><span class="line">                    &#x2F;&#x2F; 避免因为OOME而导致ReferenceHandler进程静默退出</span><br><span class="line">                    try &#123;</span><br><span class="line">                        try &#123;</span><br><span class="line">                            lock.wait();</span><br><span class="line">                        &#125; catch (OutOfMemoryError x) &#123; &#125;</span><br><span class="line">                    &#125; catch (InterruptedException x) &#123; &#125;</span><br><span class="line">                    continue;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 如果Reference是Cleaner，调用其clean方法</span><br><span class="line">            &#x2F;&#x2F; 这与Cleaner机制有关系，不在此文的讨论访问</span><br><span class="line">            if (r instanceof Cleaner) &#123;</span><br><span class="line">                ((Cleaner)r).clean();</span><br><span class="line">                continue;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 把Reference添加到关联的ReferenceQueue中</span><br><span class="line">            &#x2F;&#x2F; 如果Reference构造时没有关联ReferenceQueue，会关联ReferenceQueue.NULL，这里就不会进行入队操作了</span><br><span class="line">            ReferenceQueue&lt;Object&gt; q &#x3D; r.queue;</span><br><span class="line">            if (q !&#x3D; ReferenceQueue.NULL) q.enqueue(r);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ReferenceQueue源码"><a href="#ReferenceQueue源码" class="headerlink" title="ReferenceQueue源码"></a>ReferenceQueue源码</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public class ReferenceQueue&lt;T&gt; &#123;</span><br><span class="line">    &#x2F;&#x2F; 单向链表</span><br><span class="line">    private volatile Reference&lt;? extends T&gt; head &#x3D; null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">boolean enqueue(Reference&lt;? extends T&gt; r) &#123; </span><br><span class="line">    &#x2F;* Called only by Reference class *&#x2F;</span><br><span class="line">    synchronized (lock) &#123;</span><br><span class="line">		&#x2F;&#x2F; 判断Reference是否需要入队</span><br><span class="line">        ReferenceQueue&lt;?&gt; queue &#x3D; r.queue;</span><br><span class="line">        if ((queue &#x3D;&#x3D; NULL) || (queue &#x3D;&#x3D; ENQUEUED)) &#123;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">        assert queue &#x3D;&#x3D; this;</span><br><span class="line">        </span><br><span class="line">        &#x2F;&#x2F; Reference入队后，其queue变量设置为ENQUEUED</span><br><span class="line">        r.queue &#x3D; ENQUEUED;</span><br><span class="line">        &#x2F;&#x2F; Reference的next变量指向ReferenceQueue中下一个元素</span><br><span class="line">        r.next &#x3D; (head &#x3D;&#x3D; null) ? r : head;</span><br><span class="line">        head &#x3D; r;</span><br><span class="line">        queueLength++;</span><br><span class="line">        if (r instanceof FinalReference) &#123;</span><br><span class="line">            sun.misc.VM.addFinalRefCount(1);</span><br><span class="line">        &#125;</span><br><span class="line">        lock.notifyAll();</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public Reference&lt;? extends T&gt; poll() &#123;</span><br><span class="line">        &#x2F;&#x2F; 出队</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="Reference类解决的三个问题"><a href="#Reference类解决的三个问题" class="headerlink" title="Reference类解决的三个问题"></a>Reference类解决的三个问题</h3><ul>
+<li>实现特定的引用类型，支持不同功能</li>
+<li>使用者可以在对象被回收后得到通知</li>
+<li>使用者可以自定义回收，进行非GC回收的资源释放</li>
+</ul>
+<p>参考<br><a href="https://coldwalker.com/2019/02//gc_intro/" target="_blank" rel="noopener">https://coldwalker.com/2019/02//gc_intro/</a><br><a href="https://github.com/zxiaofan/JDK/blob/master/JDK1.8/src/java/lang/ref/ReferenceQueue.java" target="_blank" rel="noopener">https://github.com/zxiaofan/JDK/blob/master/JDK1.8/src/java/lang/ref/ReferenceQueue.java</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2018/02/11/JVM%E5%86%85%E5%AD%98%E7%9B%B8%E5%85%B3%E6%80%BB%E7%BB%93%E7%9A%84%E5%89%AF%E6%9C%AC/" rel="prev" title="JVM内存相关总结的副本">
+      <i class="fa fa-chevron-left"></i> JVM内存相关总结的副本
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/03/10/Reference%E5%AD%90%E7%B1%BB%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/" rel="next" title="Reference子类源码解析">
+      Reference子类源码解析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么需要引用？"><span class="nav-number">1.</span> <span class="nav-text">为什么需要引用？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference介绍"><span class="nav-number">2.</span> <span class="nav-text">Reference介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Reference类图"><span class="nav-number">2.0.1.</span> <span class="nav-text">Reference类图</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Reference生命周期"><span class="nav-number">2.1.</span> <span class="nav-text">Reference生命周期</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Reference运行结构"><span class="nav-number">2.2.</span> <span class="nav-text">Reference运行结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Reference源码"><span class="nav-number">2.3.</span> <span class="nav-text">Reference源码</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#字段"><span class="nav-number">2.3.0.1.</span> <span class="nav-text">字段</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#方法"><span class="nav-number">2.3.0.2.</span> <span class="nav-text">方法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#内部类"><span class="nav-number">2.3.0.3.</span> <span class="nav-text">内部类</span></a></li></ol></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ReferenceQueue源码"><span class="nav-number">2.4.</span> <span class="nav-text">ReferenceQueue源码</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference类解决的三个问题"><span class="nav-number">3.</span> <span class="nav-text">Reference类解决的三个问题</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: 'dd6e4d9818062a8db0559aafd9d7d9be',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

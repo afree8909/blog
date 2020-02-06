@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Zygote简介Zygote中文翻译为“受精卵”，正如其名，它主要用于孵化子进程。Zygote是一个C&#x2F;S模型，Zygote进程作为服务端，其他进程作为客户端向它发出“孵化”请求，而Zygote接收到这个请求后就“孵化”出一个新的进程。此篇文章着重介绍 Zygote进程的创建和启动流程 Zygote进程启动流程图 init进程main方法&#x2F;system&#x2F;core&#x2F;init&#x2F;init.c123456">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Zygote启动流程分析">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/05/16/Zygote%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="Zygote简介Zygote中文翻译为“受精卵”，正如其名，它主要用于孵化子进程。Zygote是一个C&#x2F;S模型，Zygote进程作为服务端，其他进程作为客户端向它发出“孵化”请求，而Zygote接收到这个请求后就“孵化”出一个新的进程。此篇文章着重介绍 Zygote进程的创建和启动流程 Zygote进程启动流程图 init进程main方法&#x2F;system&#x2F;core&#x2F;init&#x2F;init.c123456">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-310e2ec8e0685edb.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-05-16T07:16:04.052Z">
+<meta property="article:modified_time" content="2020-02-06T17:07:06.919Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta property="article:tag" content="启动流程">
+<meta property="article:tag" content="Zygote">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-310e2ec8e0685edb.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/05/16/Zygote%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Zygote启动流程分析 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/05/16/Zygote%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Zygote启动流程分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-05-16 15:16:04" itemprop="dateCreated datePublished" datetime="2019-05-16T15:16:04+08:00">2019-05-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 01:07:06" itemprop="dateModified" datetime="2020-02-07T01:07:06+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>9k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>8 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h4 id="Zygote简介"><a href="#Zygote简介" class="headerlink" title="Zygote简介"></a>Zygote简介</h4><p>Zygote中文翻译为“受精卵”，正如其名，它主要用于孵化子进程。<br>Zygote是一个C/S模型，Zygote进程作为服务端，其他进程作为客户端向它发出“孵化”请求，而Zygote接收到这个请求后就“孵化”出一个新的进程。<br>此篇文章着重介绍 Zygote进程的创建和启动流程</p>
+<h4 id="Zygote进程启动流程图"><a href="#Zygote进程启动流程图" class="headerlink" title="Zygote进程启动流程图"></a>Zygote进程启动流程图</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-310e2ec8e0685edb.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="init进程main方法"><a href="#init进程main方法" class="headerlink" title="init进程main方法"></a>init进程main方法</h4><h5 id="system-core-init-init-c"><a href="#system-core-init-init-c" class="headerlink" title="/system/core/init/init.c"></a>/system/core/init/init.c</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">     int main(int argc, char **argv)&#123;      </span><br><span class="line">        ... &#x2F;&#x2F; 初始化 文件、属性服务等</span><br><span class="line">        </span><br><span class="line">        &#x2F;&#x2F; 解析 init.rc </span><br><span class="line">1077    init_parse_config_file(&quot;&#x2F;init.rc&quot;);</span><br><span class="line">1078    &#x2F;&#x2F; 执行 rc解析后的data （见 rc 语法）</span><br><span class="line">1079    action_for_each_trigger(&quot;early-init&quot;, action_add_queue_tail);</span><br><span class="line">1081    queue_builtin_action(wait_for_coldboot_done_action, &quot;wait_for_coldboot_done&quot;);</span><br><span class="line">1082    queue_builtin_action(mix_hwrng_into_linux_rng_action, &quot;mix_hwrng_into_linux_rng&quot;);</span><br><span class="line">1083    queue_builtin_action(keychord_init_action, &quot;keychord_init&quot;);</span><br><span class="line">1084    queue_builtin_action(console_init_action, &quot;console_init&quot;);</span><br><span class="line">1087    action_for_each_trigger(&quot;init&quot;, action_add_queue_tail);</span><br><span class="line">1092    queue_builtin_action(mix_hwrng_into_linux_rng_action, &quot;mix_hwrng_into_linux_rng&quot;);</span><br><span class="line">1093    queue_builtin_action(property_service_init_action, &quot;property_service_init&quot;);</span><br><span class="line">1094    queue_builtin_action(signal_init_action, &quot;signal_init&quot;);</span><br><span class="line">1097    if (is_charger) &#123;</span><br><span class="line">1098        action_for_each_trigger(&quot;charger&quot;, action_add_queue_tail);</span><br><span class="line">1099    &#125; else &#123;</span><br><span class="line">1100        action_for_each_trigger(&quot;late-init&quot;, action_add_queue_tail);</span><br><span class="line">1101    &#125;</span><br><span class="line">1104    queue_builtin_action(queue_property_triggers_action, &quot;queue_property_triggers&quot;);</span><br><span class="line">1108    queue_builtin_action(bootchart_init_action, &quot;bootchart_init&quot;);</span><br><span class="line"></span><br><span class="line">1110    &#x2F;&#x2F; 无限循环，执行action、检查是否需要重启、处理系统属性变化、回收僵尸进程等</span><br><span class="line">1111    for(;;) &#123;</span><br><span class="line">            ......</span><br><span class="line">1173    &#125;</span><br><span class="line">1174</span><br><span class="line">1175    return 0;</span><br><span class="line">1176&#125;</span><br><span class="line">1177</span><br></pre></td></tr></table></figure>
+
+<h4 id="rc配置文件"><a href="#rc配置文件" class="headerlink" title="rc配置文件"></a>rc配置文件</h4><h5 id="system-core-rootdir-init-rc"><a href="#system-core-rootdir-init-rc" class="headerlink" title="/system/core/rootdir/init.rc"></a>/system/core/rootdir/init.rc</h5><p>init.rc是一个配置文件，内部由Android初始化语言编写（Android Init Language）编写的脚本，它主要包含五种类型语句：<br>Action、Commands、Services、Options和Import</p>
+<h5 id="Action"><a href="#Action" class="headerlink" title="Action"></a>Action</h5><p>init.c的main方法中通过触发器trigger执行，执行顺序依次为<br>early-init、init、late-init、boot/charger、property等</p>
+<h5 id="Service"><a href="#Service" class="headerlink" title="Service"></a>Service</h5><p>init.c先解析rc文件将service添加到service链表中，然后有 Action配置在on XXX时机下触发启动服务<br>init生成的子进程，定义在rc文件，其中每一个service在启动时会通过fork方式生成子进程</p>
+<h5 id="Command"><a href="#Command" class="headerlink" title="Command"></a>Command</h5><p>执行命令，例如：start <service_name>： 启动指定的服务</p>
+<h5 id="Options"><a href="#Options" class="headerlink" title="Options"></a>Options</h5><p>是Service的可选项，例如 socket：创建名为/dev/soket/<name>的socket</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"></span><br><span class="line">422  on nonencrypted  &#x2F;&#x2F; 执行启动 main服务</span><br><span class="line">423    class_start main</span><br><span class="line">424    class_start late_start</span><br><span class="line">...  </span><br><span class="line">     &#x2F;&#x2F; service 例子</span><br><span class="line">519  service servicemanager &#x2F;system&#x2F;bin&#x2F;servicemanager</span><br><span class="line">520    class core</span><br><span class="line">521    user system</span><br><span class="line">522    group system</span><br><span class="line">523    critical</span><br><span class="line">524    onrestart restart healthd</span><br><span class="line">525    onrestart restart zygote</span><br><span class="line">526    onrestart restart media</span><br><span class="line">527    onrestart restart surfaceflinger</span><br><span class="line">528    onrestart restart drm</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h5 id="system-core-rootdir-init-zygote64-rc"><a href="#system-core-rootdir-init-zygote64-rc" class="headerlink" title="/system/core/rootdir/init.zygote64.rc"></a>/system/core/rootdir/init.zygote64.rc</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1  service zygote &#x2F;system&#x2F;bin&#x2F;app_process64 -Xzygote &#x2F;system&#x2F;bin --zygote --start-system-server</span><br><span class="line">2    class main</span><br><span class="line">3    socket zygote stream 660 root system</span><br><span class="line">4    onrestart write &#x2F;sys&#x2F;android_power&#x2F;request_state wake</span><br><span class="line">5    onrestart write &#x2F;sys&#x2F;power&#x2F;state on</span><br><span class="line">6    onrestart restart media</span><br><span class="line">7    onrestart restart netd</span><br></pre></td></tr></table></figure>
+
+<h4 id="rc配置文件解析"><a href="#rc配置文件解析" class="headerlink" title="rc配置文件解析"></a>rc配置文件解析</h4><p>/system/core/init/init_parser.c</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F; 解析 rc文件</span><br><span class="line">404   int init_parse_config_file(const char *fn)&#123;</span><br><span class="line">409    &#x2F;&#x2F; 解析 rc文件数据</span><br><span class="line">410    parse_config(fn, data);</span><br><span class="line">412    ......</span><br><span class="line">413 &#125;</span><br><span class="line"></span><br><span class="line">347  static void parse_config(const char *fn, char *s)&#123;</span><br><span class="line">       ... &#x2F;&#x2F; 初始化变量等</span><br><span class="line">365    for (;;) &#123;</span><br><span class="line">366        switch (next_token(&amp;state)) &#123;</span><br><span class="line">367        ...</span><br><span class="line">370        case T_NEWLINE:</span><br><span class="line">371            state.line++;</span><br><span class="line">372            if (nargs) &#123;</span><br><span class="line">373                int kw &#x3D; lookup_keyword(args[0]);</span><br><span class="line">374                if (kw_is(kw, SECTION)) &#123;</span><br><span class="line">375                    state.parse_line(&amp;state, 0, 0); &#x2F;&#x2F; 解析一份配置的每一项</span><br><span class="line">376                    parse_new_section(&amp;state, kw, nargs, args); &#x2F;&#x2F; 解析一份配置</span><br><span class="line">377                &#125; else &#123;</span><br><span class="line">378                    state.parse_line(&amp;state, nargs, args);</span><br><span class="line">379                &#125;</span><br><span class="line">380                nargs &#x3D; 0;</span><br><span class="line">381            &#125;</span><br><span class="line">382            break;</span><br><span class="line">384         ...</span><br><span class="line">388        &#125;</span><br><span class="line">389    &#125;</span><br><span class="line">390     .....</span><br><span class="line">401    &#125;</span><br><span class="line">402&#125;</span><br><span class="line"></span><br><span class="line">      static void parse_new_section(struct parse_state *state, int kw,</span><br><span class="line">321                       int nargs, char **args)&#123;</span><br><span class="line">323    </span><br><span class="line">326    case K_service: &#x2F;&#x2F; 解析服务</span><br><span class="line">327        state-&gt;context &#x3D; parse_service(state, nargs, args);</span><br><span class="line">328        if (state-&gt;context) &#123;</span><br><span class="line">329            state-&gt;parse_line &#x3D; parse_line_service;</span><br><span class="line">330            return;</span><br><span class="line">331        &#125;</span><br><span class="line">332        break;</span><br><span class="line">333    case K_on: &#x2F;&#x2F; 解析 Action</span><br><span class="line">334        state-&gt;context &#x3D; parse_action(state, nargs, args);</span><br><span class="line">335        if (state-&gt;context) &#123;</span><br><span class="line">336            state-&gt;parse_line &#x3D; parse_line_action;</span><br><span class="line">337            return;</span><br><span class="line">338        &#125;</span><br><span class="line">339        break;</span><br><span class="line">340    ......</span><br><span class="line">345&#125;</span><br><span class="line">346</span><br><span class="line"></span><br><span class="line">616  static void *parse_service(struct parse_state *state, int nargs, char **args)&#123;</span><br><span class="line">       &#x2F;&#x2F; 创建service ， 并添加到 Service链表中</span><br><span class="line">640    svc-&gt;name &#x3D; args[1];</span><br><span class="line">641    svc-&gt;classname &#x3D; &quot;default&quot;;</span><br><span class="line">642    memcpy(svc-&gt;args, args + 2, sizeof(char*) * nargs);</span><br><span class="line">643    svc-&gt;args[nargs] &#x3D; 0;</span><br><span class="line">644    svc-&gt;nargs &#x3D; nargs;</span><br><span class="line">645    svc-&gt;onrestart.name &#x3D; &quot;onrestart&quot;;</span><br><span class="line">646    list_init(&amp;svc-&gt;onrestart.commands);</span><br><span class="line">647    list_add_tail(&amp;service_list, &amp;svc-&gt;slist);</span><br><span class="line">648    return svc;</span><br><span class="line">649 &#125;</span><br><span class="line">650</span><br></pre></td></tr></table></figure>
+
+<h4 id="Zygote服务启动和进程创建"><a href="#Zygote服务启动和进程创建" class="headerlink" title="Zygote服务启动和进程创建"></a>Zygote服务启动和进程创建</h4><p>服务进程启动，7.0之前面向过程实现，之后面向对象实现<br>/system/core/init/builtins.c</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">     int do_class_start(int nargs, char **args)&#123;</span><br><span class="line">221    service_for_each_class(args[1], service_start_if_not_disabled);</span><br><span class="line">222    return 0;</span><br><span class="line">223&#125;</span><br><span class="line"></span><br><span class="line">194 static void service_start_if_not_disabled(struct service *svc)&#123;</span><br><span class="line">196    if (!(svc-&gt;flags &amp; SVC_DISABLED)) &#123;</span><br><span class="line">197        service_start(svc, NULL); &#x2F;&#x2F; 启动service</span><br><span class="line">198    &#125; else &#123;</span><br><span class="line">199        svc-&gt;flags |&#x3D; SVC_DISABLED_START;</span><br><span class="line">200    &#125;</span><br><span class="line">201 &#125;</span><br></pre></td></tr></table></figure>
+<p>/system/core/init/init.c</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">    void service_start(struct service *svc, const char *dynamic_args) &#123;</span><br><span class="line">       .....</span><br><span class="line">251    pid &#x3D; fork();  &#x2F;&#x2F; fork 进程</span><br><span class="line">252</span><br><span class="line">253    if (pid &#x3D;&#x3D; 0) &#123; &#x2F;&#x2F; init 子进程</span><br><span class="line">254       if (!dynamic_args) &#123;</span><br><span class="line">        &#x2F;&#x2F; 通过execve(svc-&gt;args[0], (char**)svc-&gt;args, (char**) ENV)，进入App_main.cpp的main()函数</span><br><span class="line">335            if (execve(svc-&gt;args[0], (char**) svc-&gt;args, (char**) ENV) &lt; 0) &#123;</span><br><span class="line">336                ERROR(&quot;cannot execve(&#39;%s&#39;): %s\n&quot;, svc-&gt;args[0], strerror(errno));</span><br><span class="line">337            &#125;</span><br><span class="line">338       &#125;</span><br><span class="line">356        _exit(127);</span><br><span class="line">357    &#125;</span><br><span class="line">358     ...</span><br><span class="line">359 &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Zygote进程main方法"><a href="#Zygote进程main方法" class="headerlink" title="Zygote进程main方法"></a>Zygote进程main方法</h4><p>/frameworks/base/cmds/app_process/app_main.cpp<br>主要事情：创建一个AppRuntime，调用它的start函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">132 int main(int argc, const char* const argv[])&#123;</span><br><span class="line">       .....</span><br><span class="line">       &#x2F;&#x2F; 传递的参数 args 为 “-Xzygote &#x2F;system&#x2F;bin --zygote --start-system-server”</span><br><span class="line">197    AppRuntime runtime(argv[0], computeArgBlockSize(argc, argv)); &#x2F;&#x2F; 初始一个 runtime</span><br><span class="line">       </span><br><span class="line">162    while (i &lt; argc) &#123;</span><br><span class="line">163        const char* arg &#x3D; argv[i++];</span><br><span class="line">164        if (!parentDir) &#123;</span><br><span class="line">165            parentDir &#x3D; arg;</span><br><span class="line">166        &#125; else if (strcmp(arg, &quot;--zygote&quot;) &#x3D;&#x3D; 0) &#123;</span><br><span class="line">167            zygote &#x3D; true;   &#x2F;&#x2F; 标识启动zygote</span><br><span class="line">168            niceName &#x3D; &quot;zygote&quot;;  </span><br><span class="line">169        &#125; else if (strcmp(arg, &quot;--start-system-server&quot;) &#x3D;&#x3D; 0) &#123;</span><br><span class="line">170            startSystemServer &#x3D; true;</span><br><span class="line">171        &#125; else if (strcmp(arg, &quot;--application&quot;) &#x3D;&#x3D; 0) &#123;</span><br><span class="line">172            application &#x3D; true;</span><br><span class="line">173        &#125; else if (strncmp(arg, &quot;--nice-name&#x3D;&quot;, 12) &#x3D;&#x3D; 0) &#123;</span><br><span class="line">174            niceName &#x3D; arg + 12;</span><br><span class="line">175        &#125; else &#123;</span><br><span class="line">176            className &#x3D; arg;</span><br><span class="line">177            break;</span><br><span class="line">178        &#125;</span><br><span class="line">179    &#125;</span><br><span class="line">180</span><br><span class="line">        ......</span><br><span class="line">187</span><br><span class="line">188    if (zygote) &#123; &#x2F;&#x2F; 调用AppRuntime启动ZygoteInit</span><br><span class="line">189        runtime.start(&quot;com.android.internal.os.ZygoteInit&quot;,</span><br><span class="line">190                startSystemServer ? &quot;start-system-server&quot; : &quot;&quot;);</span><br><span class="line">191    &#125; else if (className) &#123;</span><br><span class="line">196        runtime.start(&quot;com.android.internal.os.RuntimeInit&quot;,</span><br><span class="line">197                application ? &quot;application&quot; : &quot;tool&quot;);</span><br><span class="line">198    &#125; else &#123;</span><br><span class="line">202        return 10;</span><br><span class="line">203    &#125;</span><br><span class="line">204&#125;</span><br><span class="line">205</span><br></pre></td></tr></table></figure>
+
+<h4 id="AndroidRuntime初始化及启动Zygote初始化"><a href="#AndroidRuntime初始化及启动Zygote初始化" class="headerlink" title="AndroidRuntime初始化及启动Zygote初始化"></a>AndroidRuntime初始化及启动Zygote初始化</h4><p>AndroidRuntime.cpp<br>主要事情：启动虚拟机、注册JNI方法，调用ZygoteInit的main函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">     void AndroidRuntime::start(const char* className, const char* options) &#123;</span><br><span class="line">        ......</span><br><span class="line">836</span><br><span class="line">837    &#x2F;* start the virtual machine 启动虚拟机 *&#x2F;</span><br><span class="line">838    JNIEnv* env; </span><br><span class="line">839    if (startVm(&amp;mJavaVM, &amp;env) !&#x3D; 0) &#123;</span><br><span class="line">840        return;</span><br><span class="line">841    &#125;</span><br><span class="line">842    onVmCreated(env);</span><br><span class="line">843</span><br><span class="line">844    &#x2F;*</span><br><span class="line">845     * Register android functions. JNI方法注册</span><br><span class="line">846     *&#x2F;</span><br><span class="line">847    if (startReg(env) &lt; 0) &#123;</span><br><span class="line">848        ALOGE(&quot;Unable to register all android natives\n&quot;);</span><br><span class="line">849        return;</span><br><span class="line">850    &#125;</span><br><span class="line">        ......</span><br><span class="line">871</span><br><span class="line">        &#x2F;&#x2F; 将 &quot;com.android.internal.os.ZygoteInit&quot;转换为&quot;com&#x2F;android&#x2F;internal&#x2F;os&#x2F;ZygoteInit&quot;</span><br><span class="line">876    char* slashClassName &#x3D; toSlashClassName(className);</span><br><span class="line">877    jclass startClass &#x3D; env-&gt;FindClass(slashClassName);</span><br><span class="line">878    if (startClass &#x3D;&#x3D; NULL) &#123;</span><br><span class="line">879       ......</span><br><span class="line">881    &#125; else &#123;</span><br><span class="line">882        jmethodID startMeth &#x3D; env-&gt;GetStaticMethodID(startClass, &quot;main&quot;,</span><br><span class="line">883            &quot;([Ljava&#x2F;lang&#x2F;String;)V&quot;);</span><br><span class="line">884        if (startMeth &#x3D;&#x3D; NULL) &#123;</span><br><span class="line">885            ......</span><br><span class="line">887        &#125; else &#123;</span><br><span class="line">            &#x2F;&#x2F; 调用ZygoteInit.main()方法</span><br><span class="line">888            env-&gt;CallStaticVoidMethod(startClass, startMeth, strArray);</span><br><span class="line">889</span><br><span class="line">895    &#125;</span><br><span class="line">896   ......</span><br><span class="line">903&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="ZygoteInit的main方法"><a href="#ZygoteInit的main方法" class="headerlink" title="ZygoteInit的main方法"></a>ZygoteInit的main方法</h4><p>ZygoteInit.java<br>主要事情：创建Socket用来和AMS通讯、启动SystemServer、调用runSelectLoop进入循环等待唤醒并执行相应工作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String argv[]) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            RuntimeInit.enableDdms(); &#x2F;&#x2F; 开启DDMS功能</span><br><span class="line">            ......</span><br><span class="line">            &#x2F;&#x2F; 注册 ZygoteSocket 进程间通信</span><br><span class="line">            registerZygoteSocket(socketName);</span><br><span class="line">            &#x2F;&#x2F; 预加载 类和资源（fork 进程共享）</span><br><span class="line">            preload();</span><br><span class="line">            </span><br><span class="line">            &#x2F;&#x2F; Do an initial gc to clean up after startup</span><br><span class="line">            gcAndFinalize();</span><br><span class="line">            &#x2F;&#x2F; 启动 SystemServer 此处会fork出服务进程</span><br><span class="line">            if (startSystemServer) &#123;</span><br><span class="line">                startSystemServer(abiList, socketName);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 开启无限循环模式 处理进程消息</span><br><span class="line">            runSelectLoop(abiList);</span><br><span class="line">            &#x2F;&#x2F; 关闭 socket</span><br><span class="line">            closeServerSocket();</span><br><span class="line">        &#125; catch (MethodAndArgsCaller caller) &#123;</span><br><span class="line">            caller.run(); &#x2F;&#x2F; 子进程 System_Server抛异常后调用</span><br><span class="line">        &#125; catch (RuntimeException ex) &#123;</span><br><span class="line">            Log.e(TAG, &quot;Zygote died with exception&quot;, ex);</span><br><span class="line">            closeServerSocket();</span><br><span class="line">            throw ex;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+<hr>
+<p>推荐阅读：<a href="https://www.jianshu.com/p/238eb0a17760" target="_blank" rel="noopener">图形系统总结</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+              <a href="/blog/tags/%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" rel="tag"># 启动流程</a>
+              <a href="/blog/tags/Zygote/" rel="tag"># Zygote</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/04/09/Android%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" rel="prev" title="Android系统启动流程">
+      <i class="fa fa-chevron-left"></i> Android系统启动流程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/08/01/HTTP%E7%BC%93%E5%AD%98%E7%AD%96%E7%95%A5%E5%88%86%E6%9E%90/" rel="next" title="HTTP缓存策略分析">
+      HTTP缓存策略分析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Zygote简介"><span class="nav-number">1.</span> <span class="nav-text">Zygote简介</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Zygote进程启动流程图"><span class="nav-number">2.</span> <span class="nav-text">Zygote进程启动流程图</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#init进程main方法"><span class="nav-number">3.</span> <span class="nav-text">init进程main方法</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#system-core-init-init-c"><span class="nav-number">3.1.</span> <span class="nav-text">&#x2F;system&#x2F;core&#x2F;init&#x2F;init.c</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#rc配置文件"><span class="nav-number">4.</span> <span class="nav-text">rc配置文件</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#system-core-rootdir-init-rc"><span class="nav-number">4.1.</span> <span class="nav-text">&#x2F;system&#x2F;core&#x2F;rootdir&#x2F;init.rc</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Action"><span class="nav-number">4.2.</span> <span class="nav-text">Action</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Service"><span class="nav-number">4.3.</span> <span class="nav-text">Service</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Command"><span class="nav-number">4.4.</span> <span class="nav-text">Command</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Options"><span class="nav-number">4.5.</span> <span class="nav-text">Options</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#system-core-rootdir-init-zygote64-rc"><span class="nav-number">4.6.</span> <span class="nav-text">&#x2F;system&#x2F;core&#x2F;rootdir&#x2F;init.zygote64.rc</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#rc配置文件解析"><span class="nav-number">5.</span> <span class="nav-text">rc配置文件解析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Zygote服务启动和进程创建"><span class="nav-number">6.</span> <span class="nav-text">Zygote服务启动和进程创建</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Zygote进程main方法"><span class="nav-number">7.</span> <span class="nav-text">Zygote进程main方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AndroidRuntime初始化及启动Zygote初始化"><span class="nav-number">8.</span> <span class="nav-text">AndroidRuntime初始化及启动Zygote初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ZygoteInit的main方法"><span class="nav-number">9.</span> <span class="nav-text">ZygoteInit的main方法</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '3281fe1105c252fba08ba4b046013cd7',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

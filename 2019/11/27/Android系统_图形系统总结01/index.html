@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本文基于API23源码   前序Android系统启动流程介绍Android系统_启动流程分析Android系统_Zygote启动流程分析Android系统_SystemServer启动流程分析Android系统_ActivityManagerService启动流程Android系统_进程创建流程分析Android系统_Launcher启动流程分析 Android图形系统重要流程介绍Androi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统_图形系统总结01">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/11/27/Android%E7%B3%BB%E7%BB%9F_%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F%E6%80%BB%E7%BB%9301/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="本文基于API23源码   前序Android系统启动流程介绍Android系统_启动流程分析Android系统_Zygote启动流程分析Android系统_SystemServer启动流程分析Android系统_ActivityManagerService启动流程Android系统_进程创建流程分析Android系统_Launcher启动流程分析 Android图形系统重要流程介绍Androi">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-d0a3e5312975989d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-a39cc7b496fd8297.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-9bdd9830df6844aa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-b317f94b27701458.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-1a6efe3e69764146.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-2ade1db25b50bc50.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-8ed645ddb7c0855e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-b817d3db3ce31ee5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-af8ac6a690297127.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-770103d0b6d79ada.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-101ad3306d8fb489.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-e3eac09a50090ec5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-0ce23ae06edca160.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-0bfd5198cdefa19c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-a74b5b74f6eb0c0b.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-f015cda5adaad776.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-11-27T13:42:01.152Z">
+<meta property="article:modified_time" content="2020-02-06T17:11:23.185Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta property="article:tag" content="总结">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-d0a3e5312975989d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/11/27/Android%E7%B3%BB%E7%BB%9F_%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F%E6%80%BB%E7%BB%9301/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Android系统_图形系统总结01 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/11/27/Android%E7%B3%BB%E7%BB%9F_%E5%9B%BE%E5%BD%A2%E7%B3%BB%E7%BB%9F%E6%80%BB%E7%BB%9301/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android系统_图形系统总结01
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-11-27 21:42:01" itemprop="dateCreated datePublished" datetime="2019-11-27T21:42:01+08:00">2019-11-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 01:11:23" itemprop="dateModified" datetime="2020-02-07T01:11:23+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>816</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>本文基于API23源码</p>
+</blockquote>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-d0a3e5312975989d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="目录"></p>
+<h3 id="前序"><a href="#前序" class="headerlink" title="前序"></a>前序</h3><h4 id="Android系统启动流程介绍"><a href="#Android系统启动流程介绍" class="headerlink" title="Android系统启动流程介绍"></a>Android系统启动流程介绍</h4><p><a href="https://www.jianshu.com/p/4d02ac462733" target="_blank" rel="noopener">Android系统_启动流程分析</a><br><a href="https://www.jianshu.com/p/65cf9a2a0725" target="_blank" rel="noopener">Android系统_Zygote启动流程分析</a><br><a href="https://www.jianshu.com/p/0556e0940115" target="_blank" rel="noopener">Android系统_SystemServer启动流程分析</a><br><a href="https://www.jianshu.com/p/725c4e7e2230" target="_blank" rel="noopener">Android系统_ActivityManagerService启动流程</a><br><a href="https://www.jianshu.com/p/c7fb582987ad" target="_blank" rel="noopener">Android系统_进程创建流程分析</a><br><a href="https://www.jianshu.com/p/6df6ddac15d5" target="_blank" rel="noopener">Android系统_Launcher启动流程分析</a></p>
+<h4 id="Android图形系统重要流程介绍"><a href="#Android图形系统重要流程介绍" class="headerlink" title="Android图形系统重要流程介绍"></a>Android图形系统重要流程介绍</h4><p><a href="https://www.jianshu.com/p/66eb92cca405" target="_blank" rel="noopener">Android系统_View.MeasureSpec分析</a><br><a href="https://www.jianshu.com/p/e893950d6cb3" target="_blank" rel="noopener">Android系统_View_LinearLayout.measure分析</a><br><a href="https://www.jianshu.com/p/c7859e02cf25" target="_blank" rel="noopener">Android系统_View.measure解析</a><br><a href="https://www.jianshu.com/p/f36b54feb7c5" target="_blank" rel="noopener">Android系统_View.layout解析</a><br><a href="https://www.jianshu.com/p/9b759b4a1aa5" target="_blank" rel="noopener">Android系统_View.draw解析</a><br><a href="https://www.jianshu.com/p/052c635a8853" target="_blank" rel="noopener">Android系统_WindowManagerService分析</a><br><a href="https://www.jianshu.com/p/6571fbdd1bcb" target="_blank" rel="noopener">Android系统_Window的创建和添加流程分析</a><br><a href="https://www.jianshu.com/p/956db9044cd8" target="_blank" rel="noopener">Android系统_Surface相关创建过程分析</a><br><a href="https://www.jianshu.com/p/c247013616d0" target="_blank" rel="noopener">Android系统_Surface绘制流程分析</a><br><a href="https://www.jianshu.com/p/538df44171b1" target="_blank" rel="noopener">Android系统_Choreographer工作流程分析</a><br><a href="https://www.jianshu.com/p/23a722df662f" target="_blank" rel="noopener">Android系统_SurfaceFlinger源码分析01</a></p>
+<h3 id="一图以蔽之"><a href="#一图以蔽之" class="headerlink" title="一图以蔽之"></a>一图以蔽之</h3><p><img src="https://upload-images.jianshu.io/upload_images/9696036-a39cc7b496fd8297.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="Android系统启动流程图文总结"><a href="#Android系统启动流程图文总结" class="headerlink" title="Android系统启动流程图文总结"></a>Android系统启动流程图文总结</h3><h4 id="系统启动流程"><a href="#系统启动流程" class="headerlink" title="系统启动流程"></a>系统启动流程</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-9bdd9830df6844aa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="进程创建流程"><a href="#进程创建流程" class="headerlink" title="进程创建流程"></a>进程创建流程</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-b317f94b27701458.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="WMS启动流程"><a href="#WMS启动流程" class="headerlink" title="WMS启动流程"></a>WMS启动流程</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-1a6efe3e69764146.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="Launcher启动时序图"><a href="#Launcher启动时序图" class="headerlink" title="Launcher启动时序图"></a>Launcher启动时序图</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-2ade1db25b50bc50.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="App、AMS、WMS三者关系类图"><a href="#App、AMS、WMS三者关系类图" class="headerlink" title="App、AMS、WMS三者关系类图"></a>App、AMS、WMS三者关系类图</h3><p><img src="https://upload-images.jianshu.io/upload_images/9696036-8ed645ddb7c0855e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="Android图形绘制流程图文总结"><a href="#Android图形绘制流程图文总结" class="headerlink" title="Android图形绘制流程图文总结"></a>Android图形绘制流程图文总结</h3><h4 id="Window的创建和添加流程"><a href="#Window的创建和添加流程" class="headerlink" title="Window的创建和添加流程"></a>Window的创建和添加流程</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-b817d3db3ce31ee5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="Surface的创建时序图"><a href="#Surface的创建时序图" class="headerlink" title="Surface的创建时序图"></a>Surface的创建时序图</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-af8ac6a690297127.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="Surface的绘制流程"><a href="#Surface的绘制流程" class="headerlink" title="Surface的绘制流程"></a>Surface的绘制流程</h4><p>surface的绘制时序图 （软件绘制流程、硬件绘制待后续补充）</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-770103d0b6d79ada.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="View的measure、layout、draw三大流程"><a href="#View的measure、layout、draw三大流程" class="headerlink" title="View的measure、layout、draw三大流程"></a>View的measure、layout、draw三大流程</h4><h5 id="View-measure-流程"><a href="#View-measure-流程" class="headerlink" title="View.measure 流程"></a>View.measure 流程</h5><p><img src="https://upload-images.jianshu.io/upload_images/9696036-101ad3306d8fb489.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h5 id="View-MeasureSpec-说明"><a href="#View-MeasureSpec-说明" class="headerlink" title="View.MeasureSpec 说明"></a>View.MeasureSpec 说明</h5><p><img src="https://upload-images.jianshu.io/upload_images/9696036-e3eac09a50090ec5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h5 id="View-layout-流程"><a href="#View-layout-流程" class="headerlink" title="View.layout 流程"></a>View.layout 流程</h5><p><img src="https://upload-images.jianshu.io/upload_images/9696036-0ce23ae06edca160.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h5 id="View-draw-流程"><a href="#View-draw-流程" class="headerlink" title="View.draw 流程"></a>View.draw 流程</h5><p><img src="https://upload-images.jianshu.io/upload_images/9696036-0bfd5198cdefa19c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="Android图形Vsync信号刷新原理总结"><a href="#Android图形Vsync信号刷新原理总结" class="headerlink" title="Android图形Vsync信号刷新原理总结"></a>Android图形Vsync信号刷新原理总结</h3><p>Android系统确保帧缓存刷新、图形合成、图形绘制一致的原理 ？<br>引用一张图<br><img src="https://upload-images.jianshu.io/upload_images/9696036-a74b5b74f6eb0c0b.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>Vsync信号流转流程图 （看完图相信就知道上面的疑问了）<br><img src="https://upload-images.jianshu.io/upload_images/9696036-f015cda5adaad776.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<hr>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+              <a href="/blog/tags/%E6%80%BB%E7%BB%93/" rel="tag"># 总结</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/25/Android%E7%B3%BB%E7%BB%9F_Surface/" rel="prev" title="Android系统_Surface">
+      <i class="fa fa-chevron-left"></i> Android系统_Surface
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/12/01/Android%E7%B3%BB%E7%BB%9F_Choreographer%E5%88%86%E6%9E%90/" rel="next" title="Android系统_Choreographer分析">
+      Android系统_Choreographer分析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前序"><span class="nav-number">1.</span> <span class="nav-text">前序</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Android系统启动流程介绍"><span class="nav-number">1.1.</span> <span class="nav-text">Android系统启动流程介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Android图形系统重要流程介绍"><span class="nav-number">1.2.</span> <span class="nav-text">Android图形系统重要流程介绍</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一图以蔽之"><span class="nav-number">2.</span> <span class="nav-text">一图以蔽之</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android系统启动流程图文总结"><span class="nav-number">3.</span> <span class="nav-text">Android系统启动流程图文总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#系统启动流程"><span class="nav-number">3.1.</span> <span class="nav-text">系统启动流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进程创建流程"><span class="nav-number">3.2.</span> <span class="nav-text">进程创建流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WMS启动流程"><span class="nav-number">3.3.</span> <span class="nav-text">WMS启动流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Launcher启动时序图"><span class="nav-number">3.4.</span> <span class="nav-text">Launcher启动时序图</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#App、AMS、WMS三者关系类图"><span class="nav-number">4.</span> <span class="nav-text">App、AMS、WMS三者关系类图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android图形绘制流程图文总结"><span class="nav-number">5.</span> <span class="nav-text">Android图形绘制流程图文总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Window的创建和添加流程"><span class="nav-number">5.1.</span> <span class="nav-text">Window的创建和添加流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Surface的创建时序图"><span class="nav-number">5.2.</span> <span class="nav-text">Surface的创建时序图</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Surface的绘制流程"><span class="nav-number">5.3.</span> <span class="nav-text">Surface的绘制流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#View的measure、layout、draw三大流程"><span class="nav-number">5.4.</span> <span class="nav-text">View的measure、layout、draw三大流程</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#View-measure-流程"><span class="nav-number">5.4.1.</span> <span class="nav-text">View.measure 流程</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#View-MeasureSpec-说明"><span class="nav-number">5.4.2.</span> <span class="nav-text">View.MeasureSpec 说明</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#View-layout-流程"><span class="nav-number">5.4.3.</span> <span class="nav-text">View.layout 流程</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#View-draw-流程"><span class="nav-number">5.4.4.</span> <span class="nav-text">View.draw 流程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android图形Vsync信号刷新原理总结"><span class="nav-number">6.</span> <span class="nav-text">Android图形Vsync信号刷新原理总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: '4ec0d3ec1136be3e9d22b33355ff7fc6',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

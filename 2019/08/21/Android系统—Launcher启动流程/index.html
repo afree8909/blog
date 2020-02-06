@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="前期系列：Zygote进程启动分析SystemServer启动分析AMS启动分析 Launcher启动期流程图 代码追踪AMS系统ready方法中开始启动HomeActivityActivityManagerService.java  获取和生成HomeActivity的Intent信息，并析构出ActivityInfo 调用ActivityStarter的startHomeActivityLoc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统—Launcher启动流程">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/08/21/Android%E7%B3%BB%E7%BB%9F%E2%80%94Launcher%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="前期系列：Zygote进程启动分析SystemServer启动分析AMS启动分析 Launcher启动期流程图 代码追踪AMS系统ready方法中开始启动HomeActivityActivityManagerService.java  获取和生成HomeActivity的Intent信息，并析构出ActivityInfo 调用ActivityStarter的startHomeActivityLoc">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-2ade1db25b50bc50.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-08-21T14:28:23.434Z">
+<meta property="article:modified_time" content="2020-02-06T17:08:00.695Z">
+<meta property="article:author" content="Afree">
+<meta property="article:tag" content="源码">
+<meta property="article:tag" content="启动流程">
+<meta property="article:tag" content="Launcher">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-2ade1db25b50bc50.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/08/21/Android%E7%B3%BB%E7%BB%9F%E2%80%94Launcher%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Android系统—Launcher启动流程 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/08/21/Android%E7%B3%BB%E7%BB%9F%E2%80%94Launcher%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android系统—Launcher启动流程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-08-21 22:28:23" itemprop="dateCreated datePublished" datetime="2019-08-21T22:28:23+08:00">2019-08-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 01:08:00" itemprop="dateModified" datetime="2020-02-07T01:08:00+08:00">2020-02-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Android/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>32k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>29 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前期系列：<br><a href="https://www.jianshu.com/p/65cf9a2a0725" target="_blank" rel="noopener">Zygote进程启动分析</a><br><a href="https://www.jianshu.com/p/0556e0940115" target="_blank" rel="noopener">SystemServer启动分析</a><br><a href="https://www.jianshu.com/p/725c4e7e2230" target="_blank" rel="noopener">AMS启动分析</a></p>
+<h3 id="Launcher启动期流程图"><a href="#Launcher启动期流程图" class="headerlink" title="Launcher启动期流程图"></a>Launcher启动期流程图</h3><p><img src="https://upload-images.jianshu.io/upload_images/9696036-2ade1db25b50bc50.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="代码追踪"><a href="#代码追踪" class="headerlink" title="代码追踪"></a>代码追踪</h3><h5 id="AMS系统ready方法中开始启动HomeActivity"><a href="#AMS系统ready方法中开始启动HomeActivity" class="headerlink" title="AMS系统ready方法中开始启动HomeActivity"></a>AMS系统ready方法中开始启动HomeActivity</h5><p>ActivityManagerService.java</p>
+<ul>
+<li>获取和生成HomeActivity的Intent信息，并析构出ActivityInfo</li>
+<li>调用ActivityStarter的startHomeActivityLocked方法</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">public void systemReady(final Runnable goingCallback) &#123;</span><br><span class="line">        ...</span><br><span class="line">        &#x2F;&#x2F; Start up initial activity.</span><br><span class="line">        startHomeActivityLocked(mCurrentUserId, &quot;systemReady&quot;);</span><br><span class="line">        ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">boolean startHomeActivityLocked(int userId, String reason) &#123;</span><br><span class="line">    &#x2F;&#x2F; 构建 Home Intent</span><br><span class="line">    Intent intent &#x3D; getHomeIntent();</span><br><span class="line">    &#x2F;&#x2F; 通过PM 构建 ActivityInfo</span><br><span class="line">    ActivityInfo aInfo &#x3D;</span><br><span class="line">      resolveActivityInfo(intent, STOCK_PM_FLAGS, userId);</span><br><span class="line">     </span><br><span class="line">    intent.setComponent(new ComponentName(aInfo.applicationInfo.packageName, aInfo.name));</span><br><span class="line">    &#x2F;&#x2F; 创建ActivityInfo 对象  </span><br><span class="line">    aInfo &#x3D; new ActivityInfo(aInfo);</span><br><span class="line">    aInfo.applicationInfo &#x3D; getAppInfoForUser(aInfo.applicationInfo, userId);</span><br><span class="line">    ProcessRecord app &#x3D; getProcessRecordLocked(aInfo.processName,</span><br><span class="line">         aInfo.applicationInfo.uid, true);</span><br><span class="line">      </span><br><span class="line">    intent.setFlags(intent.getFlags() | Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">    &#x2F;&#x2F; 通过ActivityStart 启动 </span><br><span class="line">    mActivityStarter.startHomeActivityLocked(intent, aInfo, myReason);    </span><br><span class="line"></span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 获取系统的启动页面Activity Intent</span><br><span class="line">Intent getHomeIntent() &#123;</span><br><span class="line">   &#x2F;&#x2F; mTOPAction &#x3D; Intent.ACTION_MAIN;</span><br><span class="line">   Intent intent &#x3D; new Intent(mTopAction, mTopData !&#x3D; null ? Uri.parse(mTopData) : null);</span><br><span class="line">   intent.setComponent(mTopComponent);</span><br><span class="line">   &#x2F;&#x2F; 添加 &quot;android.intent.category.HOME&quot;; </span><br><span class="line">   intent.addCategory(Intent.CATEGORY_HOME);</span><br><span class="line">   return intent;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; 通过PM将HomeIntent解析出ActivityInfo</span><br><span class="line">private ActivityInfo resolveActivityInfo(Intent intent, int flags, int userId) &#123;</span><br><span class="line">    ...</span><br><span class="line">    ResolveInfo info&#x3D; AppGlobals.getPackageManager().resolveIntent(intent,</span><br><span class="line">    intent.resolveTypeIfNeeded(mContext.getContentResolver()),</span><br><span class="line">    flags, userId);</span><br><span class="line">    ai &#x3D; info.activityInfo;</span><br><span class="line">    return ai;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="Activity启动前检查及任务栈管理等"><a href="#Activity启动前检查及任务栈管理等" class="headerlink" title="Activity启动前检查及任务栈管理等"></a>Activity启动前检查及任务栈管理等</h5><p>ActivityStarter.java</p>
+<ul>
+<li>startHomeActivityLocked，将HomeStack移至顶部（第一次为空）</li>
+<li>startActivityLocked，调用startActivity，并重新记录lastStartActivityResult</li>
+<li>startActivity，参数校验、权限检查等，构建ActivityRecord等</li>
+<li>startActivityUnchecked，涉及启动模式和位运算，以及调用ActivityStack的startActivityLocked来处理回退栈</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><span class="line">void startHomeActivityLocked(Intent intent, ActivityInfo aInfo, String reason) &#123;</span><br><span class="line">   &#x2F;&#x2F; 将HomeStack 移到top</span><br><span class="line">   mSupervisor.moveHomeStackTaskToTop(reason);</span><br><span class="line">   &#x2F;&#x2F; 执行 startActivityLocked</span><br><span class="line">   mLastHomeActivityStartResult &#x3D; startActivityLocked(null &#x2F;*caller*&#x2F;, intent,</span><br><span class="line">           null &#x2F;*ephemeralIntent*&#x2F;, null &#x2F;*resolvedType*&#x2F;, aInfo, null &#x2F;*rInfo*&#x2F;,</span><br><span class="line">           null &#x2F;*voiceSession*&#x2F;, null &#x2F;*voiceInteractor*&#x2F;, null &#x2F;*resultTo*&#x2F;,</span><br><span class="line">           null &#x2F;*resultWho*&#x2F;, 0 &#x2F;*requestCode*&#x2F;, 0 &#x2F;*callingPid*&#x2F;, 0 &#x2F;*callingUid*&#x2F;,</span><br><span class="line">           null &#x2F;*callingPackage*&#x2F;, 0 &#x2F;*realCallingPid*&#x2F;, 0 &#x2F;*realCallingUid*&#x2F;,</span><br><span class="line">           0 &#x2F;*startFlags*&#x2F;, null &#x2F;*options*&#x2F;, false &#x2F;*ignoreTargetSecurity*&#x2F;,</span><br><span class="line">           false &#x2F;*componentSpecified*&#x2F;, mLastHomeActivityStartRecord &#x2F;*outActivity*&#x2F;,</span><br><span class="line">           null &#x2F;*container*&#x2F;, null &#x2F;*inTask*&#x2F;, &quot;startHomeActivity: &quot; + reason);</span><br><span class="line">   if (mSupervisor.inResumeTopActivity) &#123;</span><br><span class="line">       &#x2F;&#x2F; 调度</span><br><span class="line">       mSupervisor.scheduleResumeTopActivities();</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">final int startActivityLocked(IApplicationThread caller,</span><br><span class="line">            Intent intent, String resolvedType, ActivityInfo aInfo,</span><br><span class="line">            IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,</span><br><span class="line">            IBinder resultTo, String resultWho, int requestCode,</span><br><span class="line">            int callingPid, int callingUid, String callingPackage,</span><br><span class="line">            int realCallingPid, int realCallingUid, int startFlags, Bundle options,</span><br><span class="line">            boolean ignoreTargetSecurity, boolean componentSpecified, ActivityRecord[] outActivity,</span><br><span class="line">            ActivityContainer container, TaskRecord inTask) &#123;</span><br><span class="line">      </span><br><span class="line">   &#x2F;&#x2F; 参数校验、权限检查等工作，然后构建 ActivityRecord (存储Activity的重要信息)</span><br><span class="line">    ActivityRecord r &#x3D; new ActivityRecord(mService, callerApp, callingPid, callingUid,</span><br><span class="line">           callingPackage, intent, resolvedType, aInfo, mService.getGlobalConfiguration(),</span><br><span class="line">           resultRecord, resultWho, requestCode, componentSpecified, voiceSession !&#x3D; null,</span><br><span class="line">           mSupervisor, container, options, sourceRecord);</span><br><span class="line">   ...</span><br><span class="line">   &#x2F;&#x2F; 然后调用 startActivity</span><br><span class="line">   return startActivity(r, sourceRecord, voiceSession, voiceInteractor, startFlags, true,</span><br><span class="line">                options, inTask, outActivity);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private int startActivity(...) &#123;</span><br><span class="line">    &#x2F;&#x2F; 执行 startActivityUnchecked</span><br><span class="line">    result &#x3D; startActivityUnchecked(r, sourceRecord, voiceSession, voiceInteractor,</span><br><span class="line">         startFlags, doResume, options, inTask, outActivity);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private int startActivityUnchecked(final ActivityRecord r, ActivityRecord sourceRecord,</span><br><span class="line">    IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor, int startFlags,</span><br><span class="line">                                   boolean doResume, ActivityOptions options, TaskRecord inTask,</span><br><span class="line">                                   ActivityRecord[] outActivity) &#123;</span><br><span class="line">    &#x2F;&#x2F;初始化状态（该方法会校验Intent的Flag是否是特定的Flag，会涉及到各种启动模式和Android的位运算）</span><br><span class="line">    setInitialState(r, options, inTask, doResume, startFlags, sourceRecord, voiceSession,</span><br><span class="line">            voiceInteractor);</span><br><span class="line">    &#x2F;&#x2F;判断是否需要启动新的task</span><br><span class="line">    computeLaunchingTaskFlags();</span><br><span class="line">    &#x2F;&#x2F;记录父Activity对应的TaskRecord信息</span><br><span class="line">    computeSourceStack();</span><br><span class="line">    mIntent.setFlags(mLaunchFlags);</span><br><span class="line">    &#x2F;&#x2F;决定是否将新Activity插入到现有的Task中</span><br><span class="line">    ActivityRecord reusedActivity &#x3D; getReusableIntentActivity();</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">  </span><br><span class="line">    &#x2F;&#x2F;任务栈历史栈配置（处理和WindowManagerService之间的交互、保证Activity对应的UI能在屏幕上显示出来）</span><br><span class="line">   mTargetStack.startActivityLocked(mStartActivity, topFocused, newTask, mKeepCurTransition, mOptions);</span><br><span class="line">   </span><br><span class="line">    if (mDoResume) &#123; &#x2F;&#x2F; true </span><br><span class="line">        final ActivityRecord topTaskActivity &#x3D;</span><br><span class="line">                mStartActivity.getTask().topRunningActivityLocked();</span><br><span class="line">        if (!mTargetStack.isFocusable()</span><br><span class="line">                || (topTaskActivity !&#x3D; null &amp;&amp; topTaskActivity.mTaskOverlay</span><br><span class="line">                &amp;&amp; mStartActivity !&#x3D; topTaskActivity)) &#123;</span><br><span class="line">            &#x2F;&#x2F;目标Task的focusable为false或者源Task栈顶Activity总是在其他Activity之上</span><br><span class="line">            &#x2F;&#x2F;不恢复目标Task，只需确保它可见</span><br><span class="line">            mTargetStack.ensureActivitiesVisibleLocked(null, 0, !PRESERVE_WINDOWS);</span><br><span class="line">            &#x2F;&#x2F;通过WindowManagerService执行app启动动画</span><br><span class="line">            mWindowManager.executeAppTransition();</span><br><span class="line">        &#125; else &#123; &#x2F;&#x2F; true</span><br><span class="line">            &#x2F;&#x2F;如果目标栈之前不是可聚焦状态，那么将目标栈变为可聚焦</span><br><span class="line">            if (mTargetStack.isFocusable( &amp;&amp; !mSupervisor.isFocusedStack(mTargetStack)) &#123;</span><br><span class="line">                mTargetStack.moveToFront(&quot;startActivityUnchecked&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">            &#x2F;&#x2F; 最后走到ASS执行 resumeFocusedStackTopActivityLocked</span><br><span class="line">            mSupervisor.resumeFocusedStackTopActivityLocked(mTargetStack, mStartActivity, mOptions);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        &#x2F;&#x2F;如果不需要恢复，则将Activity加入到最近活动栈中</span><br><span class="line">        mTargetStack.addRecentActivityLocked(mStartActivity);</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">    return START_SUCCESS;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>ActivityStackSupervisor.java</p>
+<ul>
+<li>resumeFocusedStackTopActivityLocked,</li>
+<li>resumeTopActivityInnerLocked,</li>
+<li>resumeTopActivityInnerLocked, 暂停栈内所有Activity，继续调用</li>
+<li>startSpecificActivityLocked, 查找ActivityRecord对应进程，存在则realStartActivityLocked，这里是第一次启动，不存在进程,调用AMS.startProcessLocked</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">boolean resumeFocusedStackTopActivityLocked(</span><br><span class="line">  ActivityStack targetStack, ActivityRecord target, ActivityOptions targetOptions) &#123;</span><br><span class="line">    &#x2F;&#x2F;  执行 resumeTopActivityUncheckedLocked</span><br><span class="line">    return targetStack.resumeTopActivityUncheckedLocked(target, targetOptions);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; ActivityStack.java</span><br><span class="line">boolean resumeTopActivityUncheckedLocked(ActivityRecord prev, ActivityOptions options) &#123;</span><br><span class="line">    &#x2F;&#x2F;执行 resumeTopActivityInnerLocked</span><br><span class="line">    result &#x3D; resumeTopActivityInnerLocked(prev, options);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private boolean resumeTopActivityInnerLocked(ActivityRecord prev, ActivityOptions options)&#123;</span><br><span class="line">    ...</span><br><span class="line">    final ActivityRecord next &#x3D; topRunningActivityLocked(true &#x2F;* focusableOnly *&#x2F;);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;该方法会遍历所有任务栈，并调用ActivityStack#startPausingLocked()暂停处于栈内的所有Activity</span><br><span class="line">    boolean pausing &#x3D; mStackSupervisor.pauseBackStacks(userLeaving, next, false);</span><br><span class="line">    </span><br><span class="line">    if (next.app !&#x3D; null &amp;&amp; next.app.thread !&#x3D; null) &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125; else &#123; &#x2F;&#x2F; true</span><br><span class="line">        &#x2F;&#x2F;调用了startSpecificActivityLocked</span><br><span class="line">        mStackSupervisor.startSpecificActivityLocked(next, true, true);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">void startSpecificActivityLocked(ActivityRecord r,</span><br><span class="line">                                 boolean andResume, boolean checkConfig) &#123;</span><br><span class="line">    &#x2F;&#x2F;这里根据processName和UID在系统中查找是否已经有相应的进程存在</span><br><span class="line">    &#x2F;&#x2F;如果之前app进程不存在，则app&#x3D;null</span><br><span class="line">    ProcessRecord app &#x3D; mService.getProcessRecordLocked(r.processName,</span><br><span class="line">            r.info.applicationInfo.uid, true);</span><br><span class="line">    </span><br><span class="line">    if (app !&#x3D; null &amp;&amp; app.thread !&#x3D; null) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            if ((r.info.flags&amp; ActivityInfo.FLAG_MULTIPROCESS) &#x3D;&#x3D; 0</span><br><span class="line">                    || !&quot;android&quot;.equals(r.info.packageName)) &#123;</span><br><span class="line">                &#x2F;&#x2F;向PreocessRecord中增加对应的package信息</span><br><span class="line">                app.addPackage(r.info.packageName, r.info.applicationInfo.versionCode,</span><br><span class="line">                        mService.mProcessStats);</span><br><span class="line">            &#125;</span><br><span class="line">            &#x2F;&#x2F;若app进程存在，通知进程启动目标Activity</span><br><span class="line">            realStartActivityLocked(r, app, andResume, checkConfig);</span><br><span class="line">            return;</span><br><span class="line">        &#125; catch (RemoteException e) &#123;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F;若进程不存在，则使用AMS开启一个新进程(进程不存在)</span><br><span class="line">    mService.startProcessLocked(r.processName, r.info.applicationInfo, true, 0,&quot;activity&quot;, r.intent.getComponent(), false, false, true);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="AMS开启进程启动"><a href="#AMS开启进程启动" class="headerlink" title="AMS开启进程启动"></a>AMS开启进程启动</h5><p>ActivityManagerService.java</p>
+<ul>
+<li><p>startProcessLocked, 进程的维护和清理等工作，然后调用重载方法</p>
+</li>
+<li><p>startProcessLocked, 该方法里主要干了三件事：</p>
+<ol>
+<li>设置了各种debug参数，若AndroidManifest.xml将android:debuggable设置为true，这些参数就会生效。</li>
+<li>通过Process.start()开启一个新进程，实际上是通过Socket与Zygote通信，使用Zygote fork新进 程，同时将ActivityThread类加入到新进程,并调用ActivityThread.main()。</li>
+<li>发送一条延时消息，若新创建的进程在消息接收前未与AMS交互，则进程启动失败</li>
+</ol>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">final ProcessRecord startProcessLocked(String processName,</span><br><span class="line">       ApplicationInfo info, boolean knownToBeDead, int intentFlags,</span><br><span class="line">       String hostingType, ComponentName hostingName, boolean allowWhileBooting,</span><br><span class="line">       boolean isolated, boolean keepIfLarge) &#123;</span><br><span class="line">   return startProcessLocked(processName, info, knownToBeDead, intentFlags, hostingType,</span><br><span class="line">           hostingName, allowWhileBooting, isolated, 0 &#x2F;* isolatedUid *&#x2F;, keepIfLarge,</span><br><span class="line">           null &#x2F;* ABI override *&#x2F;, null &#x2F;* entryPoint *&#x2F;, null &#x2F;* entryPointArgs *&#x2F;,</span><br><span class="line">           null &#x2F;* crashHandler *&#x2F;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 主要：创建或获取 ProcessRecord ，清理bad进程，然后启动进程</span><br><span class="line">final ProcessRecord startProcessLocked(String processName, ApplicationInfo info,</span><br><span class="line">                                       boolean knownToBeDead, int intentFlags, String hostingType, ComponentName hostingName, boolean allowWhileBooting, boolean isolated, int isolatedUid, boolean keepIfLarge, String abiOverride, String entryPoint, String[] entryPointArgs, Runnable crashHandler) &#123;</span><br><span class="line">    ProcessRecord app;</span><br><span class="line">    if (!isolated) &#123; &#x2F;&#x2F; 非孤立进程</span><br><span class="line">        &#x2F;&#x2F;根据进程名和UID查找相应的ProcessRecord，</span><br><span class="line">        &#x2F;&#x2F;当第一次启动app时这里返回值为null</span><br><span class="line">        app &#x3D; getProcessRecordLocked(processName, info.uid, keepIfLarge);</span><br><span class="line"></span><br><span class="line">        if ((intentFlags &amp; Intent.FLAG_FROM_BACKGROUND) !&#x3D; 0) &#123;</span><br><span class="line">            &#x2F;&#x2F;如果当前进程处于后台进程，检查当前进程是否为bad进程</span><br><span class="line">            if (mAppErrors.isBadProcessLocked(info)) &#123;</span><br><span class="line">                return null;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            &#x2F;&#x2F;当用户明确要启动一个进程时，则清空它的crash次数</span><br><span class="line">            &#x2F;&#x2F;在看见crash对话框之前它才不会成为一个bad进程</span><br><span class="line">            mAppErrors.resetProcessCrashTimeLocked(info);</span><br><span class="line">            if (mAppErrors.isBadProcessLocked(info)) &#123;</span><br><span class="line">                mAppErrors.clearBadProcessLocked(info);</span><br><span class="line">                if (app !&#x3D; null) &#123;</span><br><span class="line">                    app.bad &#x3D; false;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        &#x2F;&#x2F;如果它是一个孤立的进程，则它无法使用现存的进程</span><br><span class="line">        app &#x3D; null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;当已经存在ProcessRecord且其pid大于0(app早已经运行或者正在启动)</span><br><span class="line">    &#x2F;&#x2F;则不会清理该进程</span><br><span class="line">    if (app !&#x3D; null &amp;&amp; app.pid &gt; 0) &#123;</span><br><span class="line">        if ((!knownToBeDead &amp;&amp; !app.killed) || app.thread &#x3D;&#x3D; null) &#123;</span><br><span class="line">            &#x2F;&#x2F; 如果它是新的包，则将其添加到列表中</span><br><span class="line">            app.addPackage(info.packageName, info.versionCode, mProcessStats);</span><br><span class="line">            return app;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;当ProcessRecord被attach到之前的进程，就清理它</span><br><span class="line">        killProcessGroup(app.uid, app.pid);</span><br><span class="line">        handleAppDiedLocked(app, true, true);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    String hostingNameStr &#x3D; hostingName !&#x3D; null</span><br><span class="line">            ? hostingName.flattenToShortString() : null;</span><br><span class="line">    if (app &#x3D;&#x3D; null) &#123;</span><br><span class="line">        &#x2F;&#x2F;根据ApplicationInfo、processName、UID创建一个ProcessRecord对象</span><br><span class="line">        app &#x3D; newProcessRecordLocked(info, processName, isolated, isolatedUid);</span><br><span class="line">        if (app &#x3D;&#x3D; null) &#123;</span><br><span class="line">            return null;</span><br><span class="line">        &#125;</span><br><span class="line">        app.crashHandler &#x3D; crashHandler;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        &#x2F;&#x2F;如果在进程中它是新的一个包，则添加它到列表里</span><br><span class="line">        app.addPackage(info.packageName, info.versionCode, mProcessStats);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;如果系统仍未准备好，则推迟启动它，将app加入hold列表</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F;调用重载方法启动进程</span><br><span class="line">    startProcessLocked(app, hostingType, hostingNameStr, abiOverride, entryPoint, entryPointArgs);</span><br><span class="line">    return (app.pid !&#x3D; 0) ? app : null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">private final void startProcessLocked(ProcessRecord app, String hostingType, String hostingNameStr, String abiOverride, String entryPoint, String[] entryPointArgs) &#123;</span><br><span class="line">    &#x2F;&#x2F;如果ProcessRecord的pid&gt;0且不为当前进程的pid</span><br><span class="line">    &#x2F;&#x2F;就从mPidsSelfLocked移除该pid</span><br><span class="line">    &#x2F;&#x2F;当进程不存在时，pid&#x3D;0</span><br><span class="line">    if (app.pid &gt; 0 &amp;&amp; app.pid !&#x3D; MY_PID) &#123;</span><br><span class="line">        synchronized (mPidsSelfLocked) &#123;</span><br><span class="line">            mPidsSelfLocked.remove(app.pid);</span><br><span class="line">            mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);</span><br><span class="line">        &#125;</span><br><span class="line">        app.setPid(0);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;从hold列表移除该ProcessRecord</span><br><span class="line">    mProcessesOnHold.remove(app);</span><br><span class="line">    &#x2F;&#x2F;更新Cpu状态</span><br><span class="line">    updateCpuStats();</span><br><span class="line">    try &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            final int userId &#x3D; UserHandle.getUserId(app.uid);</span><br><span class="line">            &#x2F;&#x2F;通过PMS检查待启动进程对应的package是否满足启动条件</span><br><span class="line">            AppGlobals.getPackageManager().checkPackageStartable(app.info.packageNam     e, userId);</span><br><span class="line">        &#125; catch (RemoteException e) &#123;</span><br><span class="line">            throw e.rethrowAsRuntimeException();</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;</span><br><span class="line">        if (!app.isolated) &#123;</span><br><span class="line">            int[] permGids &#x3D; null;</span><br><span class="line">            try &#123;</span><br><span class="line">                checkTime(startTime, &quot;startProcess: getting gids from package manager&quot;);</span><br><span class="line">                final IPackageManager pm &#x3D; AppGlobals.getPackageManager();</span><br><span class="line">                &#x2F;&#x2F;得到对应的GID</span><br><span class="line">                permGids &#x3D; pm.getPackageGids(app.info.packageName,</span><br><span class="line">                        MATCH_DEBUG_TRIAGED_MISSING, app.userId);</span><br><span class="line">                StorageManagerInternal storageManagerInternal &#x3D; LocalServices.getService(</span><br><span class="line">                        StorageManagerInternal.class);</span><br><span class="line">                &#x2F;&#x2F;获得进程对外部存储的访问模式</span><br><span class="line">                mountExternal &#x3D; storageManagerInternal.getExternalStorageMountMode(uid,</span><br><span class="line">                        app.info.packageName);</span><br><span class="line">            &#125; catch (RemoteException e) &#123;</span><br><span class="line">                throw e.rethrowAsRuntimeException();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            ...</span><br><span class="line">            &#x2F;&#x2F;不同情况下设置debugFlags的值，具体的值请看Zygote类的static属性</span><br><span class="line">            ...</span><br><span class="line">            boolean isActivityProcess &#x3D; (entryPoint &#x3D;&#x3D; null);</span><br><span class="line">            &#x2F;&#x2F;当entryPoint为空的情况下，设置它的值</span><br><span class="line">            &#x2F;&#x2F;这里的entryPoint是第一个startProcessLocked()传进来的null值</span><br><span class="line">            &#x2F;&#x2F;这里是指定反射需要的className</span><br><span class="line">            if (entryPoint &#x3D;&#x3D; null) entryPoint &#x3D; &quot;android.app.ActivityThread&quot;;</span><br><span class="line"></span><br><span class="line">            ProcessStartResult startResult;</span><br><span class="line">            if (hostingType.equals(&quot;webview_service&quot;)) &#123;</span><br><span class="line">              ...</span><br><span class="line">            &#125; else &#123; &#x2F;&#x2F; true</span><br><span class="line">                &#x2F;&#x2F;开启新进程的</span><br><span class="line">                startResult &#x3D; Process.start(entryPoint,</span><br><span class="line">                        app.processName, uid, uid, gids, debugFlags, mountExternal,</span><br><span class="line">                        app.info.targetSdkVersion, seInfo, requiredAbi, instructionSet,</span><br><span class="line">                        app.info.dataDir, invokeWith, entryPointArgs);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        ...</span><br><span class="line">        &#x2F;&#x2F; 启动进程后更新ProcessRecord</span><br><span class="line">        app.setPid(startResult.pid);</span><br><span class="line">        app.usingWrapper &#x3D; startResult.usingWrapper;</span><br><span class="line">        app.removed &#x3D; false;</span><br><span class="line">        app.killed &#x3D; false;</span><br><span class="line">        app.killedByAm &#x3D; false;</span><br><span class="line"></span><br><span class="line">        synchronized (mPidsSelfLocked) &#123;</span><br><span class="line">            &#x2F;&#x2F;将启动结果的pid和PreocessRecord添加到mPidsSelfLocked</span><br><span class="line">            this.mPidsSelfLocked.put(startResult.pid, app);</span><br><span class="line">            if (isActivityProcess) &#123;</span><br><span class="line">                &#x2F;&#x2F;发送一个延时消息</span><br><span class="line">                &#x2F;&#x2F; PROC_START_TIMEOUT 值为 10</span><br><span class="line">                &#x2F;&#x2F;在消息未被处理前，若新创建的进程没有和AMS交互，则该进程启动失败</span><br><span class="line">                Message msg &#x3D; mHandler.obtainMessage(PROC_START_TIMEOUT_MSG);</span><br><span class="line">                msg.obj &#x3D; app;</span><br><span class="line">                mHandler.sendMessageDelayed(msg, startResult.usingWrapper</span><br><span class="line">                        ? PROC_START_TIMEOUT_WITH_WRAPPER : PROC_START_TIMEOUT);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch(RuntimeException e)&#123;</span><br><span class="line">            &#x2F;&#x2F;当创建进程出现异常的时候就会清理相关的记录forceStopPackageLocked(app.info.packageName, UserHandle.getAppId(app.uid), false,    false, true, false, false, UserHandle.getUserId(app.userId), &quot;start failure&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="进程fork"><a href="#进程fork" class="headerlink" title="进程fork"></a>进程fork</h5><p>Process.start<br>参考：<a href="https://www.jianshu.com/p/c7fb582987ad" target="_blank" rel="noopener">Android系统—进程创建流程分析</a></p>
+<h5 id="ActivityThread-main方法"><a href="#ActivityThread-main方法" class="headerlink" title="ActivityThread.main方法"></a>ActivityThread.main方法</h5><ul>
+<li>Looper.prepareMainLooper</li>
+<li>attach AMS</li>
+<li>Looper.loop</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    ...</span><br><span class="line">    Looper.prepareMainLooper(); &#x2F;&#x2F; 准备 main looper 和消息队列</span><br><span class="line">    ActivityThread thread &#x3D; new ActivityThread(); &#x2F;&#x2F; 构建AT</span><br><span class="line">    &#x2F;&#x2F;将应用进程绑定到ActivityManagerService</span><br><span class="line">    thread.attach(false);</span><br><span class="line">    if (sMainThreadHandler &#x3D;&#x3D; null) &#123;</span><br><span class="line">        sMainThreadHandler &#x3D; thread.getHandler();</span><br><span class="line">    &#125;</span><br><span class="line">    Looper.loop(); &#x2F;&#x2F; 开启循环，接收message并分发处理</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void attach(boolean system) &#123; </span><br><span class="line">   sCurrentActivityThread &#x3D; this;</span><br><span class="line">   mSystemThread &#x3D; system; &#x2F;&#x2F; false</span><br><span class="line">   if (!system) &#123; &#x2F;&#x2F; true</span><br><span class="line">       ...</span><br><span class="line">       &#x2F;&#x2F; 获取 AMS，调用AMS的 attachApplication</span><br><span class="line">       final IActivityManager mgr &#x3D; ActivityManager.getService();</span><br><span class="line">       try &#123;</span><br><span class="line">           mgr.attachApplication(mAppThread);</span><br><span class="line">       &#125; catch (RemoteException ex) &#123;</span><br><span class="line">           throw ex.rethrowFromSystemServer();</span><br><span class="line">       &#125;</span><br><span class="line">       &#x2F;&#x2F; Watch for getting close to heap limit.</span><br><span class="line">       ...</span><br><span class="line">   &#125; else &#123; &#x2F;&#x2F; 系统进程处理逻辑</span><br><span class="line">       ...</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="AMS-绑定Application"><a href="#AMS-绑定Application" class="headerlink" title="AMS 绑定Application"></a>AMS 绑定Application</h5><p>ActivityManagerService.java</p>
+<ul>
+<li>attachApplication, 获取当前调用pid，调用重载方法</li>
+<li>attachApplication<ul>
+<li>重置ProcessRecord信息   </li>
+<li>将进程的ApplicationThread绑定到AMS，初始化Application</li>
+<li>最后执行到 ASS.attachApplicationLocked方法进行Activity的启动</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line">public final void attachApplication(IApplicationThread thread) &#123;</span><br><span class="line">   synchronized (this) &#123;</span><br><span class="line">       int callingPid &#x3D; Binder.getCallingPid();</span><br><span class="line">       final long origId &#x3D; Binder.clearCallingIdentity();</span><br><span class="line">       attachApplicationLocked(thread, callingPid);</span><br><span class="line">       Binder.restoreCallingIdentity(origId);</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private final boolean attachApplicationLocked(IApplicationThread thread,</span><br><span class="line">                                              int pid) &#123;</span><br><span class="line">    ProcessRecord app;</span><br><span class="line">    ... &#x2F;&#x2F; 根据pid 获取 对应 ProcessRecord</span><br><span class="line">    &#x2F;&#x2F; 新进程的名字</span><br><span class="line">    final String processName &#x3D; app.processName;</span><br><span class="line"></span><br><span class="line">    try &#123;</span><br><span class="line">        &#x2F;&#x2F;在这个地方会注册该进程的死亡回调 ， Thread指的是ApplicationThread</span><br><span class="line">        AppDeathRecipient adr &#x3D; new AppDeathRecipient(</span><br><span class="line">                app, pid, thread);</span><br><span class="line">        thread.asBinder().linkToDeath(adr, 0);</span><br><span class="line">        app.deathRecipient &#x3D; adr;</span><br><span class="line">    &#125; catch (RemoteException e) &#123;</span><br><span class="line">        app.resetPackageList(mProcessStats);</span><br><span class="line">        &#x2F;&#x2F;出现异常则重新开启一个进程</span><br><span class="line">        startProcessLocked(app, &quot;link fail&quot;, processName);</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F;重置 ProcessRecord</span><br><span class="line">    app.makeActive(thread, mProcessStats); &#x2F;&#x2F;给ProcessRecord的thread赋值</span><br><span class="line">    app.curAdj &#x3D; app.setAdj &#x3D; app.verifiedAdj &#x3D; ProcessList.INVALID_ADJ;</span><br><span class="line">    app.curSchedGroup &#x3D; app.setSchedGroup &#x3D; ProcessList.SCHED_GROUP_DEFAULT;</span><br><span class="line">    app.forcingToImportant &#x3D; null;</span><br><span class="line">    updateProcessForegroundLocked(app, false, false);</span><br><span class="line">    app.hasShownUi &#x3D; false;</span><br><span class="line">    app.debugging &#x3D; false;</span><br><span class="line">    app.cached &#x3D; false;</span><br><span class="line">    app.killedByAm &#x3D; false;</span><br><span class="line">    app.killed &#x3D; false;</span><br><span class="line">    </span><br><span class="line">    ... </span><br><span class="line">    &#x2F;&#x2F; 移除startProcessLocked()中发出的延时消息</span><br><span class="line">    mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);</span><br><span class="line"></span><br><span class="line">    boolean normalMode &#x3D; mProcessesReady || isAllowedWhileBooting(app.info);</span><br><span class="line">    ... &#x2F;&#x2F; contentProvider相关处理</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F; 这里通过AIDL调用了ApplicationThread. bindApplication方法，</span><br><span class="line">    &#x2F;&#x2F; 这里是将新进程的ApplicationThread对象绑定到AMS的真正操作 ，两个方法只是参数不同</span><br><span class="line">    &#x2F;&#x2F; app.instr 为ProcessRecord.ActiveInstrumentation对象</span><br><span class="line">    if (app.instr !&#x3D; null) &#123;</span><br><span class="line">        thread.bindApplication(&#x2F;*参数省略*&#x2F;);</span><br><span class="line">    &#125;else&#123;</span><br><span class="line">        thread.bindApplication(&#x2F;*参数省略*&#x2F;);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F;更新进程情况</span><br><span class="line">    updateLruProcessLocked(app, false, null);</span><br><span class="line">    &#x2F;&#x2F;将ProcessRecord从正在启动列表和hold列表中移除</span><br><span class="line">    mPersistentStartingProcesses.remove(app);</span><br><span class="line">    mProcessesOnHold.remove(app);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;检查最顶层可见的Activity是否等待运行在该进程中</span><br><span class="line">    if (normalMode) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            &#x2F;&#x2F;调用ActivityStackSupervisor# attachApplicationLocked</span><br><span class="line">            if (mStackSupervisor.attachApplicationLocked(app)) &#123;</span><br><span class="line">                didSomething &#x3D; true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            Slog.wtf(TAG, &quot;Exception thrown launching activities in &quot; + app, e);</span><br><span class="line">            badApp &#x3D; true;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;查找所有可运行在该进程中的服务</span><br><span class="line">    &#x2F;&#x2F;检查这个进程中是否有下一个广播接收者</span><br><span class="line">    &#x2F;&#x2F;检查这个进程中是否有下一个备份代理</span><br><span class="line">    &#x2F;&#x2F;上述操作如果出现异常就杀死进程</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="ActivityThread-ApplicationThread处理Application绑定"><a href="#ActivityThread-ApplicationThread处理Application绑定" class="headerlink" title="ActivityThread.ApplicationThread处理Application绑定"></a>ActivityThread.ApplicationThread处理Application绑定</h5><p>ActivityThread.ApplicationThread</p>
+<ul>
+<li>bindApplication，构造AppBindData，发送bind消息</li>
+<li>handleBindApplication <ul>
+<li>进程、系统配置等初始化设置</li>
+<li>构建Instrumentation、Application等app对象</li>
+<li>调用Application.onCreate 生命周期方法  </li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br></pre></td><td class="code"><pre><span class="line">public final void bindApplication(&#x2F;*省略参数*&#x2F;)&#123;</span><br><span class="line">	...</span><br><span class="line">	&#x2F;&#x2F; 构造 AppBindData，并赋值</span><br><span class="line">	AppBindData data &#x3D; new AppBindData();</span><br><span class="line">	sendMessage(H.BIND_APPLICATION, data);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void handleBindApplication(AppBindData data) &#123;</span><br><span class="line">    &#x2F;&#x2F;注册UI线程到VMRuntime作为一个敏感线程</span><br><span class="line">    VMRuntime.registerSensitiveThread();</span><br><span class="line">    &#x2F;&#x2F;设置进程的启动时间</span><br><span class="line">    Process.setStartTimes(SystemClock.elapsedRealtime(), SystemClock.uptimeMillis());</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;设置进程名</span><br><span class="line">    Process.setArgV0(data.processName);</span><br><span class="line">    android.ddm.DdmHandleAppName.setAppName(data.processName, UserHandle.myUserId());</span><br><span class="line">    &#x2F;&#x2F;当app版本&lt;&#x3D; 3.1 时，设置AsyncTask使用线程池实现</span><br><span class="line">    if (data.appInfo.targetSdkVersion &lt;&#x3D; android.os.Build.VERSION_CODES.HONEYCOMB_MR1) &#123;</span><br><span class="line">        AsyncTask.setDefaultExecutor(AsyncTask.THREAD_POOL_EXECUTOR);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;重置时区（跟随系统时区）</span><br><span class="line">    TimeZone.setDefault(null);</span><br><span class="line">    LocaleList.setDefault(data.config.getLocales());</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;更新系统配置</span><br><span class="line">    synchronized (mResourcesManager) &#123;</span><br><span class="line">        mResourcesManager.applyConfigurationToResourcesLocked(data.config, data.compatInfo);</span><br><span class="line">        mCurDefaultDisplayDpi &#x3D; data.config.densityDpi;</span><br><span class="line">        applyCompatConfiguration(mCurDefaultDisplayDpi);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; 获得LoadedApk对象</span><br><span class="line">    data.info &#x3D; getPackageInfoNoCheck(data.appInfo, data.compatInfo);</span><br><span class="line">    &#x2F;&#x2F;判断是否需要为进程设置新的分辨率密度</span><br><span class="line">    if ((data.appInfo.flags&amp; ApplicationInfo.FLAG_SUPPORTS_SCREEN_DENSITIES)</span><br><span class="line">            &#x3D;&#x3D; 0) &#123;</span><br><span class="line">        mDensityCompatMode &#x3D; true;</span><br><span class="line">        Bitmap.setDefaultDensity(DisplayMetrics.DENSITY_DEFAULT);</span><br><span class="line">    &#125;</span><br><span class="line">    updateDefaultDensity();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; StrictMode</span><br><span class="line">    &#x2F;&#x2F;表示只为系统应用(FLAG_SYSTEM, FLAG_UPDATED_SYSTEM_APP)开启了</span><br><span class="line">    &#x2F;&#x2F;StrictMode，其他应用还是需要自行开启</span><br><span class="line">    if ((data.appInfo.flags &amp;</span><br><span class="line">            (ApplicationInfo.FLAG_SYSTEM |</span><br><span class="line">                    ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) !&#x3D; 0) &#123;</span><br><span class="line">        StrictMode.conditionallyEnableDebugLogging();</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;当api&gt;&#x3D;HONEYCOMB时,Android不允许在主线程中使用网络</span><br><span class="line">    if (data.appInfo.targetSdkVersion &gt;&#x3D; Build.VERSION_CODES.HONEYCOMB) &#123;</span><br><span class="line">        StrictMode.enableDeathOnNetwork();</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; Android 7.0以后，Android引入了FileProvider</span><br><span class="line">    if (data.appInfo.targetSdkVersion &gt;&#x3D; Build.VERSION_CODES.N) &#123;</span><br><span class="line">        StrictMode.enableDeathOnFileUriExposure();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">    final InstrumentationInfo ii;</span><br><span class="line">    &#x2F;&#x2F; Instrumentation信息会影响类加载器,所以应该在设置app context之前加载它</span><br><span class="line">    if (data.instrumentationName !&#x3D; null) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            ii &#x3D; new ApplicationPackageManager(null, getPackageManager())</span><br><span class="line">                    .getInstrumentationInfo(data.instrumentationName, 0);</span><br><span class="line">        &#125; catch (PackageManager.NameNotFoundException e) &#123;</span><br><span class="line">            ...</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;设置InstrumentationInfo信息</span><br><span class="line">        ...</span><br><span class="line">    &#125;else&#123;</span><br><span class="line">        ii &#x3D; null;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;在这里创建了ContextImpl对象</span><br><span class="line">    final ContextImpl appContext &#x3D; ContextImpl.createAppContext(this, data.info);</span><br><span class="line">    updateLocaleListFromAppContext(appContext,</span><br><span class="line">            mResourcesManager.getConfiguration().getLocales());</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;继续加载Instrumentation对象</span><br><span class="line">    if (ii !&#x3D; null) &#123;</span><br><span class="line">        ...</span><br><span class="line">        try &#123;</span><br><span class="line">            final ClassLoader cl &#x3D; instrContext.getClassLoader();</span><br><span class="line">            &#x2F;&#x2F;创建Instrumentation对象</span><br><span class="line">            &#x2F;&#x2F; 之前提到，Instrumentation的作用就是监控系统和应用的交互，</span><br><span class="line">            &#x2F;&#x2F; 因此Activity的生命周期也会被Instrumentation所监控</span><br><span class="line">            mInstrumentation &#x3D;(Instrumentation)cl.loadClass(</span><br><span class="line">                    data.instrumentationName.getClassName()).newInstance();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            ...</span><br><span class="line">        &#125;</span><br><span class="line">        final ComponentName component &#x3D; new ComponentName(ii.packageName, ii.name);</span><br><span class="line">        &#x2F;&#x2F;初始化Instrumentation参数</span><br><span class="line">        mInstrumentation.init(this, instrContext, appContext, component,</span><br><span class="line">                data.instrumentationWatcher, data.instrumentationUiAutomationConnection);</span><br><span class="line">        ...</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        mInstrumentation &#x3D; new Instrumentation();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">   </span><br><span class="line">    try&#123;</span><br><span class="line">        &#x2F;&#x2F; 构建 Applicaiton</span><br><span class="line">        Application app &#x3D; data.info.makeApplication(data.restrictedBackupMode, null);</span><br><span class="line">        &#x2F;&#x2F;设置ActivityThread.mInitialApplication</span><br><span class="line">        mInitialApplication &#x3D; app;</span><br><span class="line">        ...</span><br><span class="line">        try &#123;</span><br><span class="line">            &#x2F;&#x2F;这里会调用到Application的onCreate()方法</span><br><span class="line">            mInstrumentation.callApplicationOnCreate(app);</span><br><span class="line">        &#125; catch(Exception e)&#123;</span><br><span class="line">            ...</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="执行ASS的attachApplication"><a href="#执行ASS的attachApplication" class="headerlink" title="执行ASS的attachApplication"></a>执行ASS的attachApplication</h5><p>ActivityStackSupervisor.java</p>
+<ul>
+<li>attachApplicationLocked，找到对应ActivityRecord等</li>
+<li>realStartActivityLocked，更新进程信息，获取发送启动Activity参数，最后调用ActivityThread中的ApplicationThread执行 scheduleLaunchActivity 方法</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">boolean attachApplicationLocked(ProcessRecord app) throws RemoteException &#123;</span><br><span class="line">   final String processName &#x3D; app.processName;</span><br><span class="line">   boolean didSomething &#x3D; false;</span><br><span class="line">   for (int displayNdx &#x3D; mActivityDisplays.size() - 1; displayNdx &gt;&#x3D; 0; --displayNdx) &#123;</span><br><span class="line">       ArrayList&lt;ActivityStack&gt; stacks &#x3D; mActivityDisplays.valueAt(displayNdx).mStacks;</span><br><span class="line">       for (int stackNdx &#x3D; stacks.size() - 1; stackNdx &gt;&#x3D; 0; --stackNdx) &#123;</span><br><span class="line">           final ActivityStack stack &#x3D; stacks.get(stackNdx);</span><br><span class="line">           if (!isFocusedStack(stack)) &#123;</span><br><span class="line">               continue;</span><br><span class="line">           &#125;</span><br><span class="line">           &#x2F;&#x2F; 找到 当前stack 下的top ActivityRecord</span><br><span class="line">           ActivityRecord hr &#x3D; stack.topRunningActivityLocked();</span><br><span class="line">           if (hr !&#x3D; null) &#123;</span><br><span class="line">               if (hr.app &#x3D;&#x3D; null &amp;&amp; app.uid &#x3D;&#x3D; hr.info.applicationInfo.uid</span><br><span class="line">                       &amp;&amp; processName.equals(hr.processName)) &#123;</span><br><span class="line">                   try &#123;</span><br><span class="line">                       &#x2F;&#x2F; 调用 realStartActivityLocked </span><br><span class="line">                       if (realStartActivityLocked(hr, app, true, true)) &#123;</span><br><span class="line">                           didSomething &#x3D; true;</span><br><span class="line">                       &#125;</span><br><span class="line">                   &#125;</span><br><span class="line">                   ...</span><br><span class="line">               &#125;</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   if (!didSomething) &#123;</span><br><span class="line">       ensureActivitiesVisibleLocked(null, 0, !PRESERVE_WINDOWS);</span><br><span class="line">   &#125;</span><br><span class="line">   return didSomething;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">final boolean realStartActivityLocked(ActivityRecord r, ProcessRecord app,</span><br><span class="line">       boolean andResume, boolean checkConfig) throws RemoteException &#123;</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;获得已存在的Task和Stack</span><br><span class="line">    final TaskRecord task &#x3D; r.getTask();</span><br><span class="line">    final ActivityStack stack &#x3D; task.getStack();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;推迟resume，避免在一个循环中多次resume</span><br><span class="line">    beginDeferResume();</span><br><span class="line">    &#x2F;&#x2F;开始冻结屏幕</span><br><span class="line">    r.startFreezingScreenLocked(app, 0);</span><br><span class="line">    &#x2F;&#x2F;开始收集启动信息</span><br><span class="line">    r.startLaunchTickingLocked();</span><br><span class="line">    r.app &#x3D; app;</span><br><span class="line"></span><br><span class="line">    if (checkConfig) &#123;</span><br><span class="line">        final int displayId &#x3D; r.getDisplayId();</span><br><span class="line">        final Configuration config &#x3D;mWindowManager.updateOrientationFromAppTokens(</span><br><span class="line">                getDisplayOverrideConfiguration(displayId),r.mayFreezeScreenLocked(app) ? r.appToken : null, displayId);</span><br><span class="line">        &#x2F;&#x2F;当显示方向改变时，推迟resume，防止启动多余的Activity</span><br><span class="line">        mService.updateDisplayOverrideConfigurationLocked(config, r, true &#x2F;* deferResume *&#x2F;,displayId);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;更新进程使用情况</span><br><span class="line">    mService.updateLruProcessLocked(app, true, null);</span><br><span class="line">    &#x2F;&#x2F;更新进程OomAdj</span><br><span class="line">    mService.updateOomAdjLocked();</span><br><span class="line">    try &#123;</span><br><span class="line">        </span><br><span class="line">        ...</span><br><span class="line">        &#x2F;&#x2F;通过Binder调用ApplicationThread的scheduleLaunchActivity()</span><br><span class="line">        app.thread.scheduleLaunchActivity(new Intent(r.intent), r.appToken, System.identityHashCode(r),r.info,mergedConfiguration.getGlobalConfiguration(),mergedConfiguration.getOverrideConfiguration(), r.compat,</span><br><span class="line">                r.launchedFromPackage, task.voiceInteractor, app.repProcState, r.icicle,</span><br><span class="line">                r.persistentState, results, newIntents, !andResume,</span><br><span class="line">                mService.isNextTransitionForward(), profilerInfo);</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;... 处理进程臃肿的情况</span><br><span class="line">    &#125; catch(RemoteException e)&#123;</span><br><span class="line">        ...</span><br><span class="line">        &#x2F;&#x2F;会进行两次操作，第一次重启进程失败后再抛出异常执行第二次操作</span><br><span class="line">        &#x2F;&#x2F;第二次失败后就放弃</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="ActivityThread-执行Activity启动"><a href="#ActivityThread-执行Activity启动" class="headerlink" title="ActivityThread 执行Activity启动"></a>ActivityThread 执行Activity启动</h5><ul>
+<li>ActivityThread.Application.scheduleLaunchActivity，构建ActivityClientRecord，发送H.LAUNCH_ACTIVITY消息</li>
+<li>ActivityThread.handleLaunchActivity，执行Activity启动后的生命周期方法</li>
+<li>performLaunchActivity，主要是调用Activity的onCreate(),onStart(),onRestoreInstance(),onPostCreate()生命周期</li>
+<li>handleResumeActivity()，回调Activity的onResume()方法，并将DecorView添加到WindowManager中，这里的WindowManager是a.getWindowManager()得到的，其实现是WindowManagerImpl，这步操作在onResume()方法之后执行。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">public final void scheduleLaunchActivity(...) &#123;</span><br><span class="line"></span><br><span class="line">    updateProcessState(procState, false);</span><br><span class="line">    ActivityClientRecord r &#x3D; new ActivityClientRecord();</span><br><span class="line">    ...</span><br><span class="line">    sendMessage(H.LAUNCH_ACTIVITY, r);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void handleLaunchActivity(ActivityClientRecord r, Intent customIntent, String reason) &#123;</span><br><span class="line">    &#x2F;&#x2F; 当前进程正活跃，避免GC</span><br><span class="line">    unscheduleGcIdler();</span><br><span class="line">    &#x2F;&#x2F;确保使用的是最近的配置</span><br><span class="line">    handleConfigurationChanged(null, null);</span><br><span class="line">    &#x2F;&#x2F;在创建Activity之前初始化WindowManagerService</span><br><span class="line">    if (!ThreadedRenderer.sRendererDisabled) &#123;</span><br><span class="line">        GraphicsEnvironment.earlyInitEGL()</span><br><span class="line">    &#125;</span><br><span class="line">    WindowManagerGlobal.initialize();</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F;执行performLaunchActivity(),并返回Activity对象</span><br><span class="line">    Activity a &#x3D; performLaunchActivity(r, customIntent);</span><br><span class="line"></span><br><span class="line">    if (a !&#x3D; null) &#123;</span><br><span class="line">        r.createdConfig &#x3D; new Configuration(mConfiguration);</span><br><span class="line">        reportSizeConfigurations(r);</span><br><span class="line">        Bundle oldState &#x3D; r.state;</span><br><span class="line">        </span><br><span class="line">        &#x2F;&#x2F;启动成功后，恢复Activity</span><br><span class="line">        handleResumeActivity(r.token, false, r.isForward,!r.activity.mFinished &amp;&amp; !r.startsNotResumed, r.lastProcessedSeq, reason);</span><br><span class="line">        &#x2F;&#x2F; ... </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line">private Activity performLaunchActivity(ActivityClientRecord r, Intent customIntent) &#123;</span><br><span class="line">    ActivityInfo aInfo &#x3D; r.activityInfo;</span><br><span class="line">    if (r.packageInfo &#x3D;&#x3D; null) &#123;</span><br><span class="line">        &#x2F;&#x2F;从PackageManagerService获取应用包信息</span><br><span class="line">        r.packageInfo &#x3D; getPackageInfo(aInfo.applicationInfo, r.compatInfo,</span><br><span class="line">                Context.CONTEXT_INCLUDE_CODE);</span><br><span class="line">    &#125;</span><br><span class="line">    ComponentName component &#x3D; r.intent.getComponent();</span><br><span class="line">    if (component &#x3D;&#x3D; null) &#123;</span><br><span class="line">        &#x2F;&#x2F;获取组件信息</span><br><span class="line">        component &#x3D; r.intent.resolveActivity(</span><br><span class="line">                mInitialApplication.getPackageManager());</span><br><span class="line">        r.intent.setComponent(component);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;如果提前设置好了目标Activity，则重新设置组件信息</span><br><span class="line">    if (r.activityInfo.targetActivity !&#x3D; null) &#123;</span><br><span class="line">        component &#x3D; new ComponentName(r.activityInfo.packageName,</span><br><span class="line">                r.activityInfo.targetActivity);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ContextImpl appContext &#x3D; createBaseContextForActivity(r);</span><br><span class="line">    Activity activity &#x3D; null;</span><br><span class="line">    try &#123;</span><br><span class="line">        &#x2F;&#x2F;利用ClassLoader去加载Activity</span><br><span class="line">        java.lang.ClassLoader cl &#x3D; appContext.getClassLoader();</span><br><span class="line">        &#x2F;&#x2F;利用Instrumentation创建Activity实例</span><br><span class="line">        activity &#x3D; mInstrumentation.newActivity(</span><br><span class="line">                cl, component.getClassName(), r.intent);</span><br><span class="line">        StrictMode.incrementExpectedActivityCount(activity.getClass());</span><br><span class="line">        r.intent.setExtrasClassLoader(cl);</span><br><span class="line">        r.intent.prepareToEnterProcess();</span><br><span class="line">        if (r.state !&#x3D; null) &#123;</span><br><span class="line">            r.state.setClassLoader(cl);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    try&#123;</span><br><span class="line">        Application app &#x3D; r.packageInfo.makeApplication(false, mInstrumentation);</span><br><span class="line">        if (activity !&#x3D; null) &#123;</span><br><span class="line">            activity.attach(appContext, this, getInstrumentation(), r.token,</span><br><span class="line">                    r.ident, app, r.intent, r.activityInfo, title, r.parent,r.embeddedID, r.lastNonConfigurationInstances, config,r.referrer, r.voiceInteractor, window, r.configCallback);</span><br><span class="line">        &#125;</span><br><span class="line">        ...</span><br><span class="line">        &#x2F;&#x2F;回调Activity的onCreate()方法</span><br><span class="line">        &#x2F;&#x2F;这里回调的重载函数由ActivityInfo的persistableMode参数决定</span><br><span class="line">        if (r.isPersistable()) &#123;</span><br><span class="line">            mInstrumentation.callActivityOnCreate(activity, r.state, r.persistentState);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            mInstrumentation.callActivityOnCreate(activity, r.state);</span><br><span class="line">        &#125;</span><br><span class="line">        r.activity &#x3D; activity;</span><br><span class="line">        r.stopped &#x3D; true;</span><br><span class="line">        if (!r.activity.mFinished) &#123;</span><br><span class="line">            &#x2F;&#x2F;回调Activity的onStart()方法，同时会改变FragmentManager的状态信息</span><br><span class="line">            &#x2F;&#x2F; mInstrumentation.callActivityOnStart(this);</span><br><span class="line">            activity.performStart();</span><br><span class="line">            r.stopped &#x3D; false;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;回调Activity的onRestoreInstanceState()方法</span><br><span class="line">        &#x2F;&#x2F;这里的回调方法同样由ActivityInfo的persistableMode参数决定</span><br><span class="line">        if (!r.activity.mFinished) &#123;</span><br><span class="line">            if (r.isPersistable()) &#123;</span><br><span class="line">                if (r.state !&#x3D; null || r.persistentState !&#x3D; null) &#123;</span><br><span class="line">                    mInstrumentation.callActivityOnRestoreInstanceState(activity, r.state,</span><br><span class="line">                            r.persistentState);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else if (r.state !&#x3D; null) &#123;</span><br><span class="line">                mInstrumentation.callActivityOnRestoreInstanceState(activity, r.state);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;回调Activity的OnPostCreate()方法</span><br><span class="line">        if (!r.activity.mFinished) &#123;</span><br><span class="line">            activity.mCalled &#x3D; false;</span><br><span class="line">            if (r.isPersistable()) &#123;</span><br><span class="line">                mInstrumentation.callActivityOnPostCreate(activity, r.state,</span><br><span class="line">                        r.persistentState);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                mInstrumentation.callActivityOnPostCreate(activity, r.state);</span><br><span class="line">            &#125;</span><br><span class="line">            if (!activity.mCalled) &#123;</span><br><span class="line">                throw new SuperNotCalledException(</span><br><span class="line">                        &quot;Activity &quot; + r.intent.getComponent().toShortString() +</span><br><span class="line">                                &quot; did not call through to super.onPostCreate()&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        r.paused &#x3D; true;</span><br><span class="line">        mActivities.put(r.token, r);</span><br><span class="line">    &#125; catch(SuperNotCalledException e)&#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">    return activity;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">final void handleResumeActivity(IBinder token,</span><br><span class="line">                                boolean clearHide, boolean isForward, boolean reallyResume, int seq, String reason) &#123;</span><br><span class="line">    ActivityClientRecord r &#x3D; mActivities.get(token);</span><br><span class="line">    &#x2F;&#x2F;回调Activity的onResume()方法</span><br><span class="line">    r &#x3D; performResumeActivity(token, clearHide, reason);</span><br><span class="line">    if (r !&#x3D; null) &#123;</span><br><span class="line">        final Activity a &#x3D; r.activity;</span><br><span class="line">        final int forwardBit &#x3D; isForward ? WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION : 0;</span><br><span class="line">        &#x2F;&#x2F;显示window</span><br><span class="line">        if (r.window &#x3D;&#x3D; null &amp;&amp; !a.mFinished &amp;&amp; willBeVisible) &#123;</span><br><span class="line">	          ...</span><br><span class="line">            ViewManager wm &#x3D; a.getWindowManager();</span><br><span class="line">	          ...</span><br><span class="line">            &#x2F;&#x2F;将decorView添加到WindowManager中</span><br><span class="line">            wm.addView(decor, l);</span><br><span class="line">        &#125;</span><br><span class="line">        ...</span><br><span class="line">        &#x2F;&#x2F;更新布局</span><br><span class="line">        wm.updateViewLayout(decor, l);</span><br><span class="line">        ...</span><br><span class="line">        if (reallyResume) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                &#x2F;&#x2F;通知AMS已经Resume了</span><br><span class="line">                ActivityManager.getService().activityResumed(token);</span><br><span class="line">            &#125; catch (RemoteException ex) &#123;</span><br><span class="line">                throw ex.rethrowFromSystemServer();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                &#x2F;&#x2F;如果在onResume之前抛出异常了,则通知AMS结束该Activity</span><br><span class="line">                ActivityManager.getService()</span><br><span class="line">                        .finishActivity(token, Activity.RESULT_CANCELED, null,</span><br><span class="line">                                Activity.DONT_FINISH_TASK_WITH_ACTIVITY);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>您的👍，激励我的前行 👻👻👻</p>
+</blockquote>
+<hr>
+<p>推荐阅读：<a href="https://www.jianshu.com/p/238eb0a17760" target="_blank" rel="noopener">图形系统总结</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag"># 源码</a>
+              <a href="/blog/tags/%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" rel="tag"># 启动流程</a>
+              <a href="/blog/tags/Launcher/" rel="tag"># Launcher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/08/19/Android%E7%B3%BB%E7%BB%9F%E2%80%94ActivityManagerService%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" rel="prev" title="Android系统—ActivityManagerService启动流程">
+      <i class="fa fa-chevron-left"></i> Android系统—ActivityManagerService启动流程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/08/25/Android%E7%B3%BB%E7%BB%9F%E2%80%94%E8%BF%9B%E7%A8%8B%E5%88%9B%E5%BB%BA%E6%B5%81%E7%A8%8B/" rel="next" title="Android系统—进程创建流程">
+      Android系统—进程创建流程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Launcher启动期流程图"><span class="nav-number">1.</span> <span class="nav-text">Launcher启动期流程图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码追踪"><span class="nav-number">2.</span> <span class="nav-text">代码追踪</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#AMS系统ready方法中开始启动HomeActivity"><span class="nav-number">2.0.1.</span> <span class="nav-text">AMS系统ready方法中开始启动HomeActivity</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Activity启动前检查及任务栈管理等"><span class="nav-number">2.0.2.</span> <span class="nav-text">Activity启动前检查及任务栈管理等</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#AMS开启进程启动"><span class="nav-number">2.0.3.</span> <span class="nav-text">AMS开启进程启动</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#进程fork"><span class="nav-number">2.0.4.</span> <span class="nav-text">进程fork</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ActivityThread-main方法"><span class="nav-number">2.0.5.</span> <span class="nav-text">ActivityThread.main方法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#AMS-绑定Application"><span class="nav-number">2.0.6.</span> <span class="nav-text">AMS 绑定Application</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ActivityThread-ApplicationThread处理Application绑定"><span class="nav-number">2.0.7.</span> <span class="nav-text">ActivityThread.ApplicationThread处理Application绑定</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#执行ASS的attachApplication"><span class="nav-number">2.0.8.</span> <span class="nav-text">执行ASS的attachApplication</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ActivityThread-执行Activity启动"><span class="nav-number">2.0.9.</span> <span class="nav-text">ActivityThread 执行Activity启动</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: 'a33068f7914f76ea71b44789c5a6441c',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

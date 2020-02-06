@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://afree8909.github.io/blog').hostname,
+    root: '/blog/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="tags:   源码 Windowcategories: [Android, 系统]   流程图（大体流程，从Activity接受启动开始）  源码分析 基于API 23  Window创建ActivityThread.handleLaunchActivityActivityThread.performLaunchActivityActivityThread处理并执行Activity启动 123">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统_Window的创建与添加过程分析">
+<meta property="og:url" content="https://afree8909.github.io/blog/2019/11/24/Android%E7%B3%BB%E7%BB%9F_Window%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E6%B7%BB%E5%8A%A0%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="Afree&#39;s blog">
+<meta property="og:description" content="tags:   源码 Windowcategories: [Android, 系统]   流程图（大体流程，从Activity接受启动开始）  源码分析 基于API 23  Window创建ActivityThread.handleLaunchActivityActivityThread.performLaunchActivityActivityThread处理并执行Activity启动 123">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/9696036-b817d3db3ce31ee5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-11-24T03:03:26.966Z">
+<meta property="article:modified_time" content="2020-02-06T17:11:00.858Z">
+<meta property="article:author" content="Afree">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/9696036-b817d3db3ce31ee5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="https://afree8909.github.io/blog/2019/11/24/Android%E7%B3%BB%E7%BB%9F_Window%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E6%B7%BB%E5%8A%A0%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Android系统_Window的创建与添加过程分析 | Afree's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Afree's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="Searching..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2019/11/24/Android%E7%B3%BB%E7%BB%9F_Window%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E6%B7%BB%E5%8A%A0%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="name" content="Afree">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Afree's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android系统_Window的创建与添加过程分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-11-24 11:03:26" itemprop="dateCreated datePublished" datetime="2019-11-24T11:03:26+08:00">2019-11-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-02-07 01:11:00" itemprop="dateModified" datetime="2020-02-07T01:11:00+08:00">2020-02-07</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>7.7k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>7 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <hr>
+<p>tags: </p>
+<ul>
+<li>源码</li>
+<li>Window<br>categories:</li>
+<li>[Android, 系统]</li>
+</ul>
+<hr>
+<h3 id="流程图"><a href="#流程图" class="headerlink" title="流程图"></a>流程图</h3><p>（大体流程，从Activity接受启动开始）</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/9696036-b817d3db3ce31ee5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h3><blockquote>
+<p>基于API 23</p>
+</blockquote>
+<h4 id="Window创建"><a href="#Window创建" class="headerlink" title="Window创建"></a>Window创建</h4><h5 id="ActivityThread-handleLaunchActivity"><a href="#ActivityThread-handleLaunchActivity" class="headerlink" title="ActivityThread.handleLaunchActivity"></a>ActivityThread.handleLaunchActivity</h5><h5 id="ActivityThread-performLaunchActivity"><a href="#ActivityThread-performLaunchActivity" class="headerlink" title="ActivityThread.performLaunchActivity"></a>ActivityThread.performLaunchActivity</h5><p>ActivityThread处理并执行Activity启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;ActivityThread</span><br><span class="line">private void handleLaunchActivity(ActivityClientRecord r, Intent customIntent) &#123;</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;获取WindowManagerService的Binder引用(proxy端)。</span><br><span class="line">    WindowManagerGlobal.initialize();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;执行Activity的onCreate,onStart,onResotreInstanceState方法</span><br><span class="line">    Activity a &#x3D; performLaunchActivity(r, customIntent);</span><br><span class="line">    if (a !&#x3D; null) &#123;</span><br><span class="line">        ...</span><br><span class="line">        &#x2F;&#x2F;执行Activity的onResume方法.</span><br><span class="line">        handleResumeActivity(r.token, false, r.isForward,</span><br><span class="line">                !r.activity.mFinished &amp;&amp; !r.startsNotResumed, r.lastProcessedSeq, reason);</span><br><span class="line"></span><br><span class="line">        ...</span><br><span class="line">    &#125; </span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">private Activity performLaunchActivity(ActivityClientRecord r, Intent customIntent) &#123;</span><br><span class="line"></span><br><span class="line">   &#x2F;&#x2F;通过类加载器创建Activity</span><br><span class="line">   Activity activity &#x3D; mInstrumentation.newActivity(cl, component.getClassName(), r.intent);</span><br><span class="line"></span><br><span class="line">   ...      </span><br><span class="line"></span><br><span class="line">   &#x2F;&#x2F;通过LoadedApk的makeApplication方法来创建Application对象</span><br><span class="line">   Application app &#x3D; r.packageInfo.makeApplication(false, mInstrumentation);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">   if (activity !&#x3D; null) &#123;</span><br><span class="line">       ...</span><br><span class="line">       &#x2F;&#x2F; 执行 attach 方法</span><br><span class="line">       activity.attach(appContext, this, getInstrumentation(), r.token,</span><br><span class="line">               r.ident, app, r.intent, r.activityInfo, title, r.parent,</span><br><span class="line">               r.embeddedID, r.lastNonConfigurationInstances, config,</span><br><span class="line">               r.referrer, r.voiceInteractor, window);</span><br><span class="line">       ...</span><br><span class="line"></span><br><span class="line">       &#x2F;&#x2F;onCreate</span><br><span class="line">       mInstrumentation.callActivityOnCreate(activity, r.state);</span><br><span class="line"></span><br><span class="line">       &#x2F;&#x2F;onStart</span><br><span class="line">       activity.performStart();</span><br><span class="line"></span><br><span class="line">   &#125;</span><br><span class="line">   return activity;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="Activity-attach"><a href="#Activity-attach" class="headerlink" title="Activity.attach"></a>Activity.attach</h5><ul>
+<li>构造PhoneWindow （Window唯一具体实现）</li>
+<li>设置自身为Window的Callback，从而Activity能作为callback接受window的key和touch事件</li>
+<li>初始化且设置WindowManager，每个Activity对应一个WindowManager，通过WM与WMS进行通信</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">final void attach(...) &#123;</span><br><span class="line">    &#x2F;&#x2F;绑定上下文</span><br><span class="line">    attachBaseContext(context);</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F;创建Window,PhoneWindow是Window的唯一具体实现类</span><br><span class="line">    mWindow &#x3D; new PhoneWindow(this, window);&#x2F;&#x2F;此处的window&#x3D;&#x3D;null，但不影响</span><br><span class="line">    mWindow.setWindowControllerCallback(this);</span><br><span class="line">    &#x2F;&#x2F; 设置 Window.Callback</span><br><span class="line">    mWindow.setCallback(this);</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;设置WindowManager</span><br><span class="line">    mWindow.setWindowManager(</span><br><span class="line">          (WindowManager)context.getSystemService(Context.WINDOW_SERVICE),</span><br><span class="line">          mToken, mComponent.flattenToString(),</span><br><span class="line">          (info.flags &amp; ActivityInfo.FLAG_HARDWARE_ACCELERATED) !&#x3D; 0);</span><br><span class="line">    if (mParent !&#x3D; null) &#123;</span><br><span class="line">      mWindow.setContainer(mParent.getWindow());</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;创建完后通过getWindowManager就可以得到WindowManager实例</span><br><span class="line">    mWindowManager &#x3D; mWindow.getWindowManager();&#x2F;&#x2F;其实它是WindowManagerImpl</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Window添加View过程"><a href="#Window添加View过程" class="headerlink" title="Window添加View过程"></a>Window添加View过程</h4><p>前面在handleLauncherActivity完成了PhoneWindow的创建过程，下面我们继续查看Activity执行生命周期handleResumeActivity方法，查看Activity对应View被加载到PhoneWindow容器过程</p>
+<h5 id="ActivityThread-handleResumeActivity"><a href="#ActivityThread-handleResumeActivity" class="headerlink" title="ActivityThread.handleResumeActivity"></a>ActivityThread.handleResumeActivity</h5><ul>
+<li>获取ActivityClientRecord，将对应DecorView设置为不可见，因为当前View还未绘制</li>
+<li>通过Window对应的WindowManager执行addView（decor，l）操作</li>
+<li>View绘制完成后，会将decorView设置可见，展示该Activity对应内容，最后onResume完成</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">final void handleResumeActivity(IBinder token,</span><br><span class="line">            boolean clearHide, boolean isForward, boolean reallyResume, int seq, String reason) &#123;</span><br><span class="line"></span><br><span class="line">   &#x2F;&#x2F;把activity数据记录更新到ActivityClientRecord</span><br><span class="line">   ActivityClientRecord r &#x3D; performResumeActivity(token, clearHide);</span><br><span class="line"></span><br><span class="line">   if (r !&#x3D; null) &#123;</span><br><span class="line"></span><br><span class="line">       if (r.window &#x3D;&#x3D; null &amp;&amp; !a.mFinished &amp;&amp; willBeVisible) &#123;</span><br><span class="line">           r.window &#x3D; r.activity.getWindow();</span><br><span class="line">           View decor &#x3D; r.window.getDecorView();</span><br><span class="line">           decor.setVisibility(View.INVISIBLE);&#x2F;&#x2F;不可见</span><br><span class="line">           ViewManager wm &#x3D; a.getWindowManager();</span><br><span class="line">           WindowManager.LayoutParams l &#x3D; r.window.getAttributes();</span><br><span class="line">           a.mDecor &#x3D; decor;</span><br><span class="line">           l.type &#x3D; WindowManager.LayoutParams.TYPE_BASE_APPLICATION;</span><br><span class="line"></span><br><span class="line">           ...</span><br><span class="line">           if (a.mVisibleFromClient &amp;&amp; !a.mWindowAdded) &#123;</span><br><span class="line">               a.mWindowAdded &#x3D; true;</span><br><span class="line">               wm.addView(decor, l);&#x2F;&#x2F; 把decor添加到窗口上</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line">       &#125; </span><br><span class="line">           &#x2F;&#x2F;屏幕参数发生了改变</span><br><span class="line">           performConfigurationChanged(r.activity, r.tmpConfig);</span><br><span class="line"></span><br><span class="line">           WindowManager.LayoutParams l &#x3D; r.window.getAttributes();</span><br><span class="line"></span><br><span class="line">               if (r.activity.mVisibleFromClient) &#123;</span><br><span class="line">                   ViewManager wm &#x3D; a.getWindowManager();</span><br><span class="line">                   View decor &#x3D; r.window.getDecorView();</span><br><span class="line">                   wm.updateViewLayout(decor, l);&#x2F;&#x2F;更新窗口状态</span><br><span class="line">               &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">           ...</span><br><span class="line">           if (r.activity.mVisibleFromClient) &#123;</span><br><span class="line">               &#x2F;&#x2F;已经成功添加到窗口上了（绘制和事件接收），设置为可见</span><br><span class="line">               r.activity.makeVisible();</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">       &#x2F;&#x2F;通知ActivityManagerService，Activity完成Resumed</span><br><span class="line">        ActivityManagerNative.getDefault().activityResumed(token);</span><br><span class="line">   &#125; </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="WindowManagerImply-addView"><a href="#WindowManagerImply-addView" class="headerlink" title="WindowManagerImply.addView"></a>WindowManagerImply.addView</h5><h5 id="WindowManagerGlobal-addView"><a href="#WindowManagerGlobal-addView" class="headerlink" title="WindowManagerGlobal.addView"></a>WindowManagerGlobal.addView</h5><ul>
+<li>WindowManagerImpl的全局变量通过单例模式初始化了WindowManagerGlobal，（一个进程一个WMG对象）</li>
+<li>Window管理类添加View过程，创建ViewRootImpl，将View处理操作交给ViewRootImpl实现</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; WindowManagerImply</span><br><span class="line">public void addView(@NonNull View view, @NonNull ViewGroup.LayoutParams params) &#123;</span><br><span class="line">    applyDefaultToken(params);</span><br><span class="line">    mGlobal.addView(view, params, mDisplay, mParentWindow);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; WindowManagerGlobal</span><br><span class="line">public void addView(View view, ViewGroup.LayoutParams params,</span><br><span class="line">           Display display, Window parentWindow) &#123;</span><br><span class="line">     </span><br><span class="line">    synchronized (mLock) &#123; </span><br><span class="line">        ...</span><br><span class="line">        &#x2F;&#x2F; 创建ViewRootImpl，并将View与之绑定</span><br><span class="line">        root &#x3D; new ViewRootImpl(view.getContext(), display);</span><br><span class="line">        </span><br><span class="line">        view.setLayoutParams(wparams);</span><br><span class="line">        </span><br><span class="line">        mViews.add(view); &#x2F;&#x2F; 将当前view添加到mView集合中</span><br><span class="line">        mRoots.add(root); &#x2F;&#x2F; 将当前root添加mRoots集合中</span><br><span class="line">        mParams.add(wparams); &#x2F;&#x2F; 将当前window的params添加到mParams集合中</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F; setView 完成View的绘制流程，并添加到window上 </span><br><span class="line">    root.setView(view, wparams, panelParentView);</span><br><span class="line">   </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ViewRootImpl-setView"><a href="#ViewRootImpl-setView" class="headerlink" title="ViewRootImpl.setView"></a>ViewRootImpl.setView</h4><ul>
+<li>ViewRootImpl构建过程中，会通过WindowManagerGlobal的getWindowSession（static方法）获取IWindowSession即WindowSession</li>
+<li>执行requestLayout方法完成View的绘制流程</li>
+<li>通过WindowSession与WindowManagerService通信，将View和InputChannel添加到WMS，从而展示View并可以接受输入事件</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public void setView(View view, WindowManager.LayoutParams attrs, View panelParentView) &#123;</span><br><span class="line"></span><br><span class="line">      ...</span><br><span class="line">      int res</span><br><span class="line">      requestLayout();&#x2F;&#x2F;执行 View的绘制流程</span><br><span class="line"></span><br><span class="line">      if ((mWindowAttributes.inputFeatures</span><br><span class="line">              &amp; WindowManager.LayoutParams.INPUT_FEATURE_NO_INPUT_CHANNEL) &#x3D;&#x3D; 0) &#123;</span><br><span class="line">          &#x2F;&#x2F; 创建InputChannel</span><br><span class="line">          mInputChannel &#x3D; new InputChannel();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      try &#123;</span><br><span class="line"></span><br><span class="line">          &#x2F;&#x2F;通过WindowSession进行IPC调用，将View添加到Window上</span><br><span class="line">          &#x2F;&#x2F;mWindow即W类，用来接收WmS信息</span><br><span class="line">          &#x2F;&#x2F;同时通过InputChannel接收触摸事件回调</span><br><span class="line">          res &#x3D; mWindowSession.addToDisplay(mWindow, mSeq, mWindowAttributes,</span><br><span class="line">                  getHostVisibility(), mDisplay.getDisplayId(),</span><br><span class="line">                  mAttachInfo.mContentInsets, mAttachInfo.mStableInsets,</span><br><span class="line">                  mAttachInfo.mOutsets, mInputChannel);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      ...</span><br><span class="line"></span><br><span class="line">      &#x2F;&#x2F;处理触摸事件回调</span><br><span class="line">      mInputEventReceiver &#x3D; new WindowInputEventReceiver(mInputChannel,</span><br><span class="line">                  Looper.myLooper());</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="WindowSession-addToDisplay"><a href="#WindowSession-addToDisplay" class="headerlink" title="WindowSession.addToDisplay"></a>WindowSession.addToDisplay</h4><ul>
+<li>Session执行addToDisplay方法，通过调用成员变量WMS进行addWindow操作</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public int addToDisplay(...) &#123;</span><br><span class="line">   return mService.addWindow(this, window, seq, attrs, viewVisibility, displayId,</span><br><span class="line">           outContentInsets, outStableInsets, outOutsets, outInputChannel);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="WindowManagerService-addWindow"><a href="#WindowManagerService-addWindow" class="headerlink" title="WindowManagerService.addWindow"></a>WindowManagerService.addWindow</h4><ul>
+<li>创建WindowState，保存Window状态</li>
+<li>调整LayoutParams参数、设置input、设置window zOrder</li>
+<li>执行WindowState的attach（创建Surface过程，详情见下一篇）</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">public int addWindow(Session session, IWindow client, int seq,</span><br><span class="line">       WindowManager.LayoutParams attrs, int viewVisibility, int displayId,</span><br><span class="line">       Rect outContentInsets, Rect outStableInsets, Rect outOutsets,InputChannel outInputChannel) &#123;</span><br><span class="line">   </span><br><span class="line">    ... &#x2F;&#x2F; 一堆check逻辑</span><br><span class="line"></span><br><span class="line">    WindowToken token &#x3D; mTokenMap.get(attrs.token);</span><br><span class="line">    &#x2F;&#x2F;创建 WindowState</span><br><span class="line">    WindowState win &#x3D; new WindowState(this, session, client, token,</span><br><span class="line">          attachedWindow, appOp[0], seq, attrs, viewVisibility, displayContent);</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;调整 WindowManager 的 LayoutParams 参数</span><br><span class="line">    mPolicy.adjustWindowParamsLw(win.mAttrs);</span><br><span class="line">    res &#x3D; mPolicy.prepareAddWindowLw(win, attrs);</span><br><span class="line">    addWindowToListInOrderLocked(win, true);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 设置 input</span><br><span class="line">    mInputManager.registerInputChannel(win.mInputChannel, win.mInputWindowHandle);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 创建 Surface 与 SurfaceFlinger 通信，</span><br><span class="line">    win.attach();</span><br><span class="line">    mWindowMap.put(client.asBinder(), win);</span><br><span class="line">        </span><br><span class="line">    if (win.canReceiveKeys()) &#123;</span><br><span class="line">    &#x2F;&#x2F;当该窗口能接收按键事件，则更新聚焦窗口</span><br><span class="line">    focusChanged &#x3D; updateFocusedWindowLocked(UPDATE_FOCUS_WILL_ASSIGN_LAYERS,</span><br><span class="line">          false &#x2F;*updateInputWindows*&#x2F;);</span><br><span class="line">    &#125;</span><br><span class="line">    assignLayersLocked(displayContent.getWindowList());</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<hr>
+<p>推荐阅读：<a href="https://www.jianshu.com/p/238eb0a17760" target="_blank" rel="noopener">图形系统总结</a><br>参考<br><a href="https://juejin.im/entry/5a123c31f265da430d579cda" target="_blank" rel="noopener">Android Window 机制探索
+</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/22/%E5%A6%82%E4%BD%95%E5%86%99%E5%A5%BD%E4%B8%AA%E4%BA%BA%E5%91%A8%E6%8A%A5%EF%BC%881%EF%BC%89/" rel="prev" title="如何写好个人周报（1）">
+      <i class="fa fa-chevron-left"></i> 如何写好个人周报（1）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2019/11/25/Android%E7%B3%BB%E7%BB%9F_Surface/" rel="next" title="Android系统_Surface">
+      Android系统_Surface <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#流程图"><span class="nav-number">1.</span> <span class="nav-text">流程图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Window创建"><span class="nav-number">2.1.</span> <span class="nav-text">Window创建</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#ActivityThread-handleLaunchActivity"><span class="nav-number">2.1.1.</span> <span class="nav-text">ActivityThread.handleLaunchActivity</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ActivityThread-performLaunchActivity"><span class="nav-number">2.1.2.</span> <span class="nav-text">ActivityThread.performLaunchActivity</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Activity-attach"><span class="nav-number">2.1.3.</span> <span class="nav-text">Activity.attach</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Window添加View过程"><span class="nav-number">2.2.</span> <span class="nav-text">Window添加View过程</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#ActivityThread-handleResumeActivity"><span class="nav-number">2.2.1.</span> <span class="nav-text">ActivityThread.handleResumeActivity</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#WindowManagerImply-addView"><span class="nav-number">2.2.2.</span> <span class="nav-text">WindowManagerImply.addView</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#WindowManagerGlobal-addView"><span class="nav-number">2.2.3.</span> <span class="nav-text">WindowManagerGlobal.addView</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ViewRootImpl-setView"><span class="nav-number">2.3.</span> <span class="nav-text">ViewRootImpl.setView</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WindowSession-addToDisplay"><span class="nav-number">2.4.</span> <span class="nav-text">WindowSession.addToDisplay</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WindowManagerService-addWindow"><span class="nav-number">2.5.</span> <span class="nav-text">WindowManagerService.addWindow</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Afree"
+      src="/blog/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Afree</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Afree</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="Symbols count total">369k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">5:35</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'cb1555f9c0cbd64760a2',
+      clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+      repo: 'blog-comment',
+      owner: 'afree8909',
+      admin: ['afree8909'],
+      id: 'e7b2fd707bd100263388b715682f898b',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
