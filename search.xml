@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>自定义UUID-移动设备唯一标识</title>
+    <url>/blog/2020/02/06/%E8%87%AA%E5%AE%9A%E4%B9%89UUID-%E7%A7%BB%E5%8A%A8%E8%AE%BE%E5%A4%87%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/</url>
+    <content><![CDATA[<h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>希望自主生成用于所有移动业务上标识设备唯一性的标识符</p>
+<h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h3><p>业务支撑、日活和新增设备等数据统计、风控等</p>
+<h3 id="uuid系统图"><a href="#uuid系统图" class="headerlink" title="uuid系统图"></a>uuid系统图</h3><p><img src="http://upload-images.jianshu.io/upload_images/9696036-3430540af001a4ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="UUID生成"><a href="#UUID生成" class="headerlink" title="UUID生成"></a>UUID生成</h3><h4 id="移动端相关参数"><a href="#移动端相关参数" class="headerlink" title="移动端相关参数"></a>移动端相关参数</h4><h5 id="Android"><a href="#Android" class="headerlink" title="Android"></a>Android</h5><pre><code>IMEI
+
+* International Mobile Equipment Identity，移动设备国际识别码，是手机的唯一识别号码。等价于DeviceId
+* 仅支持具有通话功能的设备，例如平板没有
+* 需要权限，并且在少数手机拿到的是不合法值
+* 一定的重复率（约5%）
+
+MAC Address
+
+* 支持带有Wifi和蓝牙硬件的设备
+* 需要权限
+
+Sim Serial Number
+
+* Sim卡序列号
+* 对于CDMA设备，返回一个空值</code></pre><h5 id="iOS"><a href="#iOS" class="headerlink" title="iOS"></a>iOS</h5><pre><code>IDFA: 广告标志符,重置系统、还原广告会重新生成）
+OpenUDID: 由OpenUDID的SDK包生成，该应用重置则会重新生成
+keychain: 系统级存储，用于生成的标识存储
+MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算法"><a href="#uuid生成算法" class="headerlink" title="uuid生成算法"></a>uuid生成算法</h4><p>相关参数：客户端类型、版本号、设备信息长度、设备信息内容（见上）、时间戳、设备信息类型、随机数<br>原则：生成uuid唯一，设备信息可反查，设备信息关联uuid，设备信息可校验等<br>算法：32位明文存储相关信息，AES64对称加密</p>
+<h4 id="表结构"><a href="#表结构" class="headerlink" title="表结构"></a>表结构</h4><table>
+<thead>
+<tr>
+<th>uuid</th>
+<th>imei</th>
+<th>mac</th>
+<th>simid</th>
+<th>idfa</th>
+<th>keychainid</th>
+<th>openudid</th>
+<th>idfa</th>
+<th align="left">udid</th>
+<th align="left">Xxx</th>
+</tr>
+</thead>
+</table>
+<h3 id="相关问题"><a href="#相关问题" class="headerlink" title="相关问题"></a>相关问题</h3><p>uuid没法保存<br>uuid合法性（去重、是否作弊）<br>兼容已有uuid<br>防止刷接口<br>防止伪造uuid</p>
+]]></content>
+      <categories>
+        <category>Life</category>
+        <category>Android</category>
+        <category>Git</category>
+        <category>git</category>
+      </categories>
+      <tags>
+        <tag>UUID</tag>
+        <tag>GIT</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/blog/2020/02/06/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+]]></content>
+      <categories>
+        <category>Diary</category>
+        <category>Life</category>
+        <category>PlayStation</category>
+        <category>Games</category>
+      </categories>
+  </entry>
+</search>
