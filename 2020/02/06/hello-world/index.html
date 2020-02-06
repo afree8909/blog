@@ -32,7 +32,7 @@
     mediumzoom: false,
     lazyload: false,
     pangu: false,
-    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
     algolia: {
       appID: '',
       apiKey: '',
@@ -509,7 +509,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
     var gitalk = new Gitalk({
       clientID: 'cb1555f9c0cbd64760a2',
       clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
-      repo: 'git@github.com:afree8909/blog.git',
+      repo: 'blog-comment',
       owner: 'afree8909',
       admin: ['afree8909'],
       id: 'd2b98024be34c32d8e6286c7dd2cd01b',
