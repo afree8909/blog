@@ -1,111 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title> Mac下Charles使用教程</title>
-    <url>/blog/2020/02/07/%20Mac%E4%B8%8BCharles%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/</url>
-    <content><![CDATA[<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><h5 id="是什么？"><a href="#是什么？" class="headerlink" title="是什么？"></a>是什么？</h5><p>Charles是常用的截取网络封包的工具，Mac、Windows和linux下均可用</p>
-<h5 id="能做什么？"><a href="#能做什么？" class="headerlink" title="能做什么？"></a>能做什么？</h5><ul>
-<li>支持截取Http和Https（支持SSL代理）网络封包，</li>
-<li>支持流量控制，可以模拟慢网、弱网等case</li>
-<li>支持AJAX调试，可以自动格式化json或xml</li>
-<li>支持重发网络请求，进行后端压测</li>
-<li>支持网络请求和响应内容的mock修改</li>
-</ul>
-<h5 id="相关软件"><a href="#相关软件" class="headerlink" title="相关软件"></a>相关软件</h5><p>fiddler、tcpdump</p>
-<h5 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h5><p><img src="http://upload-images.jianshu.io/upload_images/9696036-18c68b1c63bbda25.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h3 id="安装配置"><a href="#安装配置" class="headerlink" title="安装配置"></a>安装配置</h3><h5 id="Charles安装"><a href="#Charles安装" class="headerlink" title="Charles安装"></a>Charles安装</h5><h5 id="代理设置"><a href="#代理设置" class="headerlink" title="代理设置"></a>代理设置</h5><h6 id="设置charles为设置成系统代理"><a href="#设置charles为设置成系统代理" class="headerlink" title="设置charles为设置成系统代理"></a>设置charles为设置成系统代理</h6><p><img src="http://upload-images.jianshu.io/upload_images/9696036-37301ef7e2d3438d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h6 id="开启Charles的代理功能"><a href="#开启Charles的代理功能" class="headerlink" title="开启Charles的代理功能"></a>开启Charles的代理功能</h6><p><img src="http://upload-images.jianshu.io/upload_images/9696036-18643fd001f9b826.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h6 id="手机连Charles"><a href="#手机连Charles" class="headerlink" title="手机连Charles"></a>手机连Charles<br></h6><ul>
-<li>Mac上查IP Address</li>
-<li>手机Wifi连对应服务器+端口（8888）</li>
-<li>第一次连接好后，Charles会弹出对应询问框（<strong>连上才会有</strong>），点击allow开始使用</li>
-</ul>
-<h5 id="Https截取配置"><a href="#Https截取配置" class="headerlink" title="Https截取配置"></a>Https截取配置</h5><p>给Mac安装证书，并信任证书<br>给手机安装证书（需要安装伪CA证书）<br><img src="http://upload-images.jianshu.io/upload_images/9696036-65d4c371e6b4171d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<p>Charles设置SSL代理<br><img src="http://upload-images.jianshu.io/upload_images/9696036-1ae0ba56926f6128.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h3 id="功能介绍"><a href="#功能介绍" class="headerlink" title="功能介绍"></a>功能介绍</h3><h5 id="模拟弱网"><a href="#模拟弱网" class="headerlink" title="模拟弱网"></a>模拟弱网</h5><p><img src="http://upload-images.jianshu.io/upload_images/9696036-cabadbe1187d5bab.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h5 id="修改请求或响应内容"><a href="#修改请求或响应内容" class="headerlink" title="修改请求或响应内容"></a>修改请求或响应内容</h5><ul>
-<li>Breakpoint<br>&emsp;临时性网络内容修改<br><img src="http://upload-images.jianshu.io/upload_images/9696036-2190372ba3f82220.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></li>
-</ul>
-<ul>
-<li>Rewrite<br>&emsp;适合对某一类网络请求进行一些正则替换，以达到修改结果的目的。主要可以对某些匹配请求的header、host、url、path、query param、response status、body进行rewrite</li>
-<li>Repeat<br>&emsp;用作接口压力测试</li>
-<li>Map<br>&emsp;MapRemote重定向，适用于不同服务器切换测试<br>&emsp;MapLocal重定向到本地数据，适用于本地修改及时查看数据响应</li>
-<li>DNS Spoofing Setting<br>&emsp;适用于需要将<strong>域名</strong>打到<strong>ip地址</strong>的服务器上</li>
-</ul>
-<h5 id="反向代理"><a href="#反向代理" class="headerlink" title="反向代理"></a>反向代理</h5><p><img src="http://upload-images.jianshu.io/upload_images/9696036-4dd5d0c100489910.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h3 id="常见坑"><a href="#常见坑" class="headerlink" title="常见坑"></a>常见坑</h3><h5 id="Charles与翻墙软件冲突"><a href="#Charles与翻墙软件冲突" class="headerlink" title="Charles与翻墙软件冲突"></a>Charles与翻墙软件冲突</h5><h5 id="Charles设置MapLocal在Android中出现乱码"><a href="#Charles设置MapLocal在Android中出现乱码" class="headerlink" title="Charles设置MapLocal在Android中出现乱码"></a>Charles设置MapLocal在Android中出现乱码</h5><p>原因：MapLocal的Response的Headers中Content-Type值为text/plain,没有指定编码，Android的网络解析框架如果不支持的话则会出现乱码<br>解决：Tools-&gt;Rewrite-&gt;Rewrite Rule<br><img src="http://upload-images.jianshu.io/upload_images/9696036-a93a904173cbe565.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h5 id="Charles连接不上"><a href="#Charles连接不上" class="headerlink" title="Charles连接不上"></a>Charles连接不上</h5><p>其它配置正确情况下，请先用网线试下，是否可以连接成功，如果可以的话，基本确认是Mac的wifi网络对手机不可见，如果属于公司网络，联系公司内网进行设置，保证手机和Mac的网段一致</p>
-]]></content>
-      <categories>
-        <category>开发效率</category>
-        <category>工具</category>
-      </categories>
-      <tags>
-        <tag>Charles</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>设计模式</title>
-    <url>/blog/2020/02/07/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</url>
-    <content><![CDATA[<p><img src="http://upload-images.jianshu.io/upload_images/9696036-b89e727f8e21dc43.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<p><img src="http://upload-images.jianshu.io/upload_images/9696036-959c5e557465806f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-]]></content>
-      <categories>
-        <category>设计模式</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>自定义UUID-移动设备唯一标识</title>
-    <url>/blog/2020/02/06/%E8%87%AA%E5%AE%9A%E4%B9%89UUID-%E7%A7%BB%E5%8A%A8%E8%AE%BE%E5%A4%87%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/</url>
-    <content><![CDATA[<h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>希望自主生成用于所有移动业务上标识设备唯一性的标识符</p>
-<h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h3><p>业务支撑、日活和新增设备等数据统计、风控等</p>
-<h3 id="uuid系统图"><a href="#uuid系统图" class="headerlink" title="uuid系统图"></a>uuid系统图</h3><p><img src="http://upload-images.jianshu.io/upload_images/9696036-3430540af001a4ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h3 id="UUID生成"><a href="#UUID生成" class="headerlink" title="UUID生成"></a>UUID生成</h3><h4 id="移动端相关参数"><a href="#移动端相关参数" class="headerlink" title="移动端相关参数"></a>移动端相关参数</h4><h5 id="Android"><a href="#Android" class="headerlink" title="Android"></a>Android</h5><pre><code>IMEI
-
-* International Mobile Equipment Identity，移动设备国际识别码，是手机的唯一识别号码。等价于DeviceId
-* 仅支持具有通话功能的设备，例如平板没有
-* 需要权限，并且在少数手机拿到的是不合法值
-* 一定的重复率（约5%）
-
-MAC Address
-
-* 支持带有Wifi和蓝牙硬件的设备
-* 需要权限
-
-Sim Serial Number
-
-* Sim卡序列号
-* 对于CDMA设备，返回一个空值</code></pre><h5 id="iOS"><a href="#iOS" class="headerlink" title="iOS"></a>iOS</h5><pre><code>IDFA: 广告标志符,重置系统、还原广告会重新生成）
-OpenUDID: 由OpenUDID的SDK包生成，该应用重置则会重新生成
-keychain: 系统级存储，用于生成的标识存储
-MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算法"><a href="#uuid生成算法" class="headerlink" title="uuid生成算法"></a>uuid生成算法</h4><p>相关参数：客户端类型、版本号、设备信息长度、设备信息内容（见上）、时间戳、设备信息类型、随机数<br>原则：生成uuid唯一，设备信息可反查，设备信息关联uuid，设备信息可校验等<br>算法：32位明文存储相关信息，AES64对称加密</p>
-<h4 id="表结构"><a href="#表结构" class="headerlink" title="表结构"></a>表结构</h4><table>
-<thead>
-<tr>
-<th>uuid</th>
-<th>imei</th>
-<th>mac</th>
-<th>simid</th>
-<th>idfa</th>
-<th>keychainid</th>
-<th>openudid</th>
-<th>idfa</th>
-<th align="left">udid</th>
-<th align="left">Xxx</th>
-</tr>
-</thead>
-</table>
-<h3 id="相关问题"><a href="#相关问题" class="headerlink" title="相关问题"></a>相关问题</h3><p>uuid没法保存<br>uuid合法性（去重、是否作弊）<br>兼容已有uuid<br>防止刷接口<br>防止伪造uuid</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-        <category>应用</category>
-      </categories>
-      <tags>
-        <tag>ID</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>OkHttp 4源码（7）— 总结</title>
     <url>/blog/2020/01/30/OkHttp%204%E6%BA%90%E7%A0%81%EF%BC%887%EF%BC%89%E2%80%94%20%E6%80%BB%E7%BB%93/</url>
     <content><![CDATA[<blockquote>
@@ -1191,8 +1086,8 @@ MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算�
         <category>工具</category>
       </categories>
       <tags>
-        <tag>git</tag>
         <tag>命令</tag>
+        <tag>git</tag>
       </tags>
   </entry>
   <entry>
@@ -3511,74 +3406,104 @@ if (matchWidth) {
       </tags>
   </entry>
   <entry>
-    <title>单例模式</title>
-    <url>/blog/2018/02/03/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</url>
-    <content><![CDATA[<h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><p>一个类只有一个实例，该实例必须自行创建，并且向整个系统提供这个实例</p>
-<h3 id="实现考虑因素"><a href="#实现考虑因素" class="headerlink" title="实现考虑因素"></a>实现考虑因素</h3><ul>
-<li>唯一性<ul>
-<li>是否防克隆</li>
-<li>是否防反射</li>
-<li>是否防序列化 </li>
-</ul>
-</li>
-<li>性能<ul>
-<li>是否需要懒加载 </li>
-<li>是否防指令重排（双重锁方式问题） </li>
-</ul>
-</li>
-</ul>
-<h3 id="三种实现方式"><a href="#三种实现方式" class="headerlink" title="三种实现方式"></a>三种实现方式</h3><table>
+    <title>设计模式</title>
+    <url>/blog/2018/02/08/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</url>
+    <content><![CDATA[<p><img src="http://upload-images.jianshu.io/upload_images/9696036-b89e727f8e21dc43.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""><br><img src="http://upload-images.jianshu.io/upload_images/9696036-959c5e557465806f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>自定义UUID-移动设备唯一标识</title>
+    <url>/blog/2018/02/08/%E8%87%AA%E5%AE%9A%E4%B9%89UUID-%E7%A7%BB%E5%8A%A8%E8%AE%BE%E5%A4%87%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/</url>
+    <content><![CDATA[<h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>希望自主生成用于所有移动业务上标识设备唯一性的标识符</p>
+<h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h3><p>业务支撑、日活和新增设备等数据统计、风控等</p>
+<h3 id="uuid系统图"><a href="#uuid系统图" class="headerlink" title="uuid系统图"></a>uuid系统图</h3><p><img src="http://upload-images.jianshu.io/upload_images/9696036-3430540af001a4ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="UUID生成"><a href="#UUID生成" class="headerlink" title="UUID生成"></a>UUID生成</h3><h4 id="移动端相关参数"><a href="#移动端相关参数" class="headerlink" title="移动端相关参数"></a>移动端相关参数</h4><h5 id="Android"><a href="#Android" class="headerlink" title="Android"></a>Android</h5><pre><code>IMEI
+
+* International Mobile Equipment Identity，移动设备国际识别码，是手机的唯一识别号码。等价于DeviceId
+* 仅支持具有通话功能的设备，例如平板没有
+* 需要权限，并且在少数手机拿到的是不合法值
+* 一定的重复率（约5%）
+
+MAC Address
+
+* 支持带有Wifi和蓝牙硬件的设备
+* 需要权限
+
+Sim Serial Number
+
+* Sim卡序列号
+* 对于CDMA设备，返回一个空值</code></pre><h5 id="iOS"><a href="#iOS" class="headerlink" title="iOS"></a>iOS</h5><pre><code>IDFA: 广告标志符,重置系统、还原广告会重新生成）
+OpenUDID: 由OpenUDID的SDK包生成，该应用重置则会重新生成
+keychain: 系统级存储，用于生成的标识存储
+MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算法"><a href="#uuid生成算法" class="headerlink" title="uuid生成算法"></a>uuid生成算法</h4><p>相关参数：客户端类型、版本号、设备信息长度、设备信息内容（见上）、时间戳、设备信息类型、随机数<br>原则：生成uuid唯一，设备信息可反查，设备信息关联uuid，设备信息可校验等<br>算法：32位明文存储相关信息，AES64对称加密</p>
+<h4 id="表结构"><a href="#表结构" class="headerlink" title="表结构"></a>表结构</h4><table>
 <thead>
 <tr>
-<th>实现</th>
-<th>懒加载</th>
-<th>线程安全</th>
-<th>防克隆</th>
-<th>防反射</th>
-<th>防序列化</th>
+<th>uuid</th>
+<th>imei</th>
+<th>mac</th>
+<th>simid</th>
+<th>idfa</th>
+<th>keychainid</th>
+<th>openudid</th>
+<th>idfa</th>
+<th align="left">udid</th>
+<th align="left">Xxx</th>
 </tr>
 </thead>
-<tbody><tr>
-<td>双重锁</td>
-<td>是</td>
-<td>是</td>
-<td>否</td>
-<td>否</td>
-<td>否</td>
-</tr>
-<tr>
-<td>静态内部类</td>
-<td>是</td>
-<td>是</td>
-<td>否</td>
-<td>否</td>
-<td>否</td>
-</tr>
-<tr>
-<td>枚举</td>
-<td>否</td>
-<td>是</td>
-<td>是</td>
-<td>是</td>
-<td>是</td>
-</tr>
-</tbody></table>
-<h4 id="双重锁方式（添加了防御功能）"><a href="#双重锁方式（添加了防御功能）" class="headerlink" title="双重锁方式（添加了防御功能）"></a>双重锁方式（添加了防御功能）</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Singleton implements Serializable, Cloneable &#123;</span><br><span class="line"></span><br><span class="line">    private static volatile Singleton sSingleton; &#x2F;&#x2F; volatile防止指令重排</span><br><span class="line">    private static boolean sFlag &#x3D; true;</span><br><span class="line">    private Singleton() &#123;</span><br><span class="line">        if(sFlag)&#123; &#x2F;&#x2F; 防反射</span><br><span class="line">            sFlag &#x3D; false;</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            throw new RuntimeException(&quot;对象已经存在&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Singleton getSingleton() &#123;</span><br><span class="line">        if (sSingleton &#x3D;&#x3D; null) &#123;</span><br><span class="line">            synchronized (Singleton.class) &#123;</span><br><span class="line">                if (sSingleton &#x3D;&#x3D; null) &#123;</span><br><span class="line">                    sSingleton &#x3D; new Singleton();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return sSingleton;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private Object readResolve() &#123;</span><br><span class="line">        return getSingleton(); &#x2F;&#x2F; 防序列化</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected Object clone() throws CloneNotSupportedException &#123;</span><br><span class="line">        return getSingleton(); &#x2F;&#x2F; 防克隆</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="静态内部类方式"><a href="#静态内部类方式" class="headerlink" title="静态内部类方式"></a>静态内部类方式</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Instance &#123;</span><br><span class="line">    private Instance() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static class Holder &#123;</span><br><span class="line">        &#x2F;&#x2F; 类加载机制保证懒加载，static&amp;final确保线程安全</span><br><span class="line">        private static final Instance INSTANCE &#x3D; new Instance();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Instance getInstance() &#123;</span><br><span class="line">        return Holder.INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="枚举类方式"><a href="#枚举类方式" class="headerlink" title="枚举类方式"></a>枚举类方式</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public enum Single &#123;</span><br><span class="line">    SINGLE;</span><br><span class="line">    public void whateverMethod()&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>基本等价于(除enum的防反射、序列化、克隆等属性)</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public final class Single&#123;</span><br><span class="line">    public static final Single SINGLE &#x3D; new Single();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public static void main(String args[]) &#123;</span><br><span class="line"></span><br><span class="line">       try &#123;</span><br><span class="line">           Singleton singleton &#x3D; Singleton.getSingleton();</span><br><span class="line">           testCloneSingleton(singleton);</span><br><span class="line">           testReflectSingleton(singleton);</span><br><span class="line">           testSerializableSingleton(singleton);</span><br><span class="line"></span><br><span class="line">       &#125; catch (Exception e) &#123;</span><br><span class="line">           e.printStackTrace();</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   private static void testCloneSingleton(Singleton singleton) throws CloneNotSupportedException &#123;</span><br><span class="line"></span><br><span class="line">       boolean equals &#x3D; singleton.equals(Singleton.getSingleton().clone());</span><br><span class="line"></span><br><span class="line">       System.out.print(equals);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   private static void testReflectSingleton(Singleton singleton) throws Exception &#123;</span><br><span class="line">       Constructor constructor &#x3D; Singleton.class.getDeclaredConstructor();</span><br><span class="line">       constructor.setAccessible(true);</span><br><span class="line">       constructor.newInstance();</span><br><span class="line"></span><br><span class="line">       boolean equals &#x3D; singleton.equals(constructor.newInstance(););</span><br><span class="line"></span><br><span class="line">       System.out.print(equals);</span><br><span class="line"></span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   private static void testSerializableSingleton(Singleton singleton) throws Exception &#123;</span><br><span class="line">       String tempFile &#x3D; &quot;tempFile&quot;;</span><br><span class="line">       ObjectOutputStream oos &#x3D; new ObjectOutputStream(new FileOutputStream(tempFile));</span><br><span class="line">       oos.writeObject(getSingleton());</span><br><span class="line">       ObjectInputStream objectInputStream &#x3D; new ObjectInputStream(new FileInputStream(new File(tempFile)));</span><br><span class="line"></span><br><span class="line">       boolean equals &#x3D; singleton.equals(objectInputStream.readObject());</span><br><span class="line"></span><br><span class="line">       System.out.print(equals);</span><br><span class="line"></span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-
+</table>
+<h3 id="相关问题"><a href="#相关问题" class="headerlink" title="相关问题"></a>相关问题</h3><p>uuid没法保存<br>uuid合法性（去重、是否作弊）<br>兼容已有uuid<br>防止刷接口<br>防止伪造uuid</p>
 ]]></content>
       <categories>
-        <category>设计模式</category>
+        <category>Android</category>
+        <category>应用</category>
       </categories>
       <tags>
-        <tag>单例</tag>
+        <tag>ID</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title> Mac下Charles使用教程</title>
+    <url>/blog/2018/02/08/%20Mac%E4%B8%8BCharles%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/</url>
+    <content><![CDATA[<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><h5 id="是什么？"><a href="#是什么？" class="headerlink" title="是什么？"></a>是什么？</h5><p>Charles是常用的截取网络封包的工具，Mac、Windows和linux下均可用</p>
+<h5 id="能做什么？"><a href="#能做什么？" class="headerlink" title="能做什么？"></a>能做什么？</h5><ul>
+<li>支持截取Http和Https（支持SSL代理）网络封包，</li>
+<li>支持流量控制，可以模拟慢网、弱网等case</li>
+<li>支持AJAX调试，可以自动格式化json或xml</li>
+<li>支持重发网络请求，进行后端压测</li>
+<li>支持网络请求和响应内容的mock修改</li>
+</ul>
+<h5 id="相关软件"><a href="#相关软件" class="headerlink" title="相关软件"></a>相关软件</h5><p>fiddler、tcpdump</p>
+<h5 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h5><p><img src="http://upload-images.jianshu.io/upload_images/9696036-18c68b1c63bbda25.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="安装配置"><a href="#安装配置" class="headerlink" title="安装配置"></a>安装配置</h3><h5 id="Charles安装"><a href="#Charles安装" class="headerlink" title="Charles安装"></a>Charles安装</h5><h5 id="代理设置"><a href="#代理设置" class="headerlink" title="代理设置"></a>代理设置</h5><h6 id="设置charles为设置成系统代理"><a href="#设置charles为设置成系统代理" class="headerlink" title="设置charles为设置成系统代理"></a>设置charles为设置成系统代理</h6><p><img src="http://upload-images.jianshu.io/upload_images/9696036-37301ef7e2d3438d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h6 id="开启Charles的代理功能"><a href="#开启Charles的代理功能" class="headerlink" title="开启Charles的代理功能"></a>开启Charles的代理功能</h6><p><img src="http://upload-images.jianshu.io/upload_images/9696036-18643fd001f9b826.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h6 id="手机连Charles"><a href="#手机连Charles" class="headerlink" title="手机连Charles"></a>手机连Charles<br></h6><ul>
+<li>Mac上查IP Address</li>
+<li>手机Wifi连对应服务器+端口（8888）</li>
+<li>第一次连接好后，Charles会弹出对应询问框（<strong>连上才会有</strong>），点击allow开始使用</li>
+</ul>
+<h5 id="Https截取配置"><a href="#Https截取配置" class="headerlink" title="Https截取配置"></a>Https截取配置</h5><p>给Mac安装证书，并信任证书<br>给手机安装证书（需要安装伪CA证书）<br><img src="http://upload-images.jianshu.io/upload_images/9696036-65d4c371e6b4171d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>Charles设置SSL代理<br><img src="http://upload-images.jianshu.io/upload_images/9696036-1ae0ba56926f6128.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="功能介绍"><a href="#功能介绍" class="headerlink" title="功能介绍"></a>功能介绍</h3><h5 id="模拟弱网"><a href="#模拟弱网" class="headerlink" title="模拟弱网"></a>模拟弱网</h5><p><img src="http://upload-images.jianshu.io/upload_images/9696036-cabadbe1187d5bab.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h5 id="修改请求或响应内容"><a href="#修改请求或响应内容" class="headerlink" title="修改请求或响应内容"></a>修改请求或响应内容</h5><ul>
+<li>Breakpoint<br>&emsp;临时性网络内容修改<br><img src="http://upload-images.jianshu.io/upload_images/9696036-2190372ba3f82220.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></li>
+</ul>
+<ul>
+<li>Rewrite<br>&emsp;适合对某一类网络请求进行一些正则替换，以达到修改结果的目的。主要可以对某些匹配请求的header、host、url、path、query param、response status、body进行rewrite</li>
+<li>Repeat<br>&emsp;用作接口压力测试</li>
+<li>Map<br>&emsp;MapRemote重定向，适用于不同服务器切换测试<br>&emsp;MapLocal重定向到本地数据，适用于本地修改及时查看数据响应</li>
+<li>DNS Spoofing Setting<br>&emsp;适用于需要将<strong>域名</strong>打到<strong>ip地址</strong>的服务器上</li>
+</ul>
+<h5 id="反向代理"><a href="#反向代理" class="headerlink" title="反向代理"></a>反向代理</h5><p><img src="http://upload-images.jianshu.io/upload_images/9696036-4dd5d0c100489910.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="常见坑"><a href="#常见坑" class="headerlink" title="常见坑"></a>常见坑</h3><h5 id="Charles与翻墙软件冲突"><a href="#Charles与翻墙软件冲突" class="headerlink" title="Charles与翻墙软件冲突"></a>Charles与翻墙软件冲突</h5><h5 id="Charles设置MapLocal在Android中出现乱码"><a href="#Charles设置MapLocal在Android中出现乱码" class="headerlink" title="Charles设置MapLocal在Android中出现乱码"></a>Charles设置MapLocal在Android中出现乱码</h5><p>原因：MapLocal的Response的Headers中Content-Type值为text/plain,没有指定编码，Android的网络解析框架如果不支持的话则会出现乱码<br>解决：Tools-&gt;Rewrite-&gt;Rewrite Rule<br><img src="http://upload-images.jianshu.io/upload_images/9696036-a93a904173cbe565.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h5 id="Charles连接不上"><a href="#Charles连接不上" class="headerlink" title="Charles连接不上"></a>Charles连接不上</h5><p>其它配置正确情况下，请先用网线试下，是否可以连接成功，如果可以的话，基本确认是Mac的wifi网络对手机不可见，如果属于公司网络，联系公司内网进行设置，保证手机和Mac的网段一致</p>
+]]></content>
+      <categories>
+        <category>开发效率</category>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>Charles</tag>
       </tags>
   </entry>
 </search>
