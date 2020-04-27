@@ -15,36 +15,10 @@
 
 <link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
 
-
 <script id="hexo-configurations">
-  var NexT = window.NexT || {};
-  var CONFIG = {
-    hostname: new URL('https://afree8909.github.io/blog').hostname,
-    root: '/blog/',
-    scheme: 'Gemini',
-    version: '7.7.0',
-    exturl: false,
-    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
-    copycode: {"enable":false,"show_result":false,"style":null},
-    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
-    bookmark: {"enable":false,"color":"#222","save":"auto"},
-    fancybox: false,
-    mediumzoom: false,
-    lazyload: false,
-    pangu: false,
-    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null},
-    algolia: {
-      appID: '',
-      apiKey: '',
-      indexName: '',
-      hits: {"per_page":20},
-      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
-    },
-    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
-    path: 'search.xml',
-    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
-  };
-</script>
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"afree8909.github.io","root":"/blog/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":20},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
 
   <meta property="og:type" content="website">
 <meta property="og:title" content="Afree&#39;s blog">
@@ -60,8 +34,9 @@
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome: true,
-    isPost: false
+    isHome : true,
+    isPost : false,
+    lang   : 'zh-Hans'
   };
 </script>
 
@@ -104,18 +79,6 @@
 
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
-  <div class="site-meta">
-
-    <div>
-      <a href="/blog/" class="brand" rel="start">
-        <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Afree's blog</span>
-        <span class="logo-line-after"><i></i></span>
-      </a>
-    </div>
-        <p class="site-subtitle">保持好奇心，不畏边界，持续学习</p>
-  </div>
-
   <div class="site-nav-toggle">
     <div class="toggle" aria-label="Toggle navigation bar">
       <span class="toggle-line toggle-line-first"></span>
@@ -123,25 +86,32 @@
       <span class="toggle-line toggle-line-last"></span>
     </div>
   </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Afree's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">保持好奇心，不畏边界，持续学习</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
 </div>
 
 
+
+
 <nav class="site-nav">
-  
   <ul id="menu" class="menu">
         <li class="menu-item menu-item-home">
 
     <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
-
-  </li>
-        <li class="menu-item menu-item-tags">
-
-    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
-
-  </li>
-        <li class="menu-item menu-item-categories">
-
-    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
 
   </li>
         <li class="menu-item menu-item-archives">
@@ -154,29 +124,34 @@
         </a>
       </li>
   </ul>
-
 </nav>
-  <div class="site-search">
+
+
+
+  <div class="search-pop-overlay">
     <div class="popup search-popup">
-    <div class="search-header">
+        <div class="search-header">
   <span class="search-icon">
     <i class="fa fa-search"></i>
   </span>
   <div class="search-input-container">
-    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+    <input autocomplete="off" autocapitalize="off"
            placeholder="Searching..." spellcheck="false"
-           type="text" id="search-input">
+           type="search" class="search-input">
   </div>
   <span class="popup-btn-close">
     <i class="fa fa-times-circle"></i>
   </span>
 </div>
-<div id="search-result"></div>
-
-</div>
-<div class="search-pop-overlay"></div>
-
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
   </div>
+</div>
+
+    </div>
+  </div>
+
 </div>
     </header>
 
@@ -192,18 +167,16 @@
         <div class="content-wrap">
           
 
-          <div class="content">
+          <div class="content index posts-expand">
             
-
-  <div class="posts-expand">
-        
+      
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-Hans">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
     <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2018/02/08/%20Mac%E4%B8%8BCharles%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
       <meta itemprop="name" content="Afree">
       <meta itemprop="description" content="">
     </span>
@@ -212,10 +185,10 @@
       <meta itemprop="name" content="Afree's blog">
     </span>
       <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
+        <h2 class="post-title" itemprop="name headline">
           
             <a href="/blog/2018/02/08/%20Mac%E4%B8%8BCharles%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/" class="post-title-link" itemprop="url"> Mac下Charles使用教程</a>
-        </h1>
+        </h2>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -239,15 +212,11 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E5%BC%80%E5%8F%91%E6%95%88%E7%8E%87/" itemprop="url" rel="index">
-                    <span itemprop="name">开发效率</span>
-                  </a>
+                  <a href="/blog/categories/%E5%BC%80%E5%8F%91%E6%95%88%E7%8E%87/" itemprop="url" rel="index"><span itemprop="name">开发效率</span></a>
                 </span>
                   , 
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index">
-                    <span itemprop="name">工具</span>
-                  </a>
+                  <a href="/blog/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
                 </span>
             </span>
 
@@ -262,7 +231,39 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          
+          <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><h5 id="是什么？"><a href="#是什么？" class="headerlink" title="是什么？"></a>是什么？</h5><p>Charles是常用的截取网络封包的工具，Mac、Windows和linux下均可用</p>
+<h5 id="能做什么？"><a href="#能做什么？" class="headerlink" title="能做什么？"></a>能做什么？</h5><ul>
+<li>支持截取Http和Https（支持SSL代理）网络封包，</li>
+<li>支持流量控制，可以模拟慢网、弱网等case</li>
+<li>支持AJAX调试，可以自动格式化json或xml</li>
+<li>支持重发网络请求，进行后端压测</li>
+<li>支持网络请求和响应内容的mock修改</li>
+</ul>
+<h5 id="相关软件"><a href="#相关软件" class="headerlink" title="相关软件"></a>相关软件</h5><p>fiddler、tcpdump</p>
+<h5 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h5><p><img src="http://upload-images.jianshu.io/upload_images/9696036-18c68b1c63bbda25.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="安装配置"><a href="#安装配置" class="headerlink" title="安装配置"></a>安装配置</h3><h5 id="Charles安装"><a href="#Charles安装" class="headerlink" title="Charles安装"></a>Charles安装</h5><h5 id="代理设置"><a href="#代理设置" class="headerlink" title="代理设置"></a>代理设置</h5><h6 id="设置charles为设置成系统代理"><a href="#设置charles为设置成系统代理" class="headerlink" title="设置charles为设置成系统代理"></a>设置charles为设置成系统代理</h6><p><img src="http://upload-images.jianshu.io/upload_images/9696036-37301ef7e2d3438d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h6 id="开启Charles的代理功能"><a href="#开启Charles的代理功能" class="headerlink" title="开启Charles的代理功能"></a>开启Charles的代理功能</h6><p><img src="http://upload-images.jianshu.io/upload_images/9696036-18643fd001f9b826.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h6 id="手机连Charles"><a href="#手机连Charles" class="headerlink" title="手机连Charles"></a>手机连Charles<br></h6><ul>
+<li>Mac上查IP Address</li>
+<li>手机Wifi连对应服务器+端口（8888）</li>
+<li>第一次连接好后，Charles会弹出对应询问框（<strong>连上才会有</strong>），点击allow开始使用</li>
+</ul>
+<h5 id="Https截取配置"><a href="#Https截取配置" class="headerlink" title="Https截取配置"></a>Https截取配置</h5><p>给Mac安装证书，并信任证书<br>给手机安装证书（需要安装伪CA证书）<br><img src="http://upload-images.jianshu.io/upload_images/9696036-65d4c371e6b4171d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>Charles设置SSL代理<br><img src="http://upload-images.jianshu.io/upload_images/9696036-1ae0ba56926f6128.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="功能介绍"><a href="#功能介绍" class="headerlink" title="功能介绍"></a>功能介绍</h3><h5 id="模拟弱网"><a href="#模拟弱网" class="headerlink" title="模拟弱网"></a>模拟弱网</h5><p><img src="http://upload-images.jianshu.io/upload_images/9696036-cabadbe1187d5bab.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h5 id="修改请求或响应内容"><a href="#修改请求或响应内容" class="headerlink" title="修改请求或响应内容"></a>修改请求或响应内容</h5><ul>
+<li>Breakpoint<br>&emsp;临时性网络内容修改<br><img src="http://upload-images.jianshu.io/upload_images/9696036-2190372ba3f82220.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></li>
+</ul>
+<ul>
+<li>Rewrite<br>&emsp;适合对某一类网络请求进行一些正则替换，以达到修改结果的目的。主要可以对某些匹配请求的header、host、url、path、query param、response status、body进行rewrite</li>
+<li>Repeat<br>&emsp;用作接口压力测试</li>
+<li>Map<br>&emsp;MapRemote重定向，适用于不同服务器切换测试<br>&emsp;MapLocal重定向到本地数据，适用于本地修改及时查看数据响应</li>
+<li>DNS Spoofing Setting<br>&emsp;适用于需要将<strong>域名</strong>打到<strong>ip地址</strong>的服务器上</li>
+</ul>
+<h5 id="反向代理"><a href="#反向代理" class="headerlink" title="反向代理"></a>反向代理</h5><p><img src="http://upload-images.jianshu.io/upload_images/9696036-4dd5d0c100489910.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="常见坑"><a href="#常见坑" class="headerlink" title="常见坑"></a>常见坑</h3><h5 id="Charles与翻墙软件冲突"><a href="#Charles与翻墙软件冲突" class="headerlink" title="Charles与翻墙软件冲突"></a>Charles与翻墙软件冲突</h5><h5 id="Charles设置MapLocal在Android中出现乱码"><a href="#Charles设置MapLocal在Android中出现乱码" class="headerlink" title="Charles设置MapLocal在Android中出现乱码"></a>Charles设置MapLocal在Android中出现乱码</h5><p>原因：MapLocal的Response的Headers中Content-Type值为text/plain,没有指定编码，Android的网络解析框架如果不支持的话则会出现乱码<br>解决：Tools-&gt;Rewrite-&gt;Rewrite Rule<br><img src="http://upload-images.jianshu.io/upload_images/9696036-a93a904173cbe565.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h5 id="Charles连接不上"><a href="#Charles连接不上" class="headerlink" title="Charles连接不上"></a>Charles连接不上</h5><p>其它配置正确情况下，请先用网线试下，是否可以连接成功，如果可以的话，基本确认是Mac的wifi网络对手机不可见，如果属于公司网络，联系公司内网进行设置，保证手机和Mac的网段一致</p>
+
       
     </div>
 
@@ -277,14 +278,14 @@
   
   
 
-        
+      
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-Hans">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
     <link itemprop="mainEntityOfPage" href="https://afree8909.github.io/blog/2018/02/03/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.png">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
       <meta itemprop="name" content="Afree">
       <meta itemprop="description" content="">
     </span>
@@ -293,10 +294,10 @@
       <meta itemprop="name" content="Afree's blog">
     </span>
       <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
+        <h2 class="post-title" itemprop="name headline">
           
             <a href="/blog/2018/02/03/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">单例模式</a>
-        </h1>
+        </h2>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -326,7 +327,67 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          
+          <h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><p>一个类只有一个实例，该实例必须自行创建，并且向整个系统提供这个实例</p>
+<h3 id="实现考虑因素"><a href="#实现考虑因素" class="headerlink" title="实现考虑因素"></a>实现考虑因素</h3><ul>
+<li>唯一性<ul>
+<li>是否防克隆</li>
+<li>是否防反射</li>
+<li>是否防序列化 </li>
+</ul>
+</li>
+<li>性能<ul>
+<li>是否需要懒加载 </li>
+<li>是否防指令重排（双重锁方式问题） </li>
+</ul>
+</li>
+</ul>
+<h3 id="三种实现方式"><a href="#三种实现方式" class="headerlink" title="三种实现方式"></a>三种实现方式</h3><table>
+<thead>
+<tr>
+<th>实现</th>
+<th>懒加载</th>
+<th>线程安全</th>
+<th>防克隆</th>
+<th>防反射</th>
+<th>防序列化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>双重锁</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+</tr>
+<tr>
+<td>静态内部类</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+</tr>
+<tr>
+<td>枚举</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+</tr>
+</tbody></table>
+<h4 id="双重锁方式（添加了防御功能）"><a href="#双重锁方式（添加了防御功能）" class="headerlink" title="双重锁方式（添加了防御功能）"></a>双重锁方式（添加了防御功能）</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">public class Singleton implements Serializable, Cloneable &#123;</span><br><span class="line"></span><br><span class="line">    private static volatile Singleton sSingleton; &#x2F;&#x2F; volatile防止指令重排</span><br><span class="line">    private static boolean sFlag &#x3D; true;</span><br><span class="line">    private Singleton() &#123;</span><br><span class="line">        if(sFlag)&#123; &#x2F;&#x2F; 防反射</span><br><span class="line">            sFlag &#x3D; false;</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            throw new RuntimeException(&quot;对象已经存在&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Singleton getSingleton() &#123;</span><br><span class="line">        if (sSingleton &#x3D;&#x3D; null) &#123;</span><br><span class="line">            synchronized (Singleton.class) &#123;</span><br><span class="line">                if (sSingleton &#x3D;&#x3D; null) &#123;</span><br><span class="line">                    sSingleton &#x3D; new Singleton();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return sSingleton;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private Object readResolve() &#123;</span><br><span class="line">        return getSingleton(); &#x2F;&#x2F; 防序列化</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected Object clone() throws CloneNotSupportedException &#123;</span><br><span class="line">        return getSingleton(); &#x2F;&#x2F; 防克隆</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="静态内部类方式"><a href="#静态内部类方式" class="headerlink" title="静态内部类方式"></a>静态内部类方式</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public class Instance &#123;</span><br><span class="line">    private Instance() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static class Holder &#123;</span><br><span class="line">        &#x2F;&#x2F; 类加载机制保证懒加载，static&amp;final确保线程安全</span><br><span class="line">        private static final Instance INSTANCE &#x3D; new Instance();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Instance getInstance() &#123;</span><br><span class="line">        return Holder.INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="枚举类方式"><a href="#枚举类方式" class="headerlink" title="枚举类方式"></a>枚举类方式</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public enum Single &#123;</span><br><span class="line">    SINGLE;</span><br><span class="line">    public void whateverMethod()&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>基本等价于(除enum的防反射、序列化、克隆等属性)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public final class Single&#123;</span><br><span class="line">    public static final Single SINGLE &#x3D; new Single();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String args[]) &#123;</span><br><span class="line"></span><br><span class="line">       try &#123;</span><br><span class="line">           Singleton singleton &#x3D; Singleton.getSingleton();</span><br><span class="line">           testCloneSingleton(singleton);</span><br><span class="line">           testReflectSingleton(singleton);</span><br><span class="line">           testSerializableSingleton(singleton);</span><br><span class="line"></span><br><span class="line">       &#125; catch (Exception e) &#123;</span><br><span class="line">           e.printStackTrace();</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   private static void testCloneSingleton(Singleton singleton) throws CloneNotSupportedException &#123;</span><br><span class="line"></span><br><span class="line">       boolean equals &#x3D; singleton.equals(Singleton.getSingleton().clone());</span><br><span class="line"></span><br><span class="line">       System.out.print(equals);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   private static void testReflectSingleton(Singleton singleton) throws Exception &#123;</span><br><span class="line">       Constructor constructor &#x3D; Singleton.class.getDeclaredConstructor();</span><br><span class="line">       constructor.setAccessible(true);</span><br><span class="line">       constructor.newInstance();</span><br><span class="line"></span><br><span class="line">       boolean equals &#x3D; singleton.equals(constructor.newInstance(););</span><br><span class="line"></span><br><span class="line">       System.out.print(equals);</span><br><span class="line"></span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   private static void testSerializableSingleton(Singleton singleton) throws Exception &#123;</span><br><span class="line">       String tempFile &#x3D; &quot;tempFile&quot;;</span><br><span class="line">       ObjectOutputStream oos &#x3D; new ObjectOutputStream(new FileOutputStream(tempFile));</span><br><span class="line">       oos.writeObject(getSingleton());</span><br><span class="line">       ObjectInputStream objectInputStream &#x3D; new ObjectInputStream(new FileInputStream(new File(tempFile)));</span><br><span class="line"></span><br><span class="line">       boolean equals &#x3D; singleton.equals(objectInputStream.readObject());</span><br><span class="line"></span><br><span class="line">       System.out.print(equals);</span><br><span class="line"></span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+
+
       
     </div>
 
@@ -341,7 +402,6 @@
   
   
 
-  </div>
 
   
   <nav class="pagination">
@@ -355,7 +415,7 @@
 
 <script>
   window.addEventListener('tabs:register', () => {
-    let activeClass = CONFIG.comments.activeClass;
+    let { activeClass } = CONFIG.comments;
     if (CONFIG.comments.storage) {
       activeClass = localStorage.getItem('comments_active') || activeClass;
     }
@@ -403,8 +463,6 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Afree"
-      src="/blog/images/avatar.png">
   <p class="site-author-name" itemprop="name">Afree</p>
   <div class="site-description" itemprop="description"></div>
 </div>
@@ -419,32 +477,16 @@
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
-          
         <span class="site-state-item-count">15</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
-          
         <span class="site-state-item-count">30</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
 </div>
-  <div class="links-of-author motion-element">
-      <span class="links-of-author-item">
-        <a href="https://github.com/afree8909" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;afree8909" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="/blog/afree8909@gmail.com" title="E-Mail → afree8909@gmail.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="https://www.jianshu.com/u/a86e03f1d1a3" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;a86e03f1d1a3" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>简书</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="https://juejin.im/user/591919c944d904006c6a0d67" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;591919c944d904006c6a0d67" rel="noopener" target="_blank"><i class="fa fa-fw fa-code"></i>掘金</a>
-      </span>
-  </div>
 
 
 
@@ -462,6 +504,8 @@
       <div class="footer-inner">
         
 
+        
+
 <div class="copyright">
   
   &copy; 
@@ -471,10 +515,7 @@
   </span>
   <span class="author" itemprop="copyrightHolder">Afree</span>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
-  </div>
-  <span class="post-meta-divider">|</span>
-  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
   </div>
 
         
@@ -511,8 +552,6 @@
   </div>
 
   
-  
-  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/blog/lib/canvas-nest/canvas-nest.min.js"></script>
   <script src="/blog/lib/anime.min.js"></script>
   <script src="/blog/lib/velocity/velocity.min.js"></script>
   <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
@@ -553,6 +592,7 @@
   
 
   
+
 
 </body>
 </html>
