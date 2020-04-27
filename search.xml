@@ -3675,47 +3675,6 @@ if (matchWidth) {
       </tags>
   </entry>
   <entry>
-    <title>设计模式</title>
-    <url>/blog/2018/02/08/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</url>
-    <content><![CDATA[<p><img src="http://upload-images.jianshu.io/upload_images/9696036-b89e727f8e21dc43.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""><br><img src="http://upload-images.jianshu.io/upload_images/9696036-959c5e557465806f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-]]></content>
-  </entry>
-  <entry>
-    <title>Java8中HashMap分析</title>
-    <url>/blog/2018/02/08/Java8%E4%B8%ADHashMap%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<h3 id="Put方法流程图"><a href="#Put方法流程图" class="headerlink" title="Put方法流程图"></a>Put方法流程图</h3><p><img src="http://upload-images.jianshu.io/upload_images/9696036-d3f845741e8a5756.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h3 id="特殊值"><a href="#特殊值" class="headerlink" title="特殊值"></a>特殊值</h3><h4 id="hash"><a href="#hash" class="headerlink" title="hash"></a>hash</h4><p>高16bit不变，低16bit和高16bit做了一个异或</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static final int hash(Object key) &#123;</span><br><span class="line">       int h;</span><br><span class="line">       return (key &#x3D;&#x3D; null) ? 0 : (h &#x3D; key.hashCode()) ^ (h &gt;&gt;&gt; 16);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-<h4 id="size"><a href="#size" class="headerlink" title="size"></a>size</h4><ul>
-<li>map中存储的KV数目</li>
-<li>值为2的n次幂<ul>
-<li>哈希表是通过除法散列法，取模会用到除法运算，效率很低，而HashMap通过 h&amp;（length－1）替代取模</li>
-<li>length 为2的整数次幂，是为了使不同hash值发生碰撞概率小即更均匀散列</li>
-<li>length 的值为100..0，length－1为011..1，相当于对取模，而且保证了hash可以奇偶都有</li>
-</ul>
-</li>
-</ul>
-<h4 id="threshold"><a href="#threshold" class="headerlink" title="threshold"></a>threshold</h4><ul>
-<li>阀值，=容量*loadFactor（负载因子，默认0.75）</li>
-</ul>
-<h3 id="扩容机制"><a href="#扩容机制" class="headerlink" title="扩容机制"></a>扩容机制</h3><ul>
-<li>hash与旧链表大小做 &amp; 运算，=0不变，=1移动到原位置+旧链表大小的位置<br><img src="http://upload-images.jianshu.io/upload_images/9696036-07f14b44d2fd625b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></li>
-</ul>
-<h3 id="线程是否安全"><a href="#线程是否安全" class="headerlink" title="线程是否安全"></a>线程是否安全</h3><ul>
-<li>JDK1.7，扩容前后链表导致，转移过程中修改了原来链表中节点引用关系，可能导致死循环</li>
-<li>JDK1.8，不会引起死循环，但put／get不一定同步</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Java</category>
-        <category>数据结构</category>
-      </categories>
-      <tags>
-        <tag>源码</tag>
-        <tag>集合</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>自定义UUID-移动设备唯一标识</title>
     <url>/blog/2018/02/08/%E8%87%AA%E5%AE%9A%E4%B9%89UUID-%E7%A7%BB%E5%8A%A8%E8%AE%BE%E5%A4%87%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/</url>
     <content><![CDATA[<h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>希望自主生成用于所有移动业务上标识设备唯一性的标识符</p>
@@ -3767,6 +3726,47 @@ MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算�
       </tags>
   </entry>
   <entry>
+    <title>Java8中HashMap分析</title>
+    <url>/blog/2018/02/08/Java8%E4%B8%ADHashMap%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h3 id="Put方法流程图"><a href="#Put方法流程图" class="headerlink" title="Put方法流程图"></a>Put方法流程图</h3><p><img src="http://upload-images.jianshu.io/upload_images/9696036-d3f845741e8a5756.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="特殊值"><a href="#特殊值" class="headerlink" title="特殊值"></a>特殊值</h3><h4 id="hash"><a href="#hash" class="headerlink" title="hash"></a>hash</h4><p>高16bit不变，低16bit和高16bit做了一个异或</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static final int hash(Object key) &#123;</span><br><span class="line">       int h;</span><br><span class="line">       return (key &#x3D;&#x3D; null) ? 0 : (h &#x3D; key.hashCode()) ^ (h &gt;&gt;&gt; 16);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="size"><a href="#size" class="headerlink" title="size"></a>size</h4><ul>
+<li>map中存储的KV数目</li>
+<li>值为2的n次幂<ul>
+<li>哈希表是通过除法散列法，取模会用到除法运算，效率很低，而HashMap通过 h&amp;（length－1）替代取模</li>
+<li>length 为2的整数次幂，是为了使不同hash值发生碰撞概率小即更均匀散列</li>
+<li>length 的值为100..0，length－1为011..1，相当于对取模，而且保证了hash可以奇偶都有</li>
+</ul>
+</li>
+</ul>
+<h4 id="threshold"><a href="#threshold" class="headerlink" title="threshold"></a>threshold</h4><ul>
+<li>阀值，=容量*loadFactor（负载因子，默认0.75）</li>
+</ul>
+<h3 id="扩容机制"><a href="#扩容机制" class="headerlink" title="扩容机制"></a>扩容机制</h3><ul>
+<li>hash与旧链表大小做 &amp; 运算，=0不变，=1移动到原位置+旧链表大小的位置<br><img src="http://upload-images.jianshu.io/upload_images/9696036-07f14b44d2fd625b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></li>
+</ul>
+<h3 id="线程是否安全"><a href="#线程是否安全" class="headerlink" title="线程是否安全"></a>线程是否安全</h3><ul>
+<li>JDK1.7，扩容前后链表导致，转移过程中修改了原来链表中节点引用关系，可能导致死循环</li>
+<li>JDK1.8，不会引起死循环，但put／get不一定同步</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>数据结构</category>
+      </categories>
+      <tags>
+        <tag>源码</tag>
+        <tag>集合</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>设计模式</title>
+    <url>/blog/2018/02/08/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</url>
+    <content><![CDATA[<p><img src="http://upload-images.jianshu.io/upload_images/9696036-b89e727f8e21dc43.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""><br><img src="http://upload-images.jianshu.io/upload_images/9696036-959c5e557465806f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+]]></content>
+  </entry>
+  <entry>
     <title> Mac下Charles使用教程</title>
     <url>/blog/2018/02/08/%20Mac%E4%B8%8BCharles%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/</url>
     <content><![CDATA[<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><h5 id="是什么？"><a href="#是什么？" class="headerlink" title="是什么？"></a>是什么？</h5><p>Charles是常用的截取网络封包的工具，Mac、Windows和linux下均可用</p>
@@ -3809,5 +3809,70 @@ MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算�
       <tags>
         <tag>Charles</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>单例模式</title>
+    <url>/blog/2018/02/03/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><p>一个类只有一个实例，该实例必须自行创建，并且向整个系统提供这个实例</p>
+<h3 id="实现考虑因素"><a href="#实现考虑因素" class="headerlink" title="实现考虑因素"></a>实现考虑因素</h3><ul>
+<li>唯一性<ul>
+<li>是否防克隆</li>
+<li>是否防反射</li>
+<li>是否防序列化 </li>
+</ul>
+</li>
+<li>性能<ul>
+<li>是否需要懒加载 </li>
+<li>是否防指令重排（双重锁方式问题） </li>
+</ul>
+</li>
+</ul>
+<h3 id="三种实现方式"><a href="#三种实现方式" class="headerlink" title="三种实现方式"></a>三种实现方式</h3><table>
+<thead>
+<tr>
+<th>实现</th>
+<th>懒加载</th>
+<th>线程安全</th>
+<th>防克隆</th>
+<th>防反射</th>
+<th>防序列化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>双重锁</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+</tr>
+<tr>
+<td>静态内部类</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+</tr>
+<tr>
+<td>枚举</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+</tr>
+</tbody></table>
+<h4 id="双重锁方式（添加了防御功能）"><a href="#双重锁方式（添加了防御功能）" class="headerlink" title="双重锁方式（添加了防御功能）"></a>双重锁方式（添加了防御功能）</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Singleton implements Serializable, Cloneable &#123;</span><br><span class="line"></span><br><span class="line">    private static volatile Singleton sSingleton; &#x2F;&#x2F; volatile防止指令重排</span><br><span class="line">    private static boolean sFlag &#x3D; true;</span><br><span class="line">    private Singleton() &#123;</span><br><span class="line">        if(sFlag)&#123; &#x2F;&#x2F; 防反射</span><br><span class="line">            sFlag &#x3D; false;</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            throw new RuntimeException(&quot;对象已经存在&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Singleton getSingleton() &#123;</span><br><span class="line">        if (sSingleton &#x3D;&#x3D; null) &#123;</span><br><span class="line">            synchronized (Singleton.class) &#123;</span><br><span class="line">                if (sSingleton &#x3D;&#x3D; null) &#123;</span><br><span class="line">                    sSingleton &#x3D; new Singleton();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return sSingleton;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private Object readResolve() &#123;</span><br><span class="line">        return getSingleton(); &#x2F;&#x2F; 防序列化</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected Object clone() throws CloneNotSupportedException &#123;</span><br><span class="line">        return getSingleton(); &#x2F;&#x2F; 防克隆</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="静态内部类方式"><a href="#静态内部类方式" class="headerlink" title="静态内部类方式"></a>静态内部类方式</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Instance &#123;</span><br><span class="line">    private Instance() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static class Holder &#123;</span><br><span class="line">        &#x2F;&#x2F; 类加载机制保证懒加载，static&amp;final确保线程安全</span><br><span class="line">        private static final Instance INSTANCE &#x3D; new Instance();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Instance getInstance() &#123;</span><br><span class="line">        return Holder.INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="枚举类方式"><a href="#枚举类方式" class="headerlink" title="枚举类方式"></a>枚举类方式</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public enum Single &#123;</span><br><span class="line">    SINGLE;</span><br><span class="line">    public void whateverMethod()&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>基本等价于(除enum的防反射、序列化、克隆等属性)</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public final class Single&#123;</span><br><span class="line">    public static final Single SINGLE &#x3D; new Single();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public static void main(String args[]) &#123;</span><br><span class="line"></span><br><span class="line">       try &#123;</span><br><span class="line">           Singleton singleton &#x3D; Singleton.getSingleton();</span><br><span class="line">           testCloneSingleton(singleton);</span><br><span class="line">           testReflectSingleton(singleton);</span><br><span class="line">           testSerializableSingleton(singleton);</span><br><span class="line"></span><br><span class="line">       &#125; catch (Exception e) &#123;</span><br><span class="line">           e.printStackTrace();</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   private static void testCloneSingleton(Singleton singleton) throws CloneNotSupportedException &#123;</span><br><span class="line"></span><br><span class="line">       boolean equals &#x3D; singleton.equals(Singleton.getSingleton().clone());</span><br><span class="line"></span><br><span class="line">       System.out.print(equals);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   private static void testReflectSingleton(Singleton singleton) throws Exception &#123;</span><br><span class="line">       Constructor constructor &#x3D; Singleton.class.getDeclaredConstructor();</span><br><span class="line">       constructor.setAccessible(true);</span><br><span class="line">       constructor.newInstance();</span><br><span class="line"></span><br><span class="line">       boolean equals &#x3D; singleton.equals(constructor.newInstance(););</span><br><span class="line"></span><br><span class="line">       System.out.print(equals);</span><br><span class="line"></span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   private static void testSerializableSingleton(Singleton singleton) throws Exception &#123;</span><br><span class="line">       String tempFile &#x3D; &quot;tempFile&quot;;</span><br><span class="line">       ObjectOutputStream oos &#x3D; new ObjectOutputStream(new FileOutputStream(tempFile));</span><br><span class="line">       oos.writeObject(getSingleton());</span><br><span class="line">       ObjectInputStream objectInputStream &#x3D; new ObjectInputStream(new FileInputStream(new File(tempFile)));</span><br><span class="line"></span><br><span class="line">       boolean equals &#x3D; singleton.equals(objectInputStream.readObject());</span><br><span class="line"></span><br><span class="line">       System.out.print(equals);</span><br><span class="line"></span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+
+]]></content>
   </entry>
 </search>
