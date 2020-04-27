@@ -5,7 +5,7 @@
     <url>/blog/2020/04/27/test/</url>
     <content><![CDATA[<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>分支模型的抉择可以概括为围绕 <strong>持续集成</strong> 和 <strong>特性隔离</strong> 两个特征进行博弈。</p>
 <h3 id="分支模型对比结论"><a href="#分支模型对比结论" class="headerlink" title="分支模型对比结论"></a>分支模型对比结论</h3><h4 id="优缺点分析"><a href="#优缺点分析" class="headerlink" title="优缺点分析"></a>优缺点分析</h4><p><a href="https://trunkbaseddevelopment.com/alternative-branching-models/index.html#modern-claimed-high-throughput-branching-models" target="_blank" rel="noopener">TBD说明</a></p>
-<p><img src="https://raw.githubusercontent.com/afree8909/pictures/master/blogbranch_comparison.png" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blogbranch_comparison.png"  alt=""></p>
 <h4 id="使用分析"><a href="#使用分析" class="headerlink" title="使用分析"></a>使用分析</h4><table>
 <thead>
 <tr>
@@ -86,14 +86,14 @@
 </ul>
 </li>
 </ul>
-<p><img src="test/15865841815899.jpg" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="test/15865841815899.jpg"  alt=""></p>
 <h4 id="GitHubFlow"><a href="#GitHubFlow" class="headerlink" title="GitHubFlow"></a>GitHubFlow</h4><p><a href="https://guides.github.com/introduction/flow/" target="_blank" rel="noopener">详情参考</a></p>
-<p><img src="test/15865853526049.jpg" alt="15865853526049"></p>
+<p><img src="/blog/" class="lazyload" data-src="test/15865853526049.jpg"  alt="15865853526049"></p>
 <h5 id="分支情况-1"><a href="#分支情况-1" class="headerlink" title="分支情况"></a>分支情况</h5><p>主干分支：master<br>特性分支：feature</p>
 <h5 id="玩法-1"><a href="#玩法-1" class="headerlink" title="玩法"></a>玩法</h5><p>开发：主分支创建feature分支进行开发、PR、Review、发布完成后，建立PR回master<br>修复：特性分支未合入master前特性分支修复，合入后针对tag单开分支修复并合入主干分支</p>
 <p>它有一个变种版本，更好的支持多环境和多版本 ，可以参考 <a href="https://docs.gitlab.com/ee/topics/gitlab_flow.html" target="_blank" rel="noopener">GitLab Flow</a></p>
 <h4 id="TBD"><a href="#TBD" class="headerlink" title="TBD"></a>TBD</h4><p><a href="https://trunkbaseddevelopment.com/" target="_blank" rel="noopener">详情参考</a></p>
-<p><img src="test/15865853448663.jpg" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="test/15865853448663.jpg"  alt=""></p>
 <h5 id="分支情况-2"><a href="#分支情况-2" class="headerlink" title="分支情况"></a>分支情况</h5><p>主干分支：master</p>
 <h5 id="玩法-2"><a href="#玩法-2" class="headerlink" title="玩法"></a>玩法</h5><p>开发：所有团队成员都在单个主干分支上进行开发，<br>符合约定后commit到主干分支。也可创建短周期分支进行开发rebase主干分支后提交PR</p>
 <p>发布：优先Tag，Tag不能满足则创建发布分支</p>
@@ -103,7 +103,7 @@
 <li>如何避免引入未完成feature？ feature toggle（功能开关）</li>
 <li>如果重构？ BBA（抽象分支）</li>
 </ul>
-<h4 id="AoneFlow"><a href="#AoneFlow" class="headerlink" title="AoneFlow"></a>AoneFlow</h4><p><a href="https://mp.weixin.qq.com/sJsBX3UPgZL_HUOTCIopr_A" target="_blank" rel="noopener">详情参考</a><br><img src="test/15865853069197.jpg" alt=""><br><img src="test/15865853131220.jpg" alt=""><br><img src="test/15865853182812.jpg" alt=""></p>
+<h4 id="AoneFlow"><a href="#AoneFlow" class="headerlink" title="AoneFlow"></a>AoneFlow</h4><p><a href="https://mp.weixin.qq.com/sJsBX3UPgZL_HUOTCIopr_A" target="_blank" rel="noopener">详情参考</a><br><img src="/blog/" class="lazyload" data-src="test/15865853069197.jpg"  alt=""><br><img src="/blog/" class="lazyload" data-src="test/15865853131220.jpg"  alt=""><br><img src="/blog/" class="lazyload" data-src="test/15865853182812.jpg"  alt=""></p>
 <h5 id="分支情况-3"><a href="#分支情况-3" class="headerlink" title="分支情况"></a>分支情况</h5><p>主干分支：master<br>特性分支：feature、release</p>
 <h5 id="玩法-3"><a href="#玩法-3" class="headerlink" title="玩法"></a>玩法</h5><ul>
 <li>开始工作前，从主干创建特性分支。</li>
