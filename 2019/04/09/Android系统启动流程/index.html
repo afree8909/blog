@@ -1,0 +1,203 @@
+<!DOCTYPE html><html lang="zh-Hans" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Android系统启动流程 | Afree</title><meta name="description" content="Android启动流程 Zygote进程启动分析 SystemServer启动分析 AMS启动分析 Launcher启动流程分析   Loader启动电源以及系统启动  电源按下时引导芯片会从预定义地方（固化在ROM）开始执行，加载引导程序BootLoader到RAM，然后执行 BootLoader，引导执行程序。主要作用就是把操作系统拉起来运行  Kernel内核启动，初始化各种软硬件环境，加载"><meta name="keywords" content="源码,启动流程"><meta name="author" content="Afree"><meta name="copyright" content="Afree"><meta name="format-detection" content="telephone=no"><link rel="shortcut icon" href="/blog/img/favicon.ico"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="dns-prefetch" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="crossorigin"/><link rel="dns-prefetch" href="https://fonts.googleapis.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="dns-prefetch" href="//busuanzi.ibruce.info"/><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Android系统启动流程"><meta name="twitter:description" content="Android启动流程 Zygote进程启动分析 SystemServer启动分析 AMS启动分析 Launcher启动流程分析   Loader启动电源以及系统启动  电源按下时引导芯片会从预定义地方（固化在ROM）开始执行，加载引导程序BootLoader到RAM，然后执行 BootLoader，引导执行程序。主要作用就是把操作系统拉起来运行  Kernel内核启动，初始化各种软硬件环境，加载"><meta name="twitter:image" content="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153232.png"><meta property="og:type" content="article"><meta property="og:title" content="Android系统启动流程"><meta property="og:url" content="https://afree8909.github.io/blog/2019/04/09/Android%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/"><meta property="og:site_name" content="Afree"><meta property="og:description" content="Android启动流程 Zygote进程启动分析 SystemServer启动分析 AMS启动分析 Launcher启动流程分析   Loader启动电源以及系统启动  电源按下时引导芯片会从预定义地方（固化在ROM）开始执行，加载引导程序BootLoader到RAM，然后执行 BootLoader，引导执行程序。主要作用就是把操作系统拉起来运行  Kernel内核启动，初始化各种软硬件环境，加载"><meta property="og:image" content="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153232.png"><meta property="article:published_time" content="2019-04-09T01:55:10.413Z"><meta property="article:modified_time" content="2020-04-28T07:32:51.537Z"><script src="https://cdn.jsdelivr.net/npm/js-cookie/dist/js.cookie.min.js"></script><script>var autoChangeMode = '1'
+var t = Cookies.get("theme")
+if (autoChangeMode == '1'){
+  var isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches
+  var isLightMode = window.matchMedia("(prefers-color-scheme: light)").matches
+  var isNotSpecified = window.matchMedia("(prefers-color-scheme: no-preference)").matches
+  var hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+  if (t === undefined){
+    if (isLightMode) activateLightMode()
+    else if (isDarkMode) activateDarkMode()
+    else if (isNotSpecified || hasNoSupport){
+      console.log('You specified no preference for a color scheme or your browser does not support it. I Schedule dark mode during night time.')
+      var now = new Date()
+      var hour = now.getHours()
+      var isNight = hour < 6 || hour >= 18
+      isNight ? activateDarkMode() : activateLightMode()
+  }
+  } else if (t == 'light') activateLightMode()
+  else activateDarkMode()
+
+} else if (autoChangeMode == '2'){
+  now = new Date();
+  hour = now.getHours();
+  isNight = hour < 6 || hour >= 18
+  if(t === undefined) isNight? activateDarkMode() : activateLightMode()
+  else if (t === 'light') activateLightMode()
+  else activateDarkMode() 
+} else {
+  if ( t == 'dark' ) activateDarkMode()
+  else if ( t == 'light') activateLightMode()
+}
+
+function activateDarkMode(){
+  document.documentElement.setAttribute('data-theme', 'dark')
+  if (document.querySelector('meta[name="theme-color"]') !== null){
+    document.querySelector('meta[name="theme-color"]').setAttribute('content','#000')
+  }
+}
+function activateLightMode(){
+  document.documentElement.setAttribute('data-theme', 'light')
+  if (document.querySelector('meta[name="theme-color"]') !== null){
+  document.querySelector('meta[name="theme-color"]').setAttribute('content','#fff')
+  }
+}</script><link rel="stylesheet" href="/blog/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css"><link rel="canonical" href="https://afree8909.github.io/blog/2019/04/09/Android%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/"><link rel="prev" title="Zygote启动流程分析" href="https://afree8909.github.io/blog/2019/05/16/Zygote%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/"><link rel="next" title="Java并发编程—线程池" href="https://afree8909.github.io/blog/2019/03/20/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E2%80%94%E7%BA%BF%E7%A8%8B%E6%B1%A0/"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css"><script src="https://cdn.jsdelivr.net/npm/gitalk@latest/dist/gitalk.min.js"></script><script src="https://cdn.jsdelivr.net/npm/blueimp-md5/js/md5.min.js"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Titillium+Web"><script>var GLOBAL_CONFIG = { 
+  root: '/blog/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"cookieDomain":"https://xxx/","msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  bookmark: {
+    message_prev: 'Press',
+    message_next: 'to bookmark this page'
+  },
+  runtime_unit: 'days',
+  runtime: true,
+  copyright: undefined,
+  ClickShowText: undefined,
+  medium_zoom: true,
+  fancybox: true,
+  Snackbar: undefined,
+  baiduPush: false,
+  highlightCopy: true,
+  highlightLang: true,
+  highlightShrink: 'false',
+  isFontAwesomeV5: true,
+  isPhotoFigcaption: false
+  
+}</script><script>var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isSidebar: true  
+  }</script><noscript><style>
+#page-header {
+  opacity: 1
+}
+.justified-gallery img{
+  opacity: 1
+}
+</style></noscript><meta name="generator" content="Hexo 4.2.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">Loading...</div></div></div><div id="mobile-sidebar"><div id="menu_mask"></div><div id="mobile-sidebar-menus"><div class="mobile_author_icon"><img class="avatar-img" src="/blog/img/avatar.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="mobile_post_data"><div class="mobile_data_item is-center"><div class="mobile_data_link"><a href="/blog/archives/"><div class="headline">Articles</div><div class="length_num">51</div></a></div></div><div class="mobile_data_item is-center">      <div class="mobile_data_link"><a href="/blog/tags/"><div class="headline">Tags</div><div class="length_num">33</div></a></div></div><div class="mobile_data_item is-center">     <div class="mobile_data_link"><a href="/blog/categories/"><div class="headline">Categories</div><div class="length_num">16</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/blog/"><i class="fa-fw fa fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/blog/archives/"><i class="fa-fw fa fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/blog/tags/"><i class="fa-fw fa fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/blog/categories/"><i class="fa-fw fa fa-folder-open"></i><span> Categories</span></a></div></div></div></div><i class="fa fa-arrow-right on" id="toggle-sidebar" aria-hidden="true">     </i><div id="sidebar"><div class="sidebar-toc"><div class="sidebar-toc__title">Catalog</div><div class="sidebar-toc__progress"><span class="progress-notice">You've read</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar">     </div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Android启动流程"><span class="toc-number">1.</span> <span class="toc-text">Android启动流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Loader"><span class="toc-number">2.</span> <span class="toc-text">Loader</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Kernel"><span class="toc-number">3.</span> <span class="toc-text">Kernel</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Native"><span class="toc-number">4.</span> <span class="toc-text">Native</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#init进程主要流程"><span class="toc-number">4.0.1.</span> <span class="toc-text">init进程主要流程</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#C-Framework层"><span class="toc-number">5.</span> <span class="toc-text">C++ Framework层</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Java-Framework层"><span class="toc-number">6.</span> <span class="toc-text">Java Framework层</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Zygote"><span class="toc-number">6.0.1.</span> <span class="toc-text">Zygote</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#System-Server"><span class="toc-number">6.0.2.</span> <span class="toc-text">System Server</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#ActivityManagerService"><span class="toc-number">6.0.3.</span> <span class="toc-text">ActivityManagerService</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#App层"><span class="toc-number">7.</span> <span class="toc-text">App层</span></a></li></ol></div></div></div><div id="body-wrap"><div class="post-bg" id="nav" style="background-image: url(https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153232.png)"><div id="page-header"><span class="pull_left" id="blog_name"><a class="blog_title" id="site-name" href="/blog/">Afree</a></span><span class="pull_right menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/blog/"><i class="fa-fw fa fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/blog/archives/"><i class="fa-fw fa fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/blog/tags/"><i class="fa-fw fa fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/blog/categories/"><i class="fa-fw fa fa-folder-open"></i><span> Categories</span></a></div></div><span class="toggle-menu close"><a class="site-page"><i class="fa fa-bars fa-fw" aria-hidden="true"></i></a></span></span></div><div id="post-info"><div id="post-title"><div class="posttitle">Android系统启动流程</div></div><div id="post-meta"><div class="meta-firstline"><time class="post-meta__date"><span class="post-meta__date-created" title="Created 2019-04-09 09:55:10"><i class="fa fa-calendar" aria-hidden="true"></i> Created 2019-04-09</span><span class="post-meta__separator">|</span><span class="post-meta__date-updated" title="Updated 2020-04-28 15:32:51"><i class="fa fa-history" aria-hidden="true"></i> Updated 2020-04-28</span></time><span class="post-meta__categories"><span class="post-meta__separator">|</span><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/blog/categories/Android/">Android</a><i class="fa fa-angle-right post-meta__separator" aria-hidden="true"></i><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/blog/categories/Android/%E7%B3%BB%E7%BB%9F/">系统</a></span></div><div class="meta-secondline"> <span class="post-meta-wordcount"><i class="post-meta__icon far fa-file-word" aria-hidden="true"></i><span>Word count:</span><span class="word-count">1.1k</span><span class="post-meta__separator">|</span><i class="post-meta__icon far fa-clock" aria-hidden="true"></i><span>Reading time: 3 min</span></span></div><div class="meta-thirdline"><span class="post-meta-pv-cv"><span class="post-meta__separator">|</span><i class="fa fa-eye post-meta__icon" aria-hidden="true"> </i><span>Post View:</span><span id="busuanzi_value_page_pv"></span></span><span class="post-meta-commentcount"></span></div></div></div></div><main class="layout_post" id="content-inner"><article id="post"><div id="article-container"><h3 id="Android启动流程"><a href="#Android启动流程" class="headerlink" title="Android启动流程"></a>Android启动流程</h3><ol>
+<li><a href="https://www.jianshu.com/p/65cf9a2a0725" target="_blank" rel="noopener">Zygote进程启动分析</a></li>
+<li><a href="https://www.jianshu.com/p/0556e0940115" target="_blank" rel="noopener">SystemServer启动分析</a></li>
+<li><a href="https://www.jianshu.com/p/725c4e7e2230" target="_blank" rel="noopener">AMS启动分析</a></li>
+<li><a href="https://www.jianshu.com/p/6df6ddac15d5" target="_blank" rel="noopener">Launcher启动流程分析</a></li>
+</ol>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153232.png"  alt=""></p>
+<h3 id="Loader"><a href="#Loader" class="headerlink" title="Loader"></a>Loader</h3><p>启动电源以及系统启动</p>
+<ul>
+<li>电源按下时引导芯片会从预定义地方（固化在ROM）开始执行，加载引导程序BootLoader到RAM，然后执行</li>
+<li>BootLoader，引导执行程序。主要作用就是把操作系统拉起来运行</li>
+</ul>
+<h3 id="Kernel"><a href="#Kernel" class="headerlink" title="Kernel"></a>Kernel</h3><p>内核启动，初始化各种软硬件环境，加载驱动程序，挂载根文件系统，并执行init程序，由此开启Android的世界</p>
+<ul>
+<li>swapper进程：又叫idle进程，系统初始化Kernel由无到有开创的第一个进程，用于初始化进程管理、内存管理，加载Binder Drive、Disply、Camera Driver等相关工作</li>
+<li>kthreadd进程：Linux系统内核进程，所有内核进程鼻祖，会创建其它内核守护进程</li>
+</ul>
+<h3 id="Native"><a href="#Native" class="headerlink" title="Native"></a>Native</h3><h5 id="init进程主要流程"><a href="#init进程主要流程" class="headerlink" title="init进程主要流程"></a>init进程主要流程</h5><ul>
+<li>创建和挂载启动所需的文件目录</li>
+<li>初始化属性服务</li>
+<li>处理子进程的终止(<strong>signal方式</strong>)<ul>
+<li>Zygote进程异常终止的重启动</li>
+<li>回收僵尸进程 </li>
+</ul>
+</li>
+<li>fork出 logd 、 healthd 、 installd 、 adbd 等用户守护进程</li>
+<li>启动属性服务<ul>
+<li>启动servicemanager（binder服务大管家）、bootanim（开机动画）、mediaserver等重要服务</li>
+<li>本地服务是指运行在C++层的系统守护进程</li>
+</ul>
+</li>
+<li>解析init.rc配置文件并启动Zygote进程 <ul>
+<li>解析 init.zygote.rc </li>
+<li>启动 main 类型服务 </li>
+<li>启动 zygote 服务 </li>
+<li>创建 Zygote 进程 </li>
+<li>创建 Zygote Socket </li>
+</ul>
+</li>
+<li>进入无限循环，执行action、检查是否需要重启、处理系统属性变化、回收僵尸进程等</li>
+</ul>
+<h3 id="C-Framework层"><a href="#C-Framework层" class="headerlink" title="C++ Framework层"></a>C++ Framework层</h3><p>主要运行本地服务，即MediaServer进程，由init进程fork而来，负责启动和管理整个C++ framework，包含AudioFlinger、CameraService等服务</p>
+<h3 id="Java-Framework层"><a href="#Java-Framework层" class="headerlink" title="Java Framework层"></a>Java Framework层</h3><h5 id="Zygote"><a href="#Zygote" class="headerlink" title="Zygote"></a>Zygote</h5><p><a href="https://www.jianshu.com/p/65cf9a2a0725" target="_blank" rel="noopener">Zygote启动流程分析</a></p>
+<ul>
+<li>解析init.zygote.rc中的参数，创建AppRuntime并调用AppRuntime.start()方法；</li>
+<li>调用AndroidRuntime的startVM()方法创建虚拟机，再调用startReg()注册JNI函数；</li>
+<li>通过JNI方式调用ZygoteInit.main()，第一次进入Java世界；<br>registerZygoteSocket()建立socket通道，zygote作为通信的服务端，用于响应客户端请求；</li>
+<li>preload()预加载通用类、drawable和color资源、openGL以及共享库以及WebView，这样当程序被fork处理后，应用的进程内已经包含了这些系统资源，大大节省了应用的启动时间。</li>
+<li>调用startSystemServer()，fork得力帮手system_server进程，也是上层framework的运行载体。</li>
+<li>最后调用runSelectLoop()，进入监听和接收消息的循环，当接收到请求创建新进程请求时立即唤醒并执行相应工作。（采用高效的I/O多路复用机制，保证没有客户端连接请求或数据处理时休眠，否则相应客户端的请求）</li>
+</ul>
+<h5 id="System-Server"><a href="#System-Server" class="headerlink" title="System Server"></a>System Server</h5><p><a href="https://www.jianshu.com/p/4d02ac462733" target="_blank" rel="noopener">System Server启动流程分析</a></p>
+<ul>
+<li>SystemServer的启动<ul>
+<li>初始化设置</li>
+<li>调用createSystemContext()来创建系统上下文</li>
+<li>创建SystemServiceManager</li>
+<li>启动各种服务（引导服务、核心服务、其它服务）</li>
+<li>进入Looper.loop循环    </li>
+</ul>
+</li>
+<li>初始化系统上下文<ul>
+<li>创建ActivityThread对象</li>
+<li>创建SystemContext对象（ContextImpl） </li>
+</ul>
+</li>
+<li>创建SystemServiceManager</li>
+<li>启动各种服务<ul>
+<li>startBootstrapServices()</li>
+<li>startCoreServices()</li>
+<li>startOtherServices()</li>
+</ul>
+</li>
+</ul>
+<h5 id="ActivityManagerService"><a href="#ActivityManagerService" class="headerlink" title="ActivityManagerService"></a>ActivityManagerService</h5><p>是Android中核心的服务之一，主要负责系统中四大组件的启动、切换、调度及应用程序的管理和调度等工作<br><a href="https://www.jianshu.com/p/725c4e7e2230" target="_blank" rel="noopener"><a href="https://www.jianshu.com/p/725c4e7e2230" target="_blank" rel="noopener">Android系统—ActivityManagerService启动流程</a>
+</a></p>
+<ul>
+<li>创建AMS实例对象，创建Andoid Runtime，ActivityThread和Context对象；</li>
+<li>启动AMS服务，创建ActivityManagerService.Lifecycle对象</li>
+<li>setSystemProcess：注册AMS、meminfo、cpuinfo等服务到ServiceManager</li>
+<li>启动SystemUIService，再调用一系列服务的systemReady()方法</li>
+<li>AMS.startHomeActivityLocked，启动HomeAcitivity</li>
+</ul>
+<h3 id="App层"><a href="#App层" class="headerlink" title="App层"></a>App层</h3><p>Zygote进程孵化出的第一个应用进程是Launcher进程（桌面），它还会孵化出Browser进程（浏览器）、Phone进程（电话）等。我们每个创建的应用都是一个单独的进程。</p>
+<ul>
+<li>当我们点击应用图标启动应用时或者在应用内启动一个带有process标签的Activity时，都会触发创建新进程的请求，这种请求会先通过Binder</li>
+<li>发送给system_server进程，也即是发送给ActivityManagerService进行处理。<br>system_server进程会调用Process.start()方法，会先收集uid、gid等参数，然后通过Socket方式发送给Zygote进程，请求创建新进程。</li>
+<li>Zygote进程接收到创建新进程的请求后，调用ZygoteInit.main()方法进行runSelectLoop()循环体内，当有客户端连接时执行ZygoteConnection.runOnce()方法，最后fork生成新的应用进程。</li>
+<li>新创建的进程会调用handleChildProc()方法，最后调用我们非常熟悉的ActivityThread.main()方法。</li>
+</ul>
+<p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-3eb0e8834c129aeb.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt=""></p>
+<hr>
+<p>推荐阅读：<a href="https://www.jianshu.com/p/238eb0a17760" target="_blank" rel="noopener">图形系统总结</a></p>
+</div><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">Afree</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://afree8909.github.io/blog/2019/04/09/Android%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">https://afree8909.github.io/blog/2019/04/09/Android%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/blog/tags/%E6%BA%90%E7%A0%81/">源码</a><a class="post-meta__tags" href="/blog/tags/%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">启动流程</a></div><div class="post_share"><div class="social-share" data-image="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141843.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css"/><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js"></script></div></div><nav class="pagination_post" id="pagination"><div class="prev-post pull_left"><a href="/blog/2019/05/16/Zygote%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/"><img class="prev_cover lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153154.png" onerror="onerror=null;src='/blog/img/404.jpg'"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">Zygote启动流程分析</div></div></a></div><div class="next-post pull_right"><a href="/blog/2019/03/20/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E2%80%94%E7%BA%BF%E7%A8%8B%E6%B1%A0/"><img class="next_cover lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153317.png" onerror="onerror=null;src='/blog/img/404.jpg'"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">Java并发编程—线程池</div></div></a></div></nav><div class="relatedPosts"><div class="relatedPosts_headline"><i class="fa fa-fw fa-thumbs-up" aria-hidden="true"></i><span> Recommend</span></div><div class="relatedPosts_list"><div class="relatedPosts_item"><a href="/blog/2019/08/19/Android系统—ActivityManagerService启动流程/" title="Android系统—ActivityManagerService启动流程"><img class="relatedPosts_cover lazyload"data-src="https://i.loli.net/2019/12/25/hzjJBR2x5SEmsbC.jpg"><div class="relatedPosts_main is-center"><div class="relatedPosts_date"><i class="fa fa-calendar fa-fw" aria-hidden="true"></i> 2019-08-19</div><div class="relatedPosts_title">Android系统—ActivityManagerService启动流程</div></div></a></div><div class="relatedPosts_item"><a href="/blog/2019/05/16/Zygote启动流程分析/" title="Zygote启动流程分析"><img class="relatedPosts_cover lazyload"data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153154.png"><div class="relatedPosts_main is-center"><div class="relatedPosts_date"><i class="fa fa-calendar fa-fw" aria-hidden="true"></i> 2019-05-16</div><div class="relatedPosts_title">Zygote启动流程分析</div></div></a></div><div class="relatedPosts_item"><a href="/blog/2019/08/25/Android系统—进程创建流程/" title="Android系统—进程创建流程"><img class="relatedPosts_cover lazyload"data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150402.png"><div class="relatedPosts_main is-center"><div class="relatedPosts_date"><i class="fa fa-calendar fa-fw" aria-hidden="true"></i> 2019-08-25</div><div class="relatedPosts_title">Android系统—进程创建流程</div></div></a></div></div><div class="clear_both"></div></div><hr><div id="post-comment"><div class="comment_headling"><i class="fa fa-comments fa-fw" aria-hidden="true"></i><span> Comment</span></div><div id="gitalk-container"></div><script>var gitalk = new Gitalk({
+  clientID: 'cb1555f9c0cbd64760a2',
+  clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+  repo: 'blog-comment',
+  owner: 'afree8909',
+  admin: ['afree8909'],
+  id: md5(decodeURI(location.pathname)),
+  language: 'zh-CN',
+  perPage: 10,
+  distractionFreeMode: false,
+  pagerDirection: 'last',
+  createIssueManually: false,
+  updateCountCallback: commentCount
+})
+gitalk.render('gitalk-container')
+
+function commentCount(n){
+  try {
+    document.getElementsByClassName('gitalk-comment-count')[0].innerHTML= n
+  } catch (e) {
+    return false
+  }
+}</script></div></article></main><footer id="footer" style="background-image: url(https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153232.png)" data-type="photo"><div id="footer-wrap"><div class="copyright">&copy;2020 By Afree</div><div class="framework-info"><span>Driven </span><a href="https://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>Theme </span><a href="https://github.com/jerryc127/hexo-theme-butterfly" target="_blank" rel="noopener"><span>Butterfly</span></a></div></div></footer></div><section class="rightside" id="rightside"><div id="rightside-config-hide"><i class="fa fa-book" id="readmode" title="Read Mode"></i><i class="fa fa-plus" id="font_plus" title="Increase font size"></i><i class="fa fa-minus" id="font_minus" title="Decrease font size"></i><a class="translate_chn_to_cht" id="translateLink" href="javascript:translatePage();" title="Traditional Chinese and Simplified Chinese Conversion" target="_self">简</a><i class="darkmode far fa-sun" id="darkmode" title="Dark Mode"></i></div><div id="rightside-config-show"><div id="rightside_config" title="Setting"><i class="fa fa-cog" aria-hidden="true"></i></div><a id="to_comment" href="#post-comment" title="Scroll to comment"><i class="scroll_to_comment fa fa-comments">  </i></a><i class="fa fa-list-ul close" id="mobile-toc-button" title="Table of Contents" aria-hidden="true"></i><i class="fa fa-arrow-up" id="go-up" title="Back to top" aria-hidden="true"></i></div></section><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/main.js"></script><script src="/blog/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script id="canvas_nest" color="0,0,255" opacity="0.7" zIndex="-1" count="99" mobile="false" src="/blog/js/third-party/canvas-nest.js"></script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@latest/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/lazysizes@latest/lazysizes.min.js" async=""></script><script>var endLoading = function () {
+  document.body.style.overflow = 'auto';
+  document.getElementById('loading-box').classList.add("loaded")
+}
+window.addEventListener('load',endLoading)</script></body></html>

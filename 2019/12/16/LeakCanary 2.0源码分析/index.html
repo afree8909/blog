@@ -1,0 +1,319 @@
+<!DOCTYPE html><html lang="zh-Hans" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LeakCanary 2.0源码分析 | Afree</title><meta name="description" content="本文基于LeakCanary 2.0源码分析LeakCanary - 官方地址LeakCanary - GitHub代码地址  LeakCanary 是什么概念：LeakCanary是针对Android应用的一个内存泄漏监控三方库能力：Activity、Fragment以及自主监控的任何对象出品：Square LeakCanary 作用基于对Android Framework层的认知，LeakC"><meta name="keywords" content="源码,LeakCanary"><meta name="author" content="Afree"><meta name="copyright" content="Afree"><meta name="format-detection" content="telephone=no"><link rel="shortcut icon" href="/blog/img/favicon.ico"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="dns-prefetch" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="crossorigin"/><link rel="dns-prefetch" href="https://fonts.googleapis.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="dns-prefetch" href="//busuanzi.ibruce.info"/><meta name="twitter:card" content="summary"><meta name="twitter:title" content="LeakCanary 2.0源码分析"><meta name="twitter:description" content="本文基于LeakCanary 2.0源码分析LeakCanary - 官方地址LeakCanary - GitHub代码地址  LeakCanary 是什么概念：LeakCanary是针对Android应用的一个内存泄漏监控三方库能力：Activity、Fragment以及自主监控的任何对象出品：Square LeakCanary 作用基于对Android Framework层的认知，LeakC"><meta name="twitter:image" content="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145659.png"><meta property="og:type" content="article"><meta property="og:title" content="LeakCanary 2.0源码分析"><meta property="og:url" content="https://afree8909.github.io/blog/2019/12/16/LeakCanary%202.0%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><meta property="og:site_name" content="Afree"><meta property="og:description" content="本文基于LeakCanary 2.0源码分析LeakCanary - 官方地址LeakCanary - GitHub代码地址  LeakCanary 是什么概念：LeakCanary是针对Android应用的一个内存泄漏监控三方库能力：Activity、Fragment以及自主监控的任何对象出品：Square LeakCanary 作用基于对Android Framework层的认知，LeakC"><meta property="og:image" content="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145659.png"><meta property="article:published_time" content="2019-12-16T06:48:07.094Z"><meta property="article:modified_time" content="2020-04-28T06:58:15.803Z"><script src="https://cdn.jsdelivr.net/npm/js-cookie/dist/js.cookie.min.js"></script><script>var autoChangeMode = '1'
+var t = Cookies.get("theme")
+if (autoChangeMode == '1'){
+  var isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches
+  var isLightMode = window.matchMedia("(prefers-color-scheme: light)").matches
+  var isNotSpecified = window.matchMedia("(prefers-color-scheme: no-preference)").matches
+  var hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+  if (t === undefined){
+    if (isLightMode) activateLightMode()
+    else if (isDarkMode) activateDarkMode()
+    else if (isNotSpecified || hasNoSupport){
+      console.log('You specified no preference for a color scheme or your browser does not support it. I Schedule dark mode during night time.')
+      var now = new Date()
+      var hour = now.getHours()
+      var isNight = hour < 6 || hour >= 18
+      isNight ? activateDarkMode() : activateLightMode()
+  }
+  } else if (t == 'light') activateLightMode()
+  else activateDarkMode()
+
+} else if (autoChangeMode == '2'){
+  now = new Date();
+  hour = now.getHours();
+  isNight = hour < 6 || hour >= 18
+  if(t === undefined) isNight? activateDarkMode() : activateLightMode()
+  else if (t === 'light') activateLightMode()
+  else activateDarkMode() 
+} else {
+  if ( t == 'dark' ) activateDarkMode()
+  else if ( t == 'light') activateLightMode()
+}
+
+function activateDarkMode(){
+  document.documentElement.setAttribute('data-theme', 'dark')
+  if (document.querySelector('meta[name="theme-color"]') !== null){
+    document.querySelector('meta[name="theme-color"]').setAttribute('content','#000')
+  }
+}
+function activateLightMode(){
+  document.documentElement.setAttribute('data-theme', 'light')
+  if (document.querySelector('meta[name="theme-color"]') !== null){
+  document.querySelector('meta[name="theme-color"]').setAttribute('content','#fff')
+  }
+}</script><link rel="stylesheet" href="/blog/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css"><link rel="canonical" href="https://afree8909.github.io/blog/2019/12/16/LeakCanary%202.0%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><link rel="prev" title="EventBus 3.1 源码分析" href="https://afree8909.github.io/blog/2019/12/22/EventBus%203.1%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><link rel="next" title="Android系统_Surface渲染过程分析（软件绘制）" href="https://afree8909.github.io/blog/2019/12/08/Android%E7%B3%BB%E7%BB%9F_Surface%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90%EF%BC%88%E8%BD%AF%E4%BB%B6%E7%BB%98%E5%88%B6%EF%BC%89/"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css"><script src="https://cdn.jsdelivr.net/npm/gitalk@latest/dist/gitalk.min.js"></script><script src="https://cdn.jsdelivr.net/npm/blueimp-md5/js/md5.min.js"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Titillium+Web"><script>var GLOBAL_CONFIG = { 
+  root: '/blog/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"cookieDomain":"https://xxx/","msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  bookmark: {
+    message_prev: 'Press',
+    message_next: 'to bookmark this page'
+  },
+  runtime_unit: 'days',
+  runtime: true,
+  copyright: undefined,
+  ClickShowText: undefined,
+  medium_zoom: true,
+  fancybox: true,
+  Snackbar: undefined,
+  baiduPush: false,
+  highlightCopy: true,
+  highlightLang: true,
+  highlightShrink: 'false',
+  isFontAwesomeV5: true,
+  isPhotoFigcaption: false
+  
+}</script><script>var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isSidebar: true  
+  }</script><noscript><style>
+#page-header {
+  opacity: 1
+}
+.justified-gallery img{
+  opacity: 1
+}
+</style></noscript><meta name="generator" content="Hexo 4.2.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">Loading...</div></div></div><div id="mobile-sidebar"><div id="menu_mask"></div><div id="mobile-sidebar-menus"><div class="mobile_author_icon"><img class="avatar-img" src="/blog/img/avatar.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="mobile_post_data"><div class="mobile_data_item is-center"><div class="mobile_data_link"><a href="/blog/archives/"><div class="headline">Articles</div><div class="length_num">51</div></a></div></div><div class="mobile_data_item is-center">      <div class="mobile_data_link"><a href="/blog/tags/"><div class="headline">Tags</div><div class="length_num">33</div></a></div></div><div class="mobile_data_item is-center">     <div class="mobile_data_link"><a href="/blog/categories/"><div class="headline">Categories</div><div class="length_num">16</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/blog/"><i class="fa-fw fa fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/blog/archives/"><i class="fa-fw fa fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/blog/tags/"><i class="fa-fw fa fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/blog/categories/"><i class="fa-fw fa fa-folder-open"></i><span> Categories</span></a></div></div></div></div><i class="fa fa-arrow-right on" id="toggle-sidebar" aria-hidden="true">     </i><div id="sidebar"><div class="sidebar-toc"><div class="sidebar-toc__title">Catalog</div><div class="sidebar-toc__progress"><span class="progress-notice">You've read</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar">     </div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#LeakCanary-是什么"><span class="toc-number">1.</span> <span class="toc-text">LeakCanary 是什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#LeakCanary-作用"><span class="toc-number">2.</span> <span class="toc-text">LeakCanary 作用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#LeakCanary-工作原理"><span class="toc-number">3.</span> <span class="toc-text">LeakCanary 工作原理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#预备知识"><span class="toc-number">3.1.</span> <span class="toc-text">预备知识</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#什么是内存泄漏"><span class="toc-number">3.1.1.</span> <span class="toc-text">什么是内存泄漏</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#怎么判断一个对象是否泄漏"><span class="toc-number">3.1.2.</span> <span class="toc-text">怎么判断一个对象是否泄漏</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#如何开始监控"><span class="toc-number">3.2.</span> <span class="toc-text">如何开始监控</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#监控什么对象以及如何监控到目标对象"><span class="toc-number">3.3.</span> <span class="toc-text">监控什么对象以及如何监控到目标对象</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#如何确认目标对象泄漏"><span class="toc-number">3.4.</span> <span class="toc-text">如何确认目标对象泄漏</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#如何分析目标对象泄漏的原因"><span class="toc-number">3.5.</span> <span class="toc-text">如何分析目标对象泄漏的原因</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#如何呈现目标对象泄漏的原因"><span class="toc-number">3.6.</span> <span class="toc-text">如何呈现目标对象泄漏的原因</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#LeakCanary-2-0与1-x版本对比"><span class="toc-number">4.</span> <span class="toc-text">LeakCanary 2.0与1.x版本对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#LeakCanary-源码分析"><span class="toc-number">5.</span> <span class="toc-text">LeakCanary 源码分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#主要包的结构介绍"><span class="toc-number">5.1.</span> <span class="toc-text">主要包的结构介绍</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#主要工作的时序图"><span class="toc-number">5.2.</span> <span class="toc-text">主要工作的时序图</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#相关源码"><span class="toc-number">5.3.</span> <span class="toc-text">相关源码</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#注册流程"><span class="toc-number">5.3.1.</span> <span class="toc-text">注册流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#监控流程"><span class="toc-number">5.3.2.</span> <span class="toc-text">监控流程</span></a></li></ol></li></ol></li></ol></div></div></div><div id="body-wrap"><div class="post-bg" id="nav" style="background-image: url(https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145659.png)"><div id="page-header"><span class="pull_left" id="blog_name"><a class="blog_title" id="site-name" href="/blog/">Afree</a></span><span class="pull_right menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/blog/"><i class="fa-fw fa fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/blog/archives/"><i class="fa-fw fa fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/blog/tags/"><i class="fa-fw fa fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/blog/categories/"><i class="fa-fw fa fa-folder-open"></i><span> Categories</span></a></div></div><span class="toggle-menu close"><a class="site-page"><i class="fa fa-bars fa-fw" aria-hidden="true"></i></a></span></span></div><div id="post-info"><div id="post-title"><div class="posttitle">LeakCanary 2.0源码分析</div></div><div id="post-meta"><div class="meta-firstline"><time class="post-meta__date"><span class="post-meta__date-created" title="Created 2019-12-16 14:48:07"><i class="fa fa-calendar" aria-hidden="true"></i> Created 2019-12-16</span><span class="post-meta__separator">|</span><span class="post-meta__date-updated" title="Updated 2020-04-28 14:58:15"><i class="fa fa-history" aria-hidden="true"></i> Updated 2020-04-28</span></time><span class="post-meta__categories"><span class="post-meta__separator">|</span><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/blog/categories/Android/">Android</a><i class="fa fa-angle-right post-meta__separator" aria-hidden="true"></i><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/blog/categories/Android/%E6%A1%86%E6%9E%B6/">框架</a></span></div><div class="meta-secondline"> <span class="post-meta-wordcount"><i class="post-meta__icon far fa-file-word" aria-hidden="true"></i><span>Word count:</span><span class="word-count">2.1k</span><span class="post-meta__separator">|</span><i class="post-meta__icon far fa-clock" aria-hidden="true"></i><span>Reading time: 9 min</span></span></div><div class="meta-thirdline"><span class="post-meta-pv-cv"><span class="post-meta__separator">|</span><i class="fa fa-eye post-meta__icon" aria-hidden="true"> </i><span>Post View:</span><span id="busuanzi_value_page_pv"></span></span><span class="post-meta-commentcount"></span></div></div></div></div><main class="layout_post" id="content-inner"><article id="post"><div id="article-container"><blockquote>
+<p>本文基于LeakCanary 2.0源码分析<br><a href="https://square.github.io/leakcanary/" target="_blank" rel="noopener">LeakCanary - 官方地址</a><br><a href="https://github.com/square/leakcanary" target="_blank" rel="noopener">LeakCanary - GitHub代码地址</a></p>
+</blockquote>
+<h3 id="LeakCanary-是什么"><a href="#LeakCanary-是什么" class="headerlink" title="LeakCanary 是什么"></a>LeakCanary 是什么</h3><p>概念：LeakCanary是针对Android应用的一个内存泄漏监控三方库<br>能力：Activity、Fragment以及自主监控的任何对象<br>出品：Square</p>
+<h3 id="LeakCanary-作用"><a href="#LeakCanary-作用" class="headerlink" title="LeakCanary 作用"></a>LeakCanary 作用</h3><p>基于对Android Framework层的认知，LeakCanary提供更精准的泄漏原因分析能力，从而帮助开发者快速减少OOM Crash问题</p>
+<h3 id="LeakCanary-工作原理"><a href="#LeakCanary-工作原理" class="headerlink" title="LeakCanary 工作原理"></a>LeakCanary 工作原理</h3><h4 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h4><h5 id="什么是内存泄漏"><a href="#什么是内存泄漏" class="headerlink" title="什么是内存泄漏"></a>什么是内存泄漏</h5><p>在Java运行环境下，内存泄漏是指某个程序错误导致应用长时间一直保留某个不在需要的对象，以至于它不能被回收，而它是会占用内存的，这就意味着内存泄漏了。持续累加，最终有可能导致发生内存溢出问题。<br>例如一个Activity执行完onDestroy方法后，它仍然被一个static变量强引用，从而阻止了Activity被GC回收，导致Activity发生内存泄漏</p>
+<h5 id="怎么判断一个对象是否泄漏"><a href="#怎么判断一个对象是否泄漏" class="headerlink" title="怎么判断一个对象是否泄漏"></a>怎么判断一个对象是否泄漏</h5><p>从GC Roots出发进行遍历，强引用可到达对象，都是存活对象，不可达对象则为即将被回收的对象。如果那些存活对象本应该是要被回收的，那么这个对象就是发生了内存泄漏（见下图，引用一张图说明）<br>实际过程通常作法是针对核心对象Activity、Fragment进行监控分析</p>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145649.png"  alt=""></p>
+<h4 id="如何开始监控"><a href="#如何开始监控" class="headerlink" title="如何开始监控"></a>如何开始监控</h4><p>LeakCanary通过实现四大组件中的ContentProvider，所以可以在App启动的时候执行到LeakCanary的AppWatcherInstaller.onCreate方法，从而完成<strong>0侵入</strong>实现注册监控流程</p>
+<h4 id="监控什么对象以及如何监控到目标对象"><a href="#监控什么对象以及如何监控到目标对象" class="headerlink" title="监控什么对象以及如何监控到目标对象"></a>监控什么对象以及如何监控到目标对象</h4><p>Activity: 通过注册 Application.ActivityLifecycleCallbacks实现onActivityDestroyed执行回调，以监控需要被回收的Activity是否被回收<br>Fragment： 通过注册 FragmentManager.FragmentLifecycleCallbacks实现onFragmentViewDestroyed和onFragmentDestroyed回调，以监控需要被回收的Fragment或者View是否被回收</p>
+<h4 id="如何确认目标对象泄漏"><a href="#如何确认目标对象泄漏" class="headerlink" title="如何确认目标对象泄漏"></a>如何确认目标对象泄漏</h4><ol>
+<li>执行回收：目标对象如果在一个缓冲时间（5s）仍未被回收，我们通过手动执行GC，然后在确认其是否真的不能被回收</li>
+<li>确认是否回收：JVM中，如果创建一个含有ReferenceQueue的WeakReference的A对象，这个WeakReference对应的A对象如果被回收了，则A会被自动加入到ReferenceQueue，所以我们可以通过维护一个ReferenceQueue，通过创建目标对象的含有ReferenceQueue的WeakReference，从而监听到目标对象是否被回收</li>
+</ol>
+<p>更多参考：<a href="https://www.jianshu.com/p/439a8f738153" target="_blank" rel="noopener">Reference和ReferenceQueue深入解读
+</a></p>
+<h4 id="如何分析目标对象泄漏的原因"><a href="#如何分析目标对象泄漏的原因" class="headerlink" title="如何分析目标对象泄漏的原因"></a>如何分析目标对象泄漏的原因</h4><p>泄漏原因即寻找泄漏路径</p>
+<ol>
+<li>通过Debug.dumpHprofData，dump一份hprof数据</li>
+<li>读取hprof数据，整理出一份GcRoots对象索引</li>
+<li>排序GcRoots对象，并构造一份ReferencePathNode树</li>
+<li>BFS遍历，找到泄漏对象的最短路径节点</li>
+<li>根据节点，生成泄漏路径</li>
+</ol>
+<h4 id="如何呈现目标对象泄漏的原因"><a href="#如何呈现目标对象泄漏的原因" class="headerlink" title="如何呈现目标对象泄漏的原因"></a>如何呈现目标对象泄漏的原因</h4><ol>
+<li>生成一个HeapDumpScreen，呈现泄漏信息</li>
+<li>发出通知</li>
+</ol>
+<h3 id="LeakCanary-2-0与1-x版本对比"><a href="#LeakCanary-2-0与1-x版本对比" class="headerlink" title="LeakCanary 2.0与1.x版本对比"></a>LeakCanary 2.0与1.x版本对比</h3><table>
+<thead>
+<tr>
+<th>内容</th>
+<th>2.0</th>
+<th>1.0</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>语言</td>
+<td>kotlin</td>
+<td>java</td>
+</tr>
+<tr>
+<td>使用</td>
+<td>仅需引入库，自动注册监控</td>
+<td>除引入库，还需要手动执行install</td>
+</tr>
+<tr>
+<td>内存分析</td>
+<td>shark，基于Okio的自实现的轻巧内存分析库</td>
+<td>haha三方库</td>
+</tr>
+<tr>
+<td>其它</td>
+<td>fragment，支持 androidx</td>
+<td>无</td>
+</tr>
+</tbody></table>
+<h3 id="LeakCanary-源码分析"><a href="#LeakCanary-源码分析" class="headerlink" title="LeakCanary 源码分析"></a>LeakCanary 源码分析</h3><h4 id="主要包的结构介绍"><a href="#主要包的结构介绍" class="headerlink" title="主要包的结构介绍"></a>主要包的结构介绍</h4><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145659.png"  alt=""></p>
+<h4 id="主要工作的时序图"><a href="#主要工作的时序图" class="headerlink" title="主要工作的时序图"></a>主要工作的时序图</h4><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145801.png"  alt=""></p>
+<h4 id="相关源码"><a href="#相关源码" class="headerlink" title="相关源码"></a>相关源码</h4><h5 id="注册流程"><a href="#注册流程" class="headerlink" title="注册流程"></a>注册流程</h5><p>AppWatcherInstaller.onCreate</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 继承 ContentProvider</span><br><span class="line">internal sealed class AppWatcherInstaller : ContentProvider() &#123;</span><br><span class="line">    &#x2F;&#x2F; App启动 执行 onCreate </span><br><span class="line">  override fun onCreate(): Boolean &#123;</span><br><span class="line">    val application &#x3D; context!!.applicationContext as Application</span><br><span class="line">    &#x2F;&#x2F; 注册启动（0 侵入）</span><br><span class="line">    InternalAppWatcher.install(application)</span><br><span class="line">    return true</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>InternalAppWatcher.install</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">fun install(application: Application) &#123;</span><br><span class="line">    InternalAppWatcher.application &#x3D; application</span><br><span class="line">    </span><br><span class="line">    val configProvider &#x3D; &#123; AppWatcher.config &#125;</span><br><span class="line">    &#x2F;&#x2F; Activity destroy方法监控注册</span><br><span class="line">    ActivityDestroyWatcher.install(application, objectWatcher, configProvider)</span><br><span class="line">    &#x2F;&#x2F; Fragment destroy方法监控注册</span><br><span class="line">    FragmentDestroyWatcher.install(application, objectWatcher, configProvider)</span><br><span class="line">    onAppWatcherInstalled(application)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ActivityDestroyWatcher.install</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">internal class ActivityDestroyWatcher private constructor(</span><br><span class="line">  private val objectWatcher: ObjectWatcher,</span><br><span class="line">  private val configProvider: () -&gt; Config</span><br><span class="line">) &#123;</span><br><span class="line">    &#x2F;&#x2F; 构造 Application.ActivityLifecycleCallbacks</span><br><span class="line">  private val lifecycleCallbacks &#x3D;</span><br><span class="line">    object : Application.ActivityLifecycleCallbacks by noOpDelegate() &#123;</span><br><span class="line">      override fun onActivityDestroyed(activity: Activity) &#123;</span><br><span class="line">        if (configProvider().watchActivities) &#123;</span><br><span class="line">          objectWatcher.watch(activity, &quot;Activity received Activity#onDestroy() callback&quot;)</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  companion object &#123;</span><br><span class="line">    fun install(</span><br><span class="line">      application: Application,</span><br><span class="line">      objectWatcher: ObjectWatcher,</span><br><span class="line">      configProvider: () -&gt; Config</span><br><span class="line">    ) &#123;</span><br><span class="line">      val activityDestroyWatcher &#x3D;</span><br><span class="line">        ActivityDestroyWatcher(objectWatcher, configProvider)</span><br><span class="line">      &#x2F;&#x2F; 注册 生命周期监听回调</span><br><span class="line">      application.registerActivityLifecycleCallbacks(activityDestroyWatcher.lifecycleCallbacks)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>InternalLeakCanary.invoke</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">  &#x2F;&#x2F; 初始化相关类</span><br><span class="line">override fun invoke(application: Application) &#123;</span><br><span class="line">    this.application &#x3D; application</span><br><span class="line">  </span><br><span class="line">    &#x2F;&#x2F; 添加保留对象监听</span><br><span class="line">AppWatcher.objectWatcher.addOnObjectRetainedListener(this)</span><br><span class="line">    &#x2F;&#x2F; Android heap dumper类</span><br><span class="line">    val heapDumper &#x3D; AndroidHeapDumper(application, leakDirectoryProvider)</span><br><span class="line">    &#x2F;&#x2F; GC触发器</span><br><span class="line">    val gcTrigger &#x3D; GcTrigger.Default</span><br><span class="line">    </span><br><span class="line">    val configProvider &#x3D; &#123; LeakCanary.config &#125;</span><br><span class="line">    &#x2F;&#x2F; 相关线程 handler</span><br><span class="line">    val handlerThread &#x3D; HandlerThread(LEAK_CANARY_THREAD_NAME)</span><br><span class="line">    handlerThread.start()</span><br><span class="line">    val backgroundHandler &#x3D; Handler(handlerThread.looper)</span><br><span class="line">    &#x2F;&#x2F; Heap Dump 触发器</span><br><span class="line">    heapDumpTrigger &#x3D; HeapDumpTrigger(</span><br><span class="line">       application, backgroundHandler, AppWatcher.objectWatcher, gcTrigger, heapDumper,</span><br><span class="line">       configProvider</span><br><span class="line">    )</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<h5 id="监控流程"><a href="#监控流程" class="headerlink" title="监控流程"></a>监控流程</h5><p>以Activity.onDestory为例<br>ActivityDestroyWatcher.lifecycleCallbacks</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">private val lifecycleCallbacks &#x3D;</span><br><span class="line">  object : Application.ActivityLifecycleCallbacks by noOpDelegate() &#123;</span><br><span class="line">    override fun onActivityDestroyed(activity: Activity) &#123;</span><br><span class="line">      if (configProvider().watchActivities) &#123;</span><br><span class="line">          &#x2F;&#x2F; 开始监控 销毁的activity</span><br><span class="line">        objectWatcher.watch(activity, &quot;Activity received Activity#onDestroy() callback&quot;)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line">ObjectWatcher.watch</span><br></pre></td></tr></table></figure>
+<p>  @Synchronized fun watch(<br>    watchedObject: Any,<br>    description: String<br>  ) {<br>    // 移除已经回收的监听对象<br>    removeWeaklyReachableObjects()<br>    // 随机key<br>    val key = UUID.randomUUID()<br>        .toString()<br>    val watchUptimeMillis = clock.uptimeMillis()<br>    // 构造KeyedWeakReference 用来监听目标对象<br>    val reference =<br>      KeyedWeakReference(watchedObject, key, description, watchUptimeMillis, queue)<br>    // 存储 key + reference<br>    watchedObjects[key] = reference<br>    checkRetainedExecutor.execute {<br>        // 执行 没有回收流程<br>      moveToRetained(key)<br>    }<br>  }</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">ObjectWatcher.moveToRetained</span><br></pre></td></tr></table></figure>
+<p>  @Synchronized private fun moveToRetained(key: String) {<br>    // 再次移除被回收的对象<br>    removeWeaklyReachableObjects()<br>    val retainedRef = watchedObjects[key]<br>    // 如果没有被回收 则开始执行对象未被回收流程<br>    if (retainedRef != null) {<br>      retainedRef.retainedUptimeMillis = clock.uptimeMillis()<br>      onObjectRetainedListeners.forEach { it.onObjectRetained() }<br>    }<br>  }</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line">HeapDumpTrigger</span><br></pre></td></tr></table></figure>
+<p>  override fun onObjectRetained() {<br>    if (this::heapDumpTrigger.isInitialized) {<br>      heapDumpTrigger.onObjectRetained()<br>    }<br>  }</p>
+<p>  fun onObjectRetained() {<br>    scheduleRetainedObjectCheck(“found new object retained”)<br>  }</p>
+<p>  private fun scheduleRetainedObjectCheck(reason: String) {<br>    checkScheduled = true<br>    backgroundHandler.post {<br>      checkScheduled = false<br>      checkRetainedObjects(reason)<br>    }<br>  }</p>
+<p>private fun checkRetainedObjects(reason: String) {<br>    val config = configProvider()<br>    // A tick will be rescheduled when this is turned back on.<br>    if (!config.dumpHeap) {<br>      SharkLog.d { “No checking for retained object: LeakCanary.Config.dumpHeap is false” }<br>      return<br>    }<br>    SharkLog.d { “Checking retained object because $reason” }</p>
+<pre><code>var retainedReferenceCount = objectWatcher.retainedObjectCount
+// 如果还有未被回收的目标对象，则出发GC，
+if (retainedReferenceCount &gt; 0) {
+  gcTrigger.runGc()
+  retainedReferenceCount = objectWatcher.retainedObjectCount
+}
+
+if (checkRetainedCount(retainedReferenceCount, config.retainedVisibleThreshold)) return
+
+// 触发GC后，对象仍未被回收，开始dump
+dumpHeap(retainedReferenceCount, retry = true)</code></pre><p>  }</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">HeapDumpTrigger.dumpHeap</span><br></pre></td></tr></table></figure>
+<p>  private fun dumpHeap(<br>    retainedReferenceCount: Int,<br>    retry: Boolean<br>  ) {<br>    // 储存Android 的资源id 及其对应的name<br>    saveResourceIdNamesToMemory()<br>    val heapDumpUptimeMillis = SystemClock.uptimeMillis()<br>    KeyedWeakReference.heapDumpUptimeMillis = heapDumpUptimeMillis<br>    // dumpHeap 到file<br>    val heapDumpFile = heapDumper.dumpHeap()</p>
+<pre><code>lastDisplayedRetainedObjectCount = 0
+objectWatcher.clearObjectsWatchedBefore(heapDumpUptimeMillis)
+// 启动service 开始dump分析
+HeapAnalyzerService.runAnalysis(application, heapDumpFile)</code></pre><p>  }</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AndroidHeapDumper.dumpHeap</span><br></pre></td></tr></table></figure>
+<p> override fun dumpHeap(): File? {<br>    val heapDumpFile = leakDirectoryProvider.newHeapDumpFile() ?: return null<br>    …<br>    // 调用Debug的dumpHprofData 到目标文件<br>    return Debug.dumpHprofData(heapDumpFile.absolutePath)<br>             heapDumpFile<br>  }</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">##### 分析流程</span><br><span class="line"></span><br><span class="line">HeapAnalyzerService.onHandleIntentInForeground</span><br></pre></td></tr></table></figure>
+<p>  override fun onHandleIntentInForeground(intent: Intent?) {<br>    // 获取目标 heap dump file<br>     val heapDumpFile = intent.getSerializableExtra(HEAPDUMP_FILE_EXTRA) as File<br>    // 构造 heap分析器<br>    val heapAnalyzer = HeapAnalyzer(this)<br>    // …<br>    // 执行分析流程<br>    val heapAnalysis =<br>      heapAnalyzer.analyze(<br>          heapDumpFile,<br>          config.referenceMatchers,<br>          config.computeRetainedHeapSize,<br>          config.objectInspectors,<br>          if (config.useExperimentalLeakFinders) config.objectInspectors else listOf(<br>              ObjectInspectors.KEYED_WEAK_REFERENCE<br>          ),<br>          config.metatadaExtractor,<br>          proguardMappingReader?.readProguardMapping()<br>      )</p>
+<pre><code>// 回调分析完成
+config.onHeapAnalyzedListener.onHeapAnalyzed(heapAnalysis)</code></pre><p>  }</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">HeapAnalyzer.analyze</span><br></pre></td></tr></table></figure>
+<p>fun analyze(<br>    heapDumpFile: File,<br>    referenceMatchers: List<ReferenceMatcher> = emptyList(),<br>    computeRetainedHeapSize: Boolean = false,<br>    objectInspectors: List<ObjectInspector> = emptyList(),<br>    leakFinders: List<ObjectInspector> = objectInspectors,<br>    metadataExtractor: MetadataExtractor = MetadataExtractor.NO_OP,<br>    proguardMapping: ProguardMapping? = null<br>  ): HeapAnalysis {<br>    val analysisStartNanoTime = System.nanoTime()</p>
+<pre><code>try {
+  listener.onAnalysisProgress(PARSING_HEAP_DUMP)
+  // 读取 文件，然后执行分析
+  Hprof.open(heapDumpFile)
+      .use { hprof -&gt;
+        // Hprof -&gt; graph 转换过程 目标获取GcRoots index
+        val graph = HprofHeapGraph.indexHprof(hprof, proguardMapping)
+
+        listener.onAnalysisProgress(EXTRACTING_METADATA)
+        // 获取Android相关 metadata （如sdk版本、收集厂商等信息）
+        val metadata = metadataExtractor.extractMetadata(graph)
+
+        val findLeakInput = FindLeakInput(
+            graph, leakFinders, referenceMatchers, computeRetainedHeapSize, objectInspectors
+        )
+        // 找泄漏最短路径
+        val (applicationLeaks, libraryLeaks) = findLeakInput.findLeaks()
+        listener.onAnalysisProgress(REPORTING_HEAP_ANALYSIS)
+        // 返回分析成功结果
+        return HeapAnalysisSuccess(
+            heapDumpFile, System.currentTimeMillis(), since(analysisStartNanoTime), metadata,
+            applicationLeaks, libraryLeaks
+        )
+      }
+
+}</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">HeapAnalyzer.findLeaks</span><br></pre></td></tr></table></figure>
+<p>  private fun FindLeakInput.findLeaks(): Pair&lt;List<ApplicationLeak>, List<LibraryLeak>&gt; {<br>    // 找未被回收对象的 objectId<br>    val leakingInstanceObjectIds = findRetainedObjects()<br>    // 构造pathFinder对象<br>    val pathFinder = PathFinder(graph, listener, referenceMatchers)<br>    val pathFindingResults =<br>    // ⚠️ 找泄漏对象到GcRoots的最短路径<br>    pathFinder.findPathsFromGcRoots(leakingInstanceObjectIds, computeRetainedHeapSize)</p>
+<p>   // 返回 泄漏路径<br>    return buildLeakTraces(pathFindingResults)<br>  }</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">PathFinder.findPatchsFromGcRoots</span><br></pre></td></tr></table></figure>
+<p>  fun findPathsFromGcRoots(<br>    leakingObjectIds: Set<Long>,<br>    computeRetainedHeapSize: Boolean<br>  ): PathFindingResults {<br>    listener.onAnalysisProgress(FINDING_PATHS_TO_RETAINED_OBJECTS)</p>
+<pre><code>val sizeOfObjectInstances = determineSizeOfObjectInstances(graph)
+
+val state = State(leakingObjectIds, sizeOfObjectInstances, computeRetainedHeapSize)
+// 执行 state。findPathsFromGcRoots
+return state.findPathsFromGcRoots()</code></pre><p>  }</p>
+<p>  private fun State.findPathsFromGcRoots(): PathFindingResults {<br>    // GcRoots 生成节点队列树<br>    enqueueGcRoots()</p>
+<pre><code>val shortestPathsToLeakingObjects = mutableListOf&lt;ReferencePathNode&gt;()
+visitingQueue@ while (queuesNotEmpty) {
+  val node = poll() // 循环取node
+
+    // 泄漏的节点，则添加到shortestPathsToLeakingObjects 直到，全部找完 
+  if (node.objectId in leakingObjectIds) {
+    shortestPathsToLeakingObjects.add(node)
+    // Found all refs, stop searching (unless computing retained size)
+    if (shortestPathsToLeakingObjects.size == leakingObjectIds.size) {
+      if (computeRetainedHeapSize) {
+        listener.onAnalysisProgress(FINDING_DOMINATORS)
+      } else {
+        break@visitingQueue
+      }
+    }
+  }
+}
+return PathFindingResults(shortestPathsToLeakingObjects, dominatedObjectIds)</code></pre><p>  }</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">##### 呈现流程</span><br><span class="line"></span><br><span class="line">DefaultOnHeapAnalyzedListener.onHeapAnalyzed</span><br></pre></td></tr></table></figure>
+<p>  override fun onHeapAnalyzed(heapAnalysis: HeapAnalysis) {<br>    // 写入 db<br>    val (id, groupProjections) = LeaksDbHelper(application)<br>        .writableDatabase.use { db -&gt;<br>      val id = HeapAnalysisTable.insert(db, heapAnalysis)<br>      id to LeakTable.retrieveHeapDumpLeaks(db, id)<br>    }</p>
+<pre><code>// 生成 泄漏信息到屏幕展示
+val (contentTitle, screenToShow) = when (heapAnalysis) {
+  is HeapAnalysisFailure -&gt; application.getString(
+      R.string.leak_canary_analysis_failed
+  ) to HeapAnalysisFailureScreen(id)
+  is HeapAnalysisSuccess -&gt; {
+    var leakCount = 0
+    var newLeakCount = 0
+    var knownLeakCount = 0
+    var libraryLeakCount = 0
+
+    for ((_, projection) in groupProjections) {
+      leakCount += projection.leakCount
+      when {
+        projection.isLibraryLeak -&gt; libraryLeakCount += projection.leakCount
+        projection.isNew -&gt; newLeakCount += projection.leakCount
+        else -&gt; knownLeakCount += projection.leakCount
+      }
+    }
+
+    application.getString(
+        R.string.leak_canary_analysis_success_notification, leakCount, newLeakCount,
+        knownLeakCount, libraryLeakCount
+    ) to HeapDumpScreen(id)
+  }
+}
+
+val pendingIntent = LeakActivity.createPendingIntent(
+    application, arrayListOf(HeapDumpsScreen(), screenToShow)
+)
+
+val contentText = application.getString(R.string.leak_canary_notification_message)
+// 构建通知
+Notifications.showNotification(
+    application, contentTitle, contentText, pendingIntent,
+    R.id.leak_canary_notification_analysis_result,
+    LEAKCANARY_MAX
+)</code></pre><p>  }</p>
+<pre><code>
+
+
+---
+![](https://upload-images.jianshu.io/upload_images/9696036-70673e2d55e85b18.gif?imageMogr2/auto-orient/strip)
+
+</code></pre></div><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">Afree</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://afree8909.github.io/blog/2019/12/16/LeakCanary%202.0%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">https://afree8909.github.io/blog/2019/12/16/LeakCanary%202.0%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/blog/tags/%E6%BA%90%E7%A0%81/">源码</a><a class="post-meta__tags" href="/blog/tags/LeakCanary/">LeakCanary</a></div><div class="post_share"><div class="social-share" data-image="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141843.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css"/><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js"></script></div></div><nav class="pagination_post" id="pagination"><div class="prev-post pull_left"><a href="/blog/2019/12/22/EventBus%203.1%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><img class="prev_cover lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145500.png" onerror="onerror=null;src='/blog/img/404.jpg'"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">EventBus 3.1 源码分析</div></div></a></div><div class="next-post pull_right"><a href="/blog/2019/12/08/Android%E7%B3%BB%E7%BB%9F_Surface%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90%EF%BC%88%E8%BD%AF%E4%BB%B6%E7%BB%98%E5%88%B6%EF%BC%89/"><img class="next_cover lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145839.png" onerror="onerror=null;src='/blog/img/404.jpg'"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">Android系统_Surface渲染过程分析（软件绘制）</div></div></a></div></nav><div class="relatedPosts"><div class="relatedPosts_headline"><i class="fa fa-fw fa-thumbs-up" aria-hidden="true"></i><span> Recommend</span></div><div class="relatedPosts_list"><div class="relatedPosts_item"><a href="/blog/2019/11/25/Android系统_Surface/" title="Android系统_Surface"><img class="relatedPosts_cover lazyload"data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151413.png"><div class="relatedPosts_main is-center"><div class="relatedPosts_date"><i class="fa fa-calendar fa-fw" aria-hidden="true"></i> 2019-11-25</div><div class="relatedPosts_title">Android系统_Surface</div></div></a></div><div class="relatedPosts_item"><a href="/blog/2019/11/16/Android图形系统-View测量规格解析/" title="Android图形系统-View测量规格解析"><img class="relatedPosts_cover lazyload"data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150503.png"><div class="relatedPosts_main is-center"><div class="relatedPosts_date"><i class="fa fa-calendar fa-fw" aria-hidden="true"></i> 2019-11-16</div><div class="relatedPosts_title">Android图形系统-View测量规格解析</div></div></a></div><div class="relatedPosts_item"><a href="/blog/2019/11/20/Android图形系统—View.draw解析/" title="Android图形系统—View.draw解析"><img class="relatedPosts_cover lazyload"data-src="https://i.loli.net/2019/11/10/egVhFWopA5mP2Hk.png"><div class="relatedPosts_main is-center"><div class="relatedPosts_date"><i class="fa fa-calendar fa-fw" aria-hidden="true"></i> 2019-11-20</div><div class="relatedPosts_title">Android图形系统—View.draw解析</div></div></a></div></div><div class="clear_both"></div></div><hr><div id="post-comment"><div class="comment_headling"><i class="fa fa-comments fa-fw" aria-hidden="true"></i><span> Comment</span></div><div id="gitalk-container"></div><script>var gitalk = new Gitalk({
+  clientID: 'cb1555f9c0cbd64760a2',
+  clientSecret: '1b7216ee7c340092507f7fa63a1435dcb5ad8bed',
+  repo: 'blog-comment',
+  owner: 'afree8909',
+  admin: ['afree8909'],
+  id: md5(decodeURI(location.pathname)),
+  language: 'zh-CN',
+  perPage: 10,
+  distractionFreeMode: false,
+  pagerDirection: 'last',
+  createIssueManually: false,
+  updateCountCallback: commentCount
+})
+gitalk.render('gitalk-container')
+
+function commentCount(n){
+  try {
+    document.getElementsByClassName('gitalk-comment-count')[0].innerHTML= n
+  } catch (e) {
+    return false
+  }
+}</script></div></article></main><footer id="footer" style="background-image: url(https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145659.png)" data-type="photo"><div id="footer-wrap"><div class="copyright">&copy;2020 By Afree</div><div class="framework-info"><span>Driven </span><a href="https://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>Theme </span><a href="https://github.com/jerryc127/hexo-theme-butterfly" target="_blank" rel="noopener"><span>Butterfly</span></a></div></div></footer></div><section class="rightside" id="rightside"><div id="rightside-config-hide"><i class="fa fa-book" id="readmode" title="Read Mode"></i><i class="fa fa-plus" id="font_plus" title="Increase font size"></i><i class="fa fa-minus" id="font_minus" title="Decrease font size"></i><a class="translate_chn_to_cht" id="translateLink" href="javascript:translatePage();" title="Traditional Chinese and Simplified Chinese Conversion" target="_self">简</a><i class="darkmode far fa-sun" id="darkmode" title="Dark Mode"></i></div><div id="rightside-config-show"><div id="rightside_config" title="Setting"><i class="fa fa-cog" aria-hidden="true"></i></div><a id="to_comment" href="#post-comment" title="Scroll to comment"><i class="scroll_to_comment fa fa-comments">  </i></a><i class="fa fa-list-ul close" id="mobile-toc-button" title="Table of Contents" aria-hidden="true"></i><i class="fa fa-arrow-up" id="go-up" title="Back to top" aria-hidden="true"></i></div></section><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/main.js"></script><script src="/blog/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script id="canvas_nest" color="0,0,255" opacity="0.7" zIndex="-1" count="99" mobile="false" src="/blog/js/third-party/canvas-nest.js"></script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@latest/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/lazysizes@latest/lazysizes.min.js" async=""></script><script>var endLoading = function () {
+  document.body.style.overflow = 'auto';
+  document.getElementById('loading-box').classList.add("loaded")
+}
+window.addEventListener('load',endLoading)</script></body></html>
