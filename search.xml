@@ -762,7 +762,7 @@
 <p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143220.png"  alt="HTTP缓存流程图"></p>
 <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）</p>
 <p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144516.png"  alt=""></p>
-<p>缓存处理流程<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144613.png"  alt=""></p>
+<p>缓存处理流程<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143225.png"  alt=""></p>
 <p>缓存文件夹<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144602.png"  alt=""></p>
 <p>缓存日志格式<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144613.png"  alt=""></p>
 <h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><p>如果需要缓存机制，那么在构造OkHttpClient的时候需要传入一个Cache实例。<br>下面是OkHttp提供的一个CacheResponse的用例，除了传入一个Cache构造OkHttpClient，其它完全一样。<br>OkHttp实现缓存的切入点依旧是拦截器，之前的文章我们知道拦截器处理对象可以接受命令对象并根据自身情况选择处理还是不处理，所以接下来就是直接从CacheInterceptor开始分析</p>
@@ -867,7 +867,7 @@
 <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）</p>
 <p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144715.png"  alt=""></p>
 <p>Interceptor流程</p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144225.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143543.png"  alt=""></p>
 <h2 id="责任链模式"><a href="#责任链模式" class="headerlink" title="责任链模式"></a>责任链模式</h2><p>概念<br>责任链模式（Chain of Responsibility Pattern），包含命令对象和一系列实现了相同接口的处理对象，这些处理对象相互连接成为一条责任链。每一个处理对象能决定它能处理哪些命令对象，对于它不能处理的命令对象，将会传递给该链中的下一个处理对象。负责链模式就是对这种顺序处理事件的行为的抽象,通过接口来定义处理事件的方法，顺序分发/处理事件。</p>
 <p>主要解决<br>职责链上的处理者负责处理请求，客户只需要将请求发送到职责链上即可，无须关心请求的处理细节和请求的传递，所以职责链将请求的发送者和请求的处理者解耦了。</p>
 <p>优点</p>
@@ -1031,7 +1031,7 @@
   <entry>
     <title>目标管理-SMART原则</title>
     <url>/blog/2020/01/10/%E7%9B%AE%E6%A0%87%E7%AE%A1%E7%90%86-SMART%E5%8E%9F%E5%88%99/</url>
-    <content><![CDATA[<h2 id="一图以蔽之"><a href="#一图以蔽之" class="headerlink" title="一图以蔽之"></a>一图以蔽之</h2><p><img src="https://upload-images.jianshu.io/upload_images/9696036-99645f5d4e58ed36.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+    <content><![CDATA[<h2 id="一图以蔽之"><a href="#一图以蔽之" class="headerlink" title="一图以蔽之"></a>一图以蔽之</h2><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145153.png"  alt=""></p>
 <h2 id="基本情况"><a href="#基本情况" class="headerlink" title="基本情况"></a>基本情况</h2><h3 id="基本信息"><a href="#基本信息" class="headerlink" title="基本信息"></a>基本信息</h3><ul>
 <li>提出者：彼得·德鲁克</li>
 <li>出处：《管理的实践》</li>
@@ -1121,7 +1121,7 @@
 <li><strong>主次分明</strong>（强化逻辑）：分清楚主要和次要，先主要后次要</li>
 <li><strong>规范动作</strong>（减少耗时时间）：使用标准动作健身和使用非标准动作健身，花同样的时间，两者呈现的结果可能是千差万别；金字塔原理也是写作、思考、表达的规范性动作，在前期训练的过程，你会感觉很不舒适，但是一旦动作成型，那么你的写作、思考、表达的记忆性肌肉就炼成了，后期将会释放出力量。</li>
 </ul>
-<p><strong>图例</strong><br><img src="https://upload-images.jianshu.io/upload_images/9696036-5f23ae6141b04e5f.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p><strong>图例</strong><br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145239.png"  alt=""></p>
 <h2 id="什么是金字塔原理"><a href="#什么是金字塔原理" class="headerlink" title="什么是金字塔原理"></a>什么是金字塔原理</h2><h3 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h3><p>金字塔原理是一种结构化思考、表达和解决问题的艺术</p>
 <h3 id="金字塔原理的234"><a href="#金字塔原理的234" class="headerlink" title="金字塔原理的234"></a>金字塔原理的234</h3><h4 id="2个目标"><a href="#2个目标" class="headerlink" title="2个目标"></a>2个目标</h4><ul>
 <li>想清楚：自下而上思考，总结概括</li>
@@ -1184,7 +1184,7 @@
 </ul>
 </li>
 </ul>
-<h2 id="一图以蔽之"><a href="#一图以蔽之" class="headerlink" title="一图以蔽之"></a>一图以蔽之</h2><p><img src="https://upload-images.jianshu.io/upload_images/9696036-8362667c25ef0c59.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h2 id="一图以蔽之"><a href="#一图以蔽之" class="headerlink" title="一图以蔽之"></a>一图以蔽之</h2><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145239.png"  alt=""></p>
 ]]></content>
       <categories>
         <category>方法论</category>
@@ -1272,7 +1272,7 @@
 <li><p>归档复盘<br>复盘进行归档，这其实也是知识管理的一种。归档将复盘得到的认识知识化或者形成方法论，更加方便传播和查阅，这让没有参与复盘的人也能掌握复盘得出的规律和观念，让新人可以在自己的工作中进行学习和参考，少走弯路。</p>
 </li>
 </ul>
-<h2 id="复盘模版"><a href="#复盘模版" class="headerlink" title="复盘模版"></a>复盘模版</h2><p><img src="https://upload-images.jianshu.io/upload_images/9696036-b088afab48869a76.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h2 id="复盘模版"><a href="#复盘模版" class="headerlink" title="复盘模版"></a>复盘模版</h2><p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-b088afab48869a76.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt=""></p>
 <h2 id="项目复盘示例"><a href="#项目复盘示例" class="headerlink" title="项目复盘示例"></a>项目复盘示例</h2><h3 id="项目目标复盘"><a href="#项目目标复盘" class="headerlink" title="项目目标复盘"></a>项目目标复盘</h3><h4 id="项目进度复盘"><a href="#项目进度复盘" class="headerlink" title="项目进度复盘"></a>项目进度复盘</h4><ul>
 <li>是否按照原计划交付时间交付？</li>
 <li>原计划的需求点实现了多少？哪些需求点没有按计划实现？每一个需求点延后原因分别是什么？</li>
@@ -1354,7 +1354,7 @@
   <entry>
     <title>Git常用命令</title>
     <url>/blog/2019/12/23/Git%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/</url>
-    <content><![CDATA[<p><img src="https://upload-images.jianshu.io/upload_images/9696036-f719bd62f295b4fa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="经典Git操作与对应区域图"></p>
+    <content><![CDATA[<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145339.png"  alt="经典Git操作与对应区域图"></p>
 <h2 id="Git库创建"><a href="#Git库创建" class="headerlink" title="Git库创建"></a>Git库创建</h2><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F; 远程仓库克隆到本地</span><br><span class="line">git clone [ssh]</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 本地构建仓库</span><br><span class="line">git init</span><br></pre></td></tr></table></figure>
 
 <h2 id="Git配置"><a href="#Git配置" class="headerlink" title="Git配置"></a>Git配置</h2><p>以MAC系统，Git配置文件一般有两个配置文件，其作用域分别为全局级、仓库级</p>
@@ -1391,9 +1391,8 @@
 
 <h2 id="Git标签"><a href="#Git标签" class="headerlink" title="Git标签"></a>Git标签</h2><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F; 列出所有的标签</span><br><span class="line">git tag</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 新建一个tag</span><br><span class="line">git tag [tag]</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 指定commit傻姑娘新建一个tag</span><br><span class="line">git tag [tag] [commit]</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 删除本地tag</span><br><span class="line">git tag -d [tag]</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 删除远程tag</span><br><span class="line">git push origin :refs&#x2F;tags&#x2F;[tagName]</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 推送指定tag</span><br><span class="line">git push [remote] [tag]</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 以指定某个分支的tag处新建一个分支</span><br><span class="line">git checkout -b [branch][tag]</span><br></pre></td></tr></table></figure>
 
-<blockquote>
-</blockquote>
-<p><img src="https://upload-images.jianshu.io/upload_images/9696036-70673e2d55e85b18.gif?imageMogr2/auto-orient/strip" alt=""></p>
+
+
 ]]></content>
       <categories>
         <category>开发效率</category>
@@ -1420,8 +1419,7 @@
 <li>Android生命周期无感知</li>
 </ul>
 <h3 id="EventBus-工作原理"><a href="#EventBus-工作原理" class="headerlink" title="EventBus 工作原理"></a>EventBus 工作原理</h3><h4 id="消息发布和订阅模型"><a href="#消息发布和订阅模型" class="headerlink" title="消息发布和订阅模型"></a>消息发布和订阅模型</h4><p>生产者：发布者发布消息<br>消费者：订阅者注册消息<br>调度中心： 执行消息的分发到位</p>
-<p><img src="https://upload-images.jianshu.io/upload_images/9696036-dbdce0f49425368a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="图片来源EventBus"></p>
-<p><img src="https://upload-images.jianshu.io/upload_images/9696036-c2e6b8e2a67958ea.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145447.png"  alt="图片来源EventBus"><br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145451.png"  alt=""></p>
 <h4 id="线程切换"><a href="#线程切换" class="headerlink" title="线程切换"></a>线程切换</h4><p>主要就是两个切换，主线程切子线程，子线程切主线程<br>一个进程内通过Looper.getMainLooper可以顺利切换到主线程<br>子线程通过是通过主线程执行某个线程，自动切换，也可以借助ThreadLocal缓存对象来切换</p>
 <p>参考：<a href="https://www.jianshu.com/p/75258d19a964" target="_blank" rel="noopener">Android线程消息机制</a></p>
 <h3 id="EventBus-类图"><a href="#EventBus-类图" class="headerlink" title="EventBus 类图"></a>EventBus 类图</h3><ul>
@@ -1434,9 +1432,9 @@
 <li>PostingThreadState：消息发布状态封装</li>
 <li>Poster：不同线程消息发布器</li>
 </ul>
-<p><img src="https://upload-images.jianshu.io/upload_images/9696036-4c00b6179c92cb4c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h3 id="EventBus-订阅-发布时序图"><a href="#EventBus-订阅-发布时序图" class="headerlink" title="EventBus 订阅-发布时序图"></a>EventBus 订阅-发布时序图</h3><p><img src="https://upload-images.jianshu.io/upload_images/9696036-5905ca1a69e99644.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h3 id="EventBus-订阅-发布流程图"><a href="#EventBus-订阅-发布流程图" class="headerlink" title="EventBus 订阅-发布流程图"></a>EventBus 订阅-发布流程图</h3><p><img src="https://upload-images.jianshu.io/upload_images/9696036-8648e4c75064762b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145456.png"  alt=""></p>
+<h3 id="EventBus-订阅-发布时序图"><a href="#EventBus-订阅-发布时序图" class="headerlink" title="EventBus 订阅-发布时序图"></a>EventBus 订阅-发布时序图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145500.png"  alt=""></p>
+<h3 id="EventBus-订阅-发布流程图"><a href="#EventBus-订阅-发布流程图" class="headerlink" title="EventBus 订阅-发布流程图"></a>EventBus 订阅-发布流程图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145508.png"  alt=""></p>
 <h3 id="订阅流程源码分析"><a href="#订阅流程源码分析" class="headerlink" title="订阅流程源码分析"></a>订阅流程源码分析</h3><p>EventBus.getDefault<br>获取EventBus单例，</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F; 提供默认单例 EventBus</span><br><span class="line">public static EventBus getDefault() &#123;</span><br><span class="line">   EventBus instance &#x3D; defaultInstance;</span><br><span class="line">   if (instance &#x3D;&#x3D; null) &#123;</span><br><span class="line">       synchronized (EventBus.class) &#123;</span><br><span class="line">           instance &#x3D; EventBus.defaultInstance;</span><br><span class="line">           if (instance &#x3D;&#x3D; null) &#123;</span><br><span class="line">               instance &#x3D; EventBus.defaultInstance &#x3D; new EventBus();</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   return instance;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">EventBus(EventBusBuilder builder) &#123;</span><br><span class="line">   logger &#x3D; builder.getLogger();</span><br><span class="line">   &#x2F;&#x2F; &lt;订阅事件类型，订阅对象集合&gt;</span><br><span class="line">   subscriptionsByEventType &#x3D; new HashMap&lt;&gt;();</span><br><span class="line">   &#x2F;&#x2F; &lt;订阅者，订阅事件类型集合&gt;</span><br><span class="line">   typesBySubscriber &#x3D; new HashMap&lt;&gt;();</span><br><span class="line">   &#x2F;&#x2F; 粘性事件 map</span><br><span class="line">   stickyEvents &#x3D; new ConcurrentHashMap&lt;&gt;();</span><br><span class="line">   &#x2F;&#x2F; 主线程支持类</span><br><span class="line">   mainThreadSupport &#x3D; builder.getMainThreadSupport();</span><br><span class="line">   &#x2F;&#x2F; 主线程分发者</span><br><span class="line">   mainThreadPoster &#x3D; mainThreadSupport !&#x3D; null ? mainThreadSupport.createPoster(this) : null;</span><br><span class="line">   &#x2F;&#x2F; 后天线程分发者</span><br><span class="line">   backgroundPoster &#x3D; new BackgroundPoster(this);</span><br><span class="line">   &#x2F;&#x2F; 异步现场分发者</span><br><span class="line">   asyncPoster &#x3D; new AsyncPoster(this);</span><br><span class="line">   indexCount &#x3D; builder.subscriberInfoIndexes !&#x3D; null ? builder.subscriberInfoIndexes.size() : 0;</span><br><span class="line">   &#x2F;&#x2F; 订阅方法寻找器</span><br><span class="line">   subscriberMethodFinder &#x3D; new SubscriberMethodFinder(builder.subscriberInfoIndexes,</span><br><span class="line">           builder.strictMethodVerification, builder.ignoreGeneratedIndex);</span><br><span class="line">   logSubscriberExceptions &#x3D; builder.logSubscriberExceptions;</span><br><span class="line">   logNoSubscriberMessages &#x3D; builder.logNoSubscriberMessages;</span><br><span class="line">   sendSubscriberExceptionEvent &#x3D; builder.sendSubscriberExceptionEvent;</span><br><span class="line">   sendNoSubscriberEvent &#x3D; builder.sendNoSubscriberEvent;</span><br><span class="line">   throwSubscriberException &#x3D; builder.throwSubscriberException;</span><br><span class="line">   &#x2F;&#x2F; 是否执行分发父类事件类型</span><br><span class="line">   eventInheritance &#x3D; builder.eventInheritance;</span><br><span class="line">   &#x2F;&#x2F; 线程执行器 </span><br><span class="line">   executorService &#x3D; builder.executorService;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -1502,7 +1500,7 @@
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">final class BackgroundPoster implements Runnable, Poster &#123;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 入队</span><br><span class="line">    public void enqueue(Subscription subscription, Object event) &#123;</span><br><span class="line">        &#x2F;&#x2F; 将 订阅者和事件封装为一个 PendingPost</span><br><span class="line">        PendingPost pendingPost &#x3D; PendingPost.obtainPendingPost(subscription, event);</span><br><span class="line">        synchronized (this) &#123;</span><br><span class="line">            queue.enqueue(pendingPost); &#x2F;&#x2F; 入队</span><br><span class="line">            if (!executorRunning) &#123;</span><br><span class="line">                executorRunning &#x3D; true;</span><br><span class="line">                &#x2F;&#x2F; 调用现场执行器，执行</span><br><span class="line">                eventBus.getExecutorService().execute(this); </span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                while (true) &#123;</span><br><span class="line">                    PendingPost pendingPost &#x3D; queue.poll(1000);</span><br><span class="line">                    轮训取 post，1s没有则停止执行</span><br><span class="line">                    if (pendingPost &#x3D;&#x3D; null) &#123;</span><br><span class="line">                        synchronized (this) &#123;</span><br><span class="line">                            &#x2F;&#x2F; Check again, this time in synchronized</span><br><span class="line">                            pendingPost &#x3D; queue.poll();</span><br><span class="line">                            if (pendingPost &#x3D;&#x3D; null) &#123;</span><br><span class="line">                                executorRunning &#x3D; false;</span><br><span class="line">                                return;</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    &#x2F;&#x2F; 最后执行eventBus的invokeSubscriber方法</span><br><span class="line">                    eventBus.invokeSubscriber(pendingPost);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <hr>
-<p><img src="https://upload-images.jianshu.io/upload_images/9696036-70673e2d55e85b18.gif?imageMogr2/auto-orient/strip" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-70673e2d55e85b18.gif?imageMogr2/auto-orient/strip"  alt=""></p>
 ]]></content>
       <categories>
         <category>Android</category>
@@ -1523,7 +1521,7 @@
 <h3 id="LeakCanary-作用"><a href="#LeakCanary-作用" class="headerlink" title="LeakCanary 作用"></a>LeakCanary 作用</h3><p>基于对Android Framework层的认知，LeakCanary提供更精准的泄漏原因分析能力，从而帮助开发者快速减少OOM Crash问题</p>
 <h3 id="LeakCanary-工作原理"><a href="#LeakCanary-工作原理" class="headerlink" title="LeakCanary 工作原理"></a>LeakCanary 工作原理</h3><h4 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h4><h5 id="什么是内存泄漏"><a href="#什么是内存泄漏" class="headerlink" title="什么是内存泄漏"></a>什么是内存泄漏</h5><p>在Java运行环境下，内存泄漏是指某个程序错误导致应用长时间一直保留某个不在需要的对象，以至于它不能被回收，而它是会占用内存的，这就意味着内存泄漏了。持续累加，最终有可能导致发生内存溢出问题。<br>例如一个Activity执行完onDestroy方法后，它仍然被一个static变量强引用，从而阻止了Activity被GC回收，导致Activity发生内存泄漏</p>
 <h5 id="怎么判断一个对象是否泄漏"><a href="#怎么判断一个对象是否泄漏" class="headerlink" title="怎么判断一个对象是否泄漏"></a>怎么判断一个对象是否泄漏</h5><p>从GC Roots出发进行遍历，强引用可到达对象，都是存活对象，不可达对象则为即将被回收的对象。如果那些存活对象本应该是要被回收的，那么这个对象就是发生了内存泄漏（见下图，引用一张图说明）<br>实际过程通常作法是针对核心对象Activity、Fragment进行监控分析</p>
-<p><img src="https://upload-images.jianshu.io/upload_images/9696036-390ce78028460e86.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145649.png"  alt=""></p>
 <h4 id="如何开始监控"><a href="#如何开始监控" class="headerlink" title="如何开始监控"></a>如何开始监控</h4><p>LeakCanary通过实现四大组件中的ContentProvider，所以可以在App启动的时候执行到LeakCanary的AppWatcherInstaller.onCreate方法，从而完成<strong>0侵入</strong>实现注册监控流程</p>
 <h4 id="监控什么对象以及如何监控到目标对象"><a href="#监控什么对象以及如何监控到目标对象" class="headerlink" title="监控什么对象以及如何监控到目标对象"></a>监控什么对象以及如何监控到目标对象</h4><p>Activity: 通过注册 Application.ActivityLifecycleCallbacks实现onActivityDestroyed执行回调，以监控需要被回收的Activity是否被回收<br>Fragment： 通过注册 FragmentManager.FragmentLifecycleCallbacks实现onFragmentViewDestroyed和onFragmentDestroyed回调，以监控需要被回收的Fragment或者View是否被回收</p>
 <h4 id="如何确认目标对象泄漏"><a href="#如何确认目标对象泄漏" class="headerlink" title="如何确认目标对象泄漏"></a>如何确认目标对象泄漏</h4><ol>
@@ -1573,8 +1571,8 @@
 <td>无</td>
 </tr>
 </tbody></table>
-<h3 id="LeakCanary-源码分析"><a href="#LeakCanary-源码分析" class="headerlink" title="LeakCanary 源码分析"></a>LeakCanary 源码分析</h3><h4 id="主要包的结构介绍"><a href="#主要包的结构介绍" class="headerlink" title="主要包的结构介绍"></a>主要包的结构介绍</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-7f35590ddeeb2d11.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h4 id="主要工作的时序图"><a href="#主要工作的时序图" class="headerlink" title="主要工作的时序图"></a>主要工作的时序图</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-3a291778423a85ec.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="LeakCanary-源码分析"><a href="#LeakCanary-源码分析" class="headerlink" title="LeakCanary 源码分析"></a>LeakCanary 源码分析</h3><h4 id="主要包的结构介绍"><a href="#主要包的结构介绍" class="headerlink" title="主要包的结构介绍"></a>主要包的结构介绍</h4><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145659.png"  alt=""></p>
+<h4 id="主要工作的时序图"><a href="#主要工作的时序图" class="headerlink" title="主要工作的时序图"></a>主要工作的时序图</h4><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145801.png"  alt=""></p>
 <h4 id="相关源码"><a href="#相关源码" class="headerlink" title="相关源码"></a>相关源码</h4><h5 id="注册流程"><a href="#注册流程" class="headerlink" title="注册流程"></a>注册流程</h5><p>AppWatcherInstaller.onCreate</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F; 继承 ContentProvider</span><br><span class="line">internal sealed class AppWatcherInstaller : ContentProvider() &#123;</span><br><span class="line">    &#x2F;&#x2F; App启动 执行 onCreate </span><br><span class="line">  override fun onCreate(): Boolean &#123;</span><br><span class="line">    val application &#x3D; context!!.applicationContext as Application</span><br><span class="line">    &#x2F;&#x2F; 注册启动（0 侵入）</span><br><span class="line">    InternalAppWatcher.install(application)</span><br><span class="line">    return true</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>InternalAppWatcher.install</p>
@@ -1741,7 +1739,8 @@ Notifications.showNotification(
     <content><![CDATA[<blockquote>
 <p>基于API 23</p>
 </blockquote>
-<p>前篇：<a href="https://www.jianshu.com/p/956db9044cd8" target="_blank" rel="noopener">Android系统_Surface创建流程分析</a><br><img src="https://upload-images.jianshu.io/upload_images/9696036-b2bb93136eb953d9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>前篇：<a href="https://www.jianshu.com/p/956db9044cd8" target="_blank" rel="noopener">Android系统_Surface创建流程分析</a></p>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145839.png"  alt=""></p>
 <h3 id="申请Buffer"><a href="#申请Buffer" class="headerlink" title="申请Buffer"></a>申请Buffer</h3><h4 id="ViewRootImpl-draw"><a href="#ViewRootImpl-draw" class="headerlink" title="ViewRootImpl.draw"></a>ViewRootImpl.draw</h4><p>执行遍历 &gt; 执行Draw &gt; draw方法 &gt; 软件绘制流程</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">private void performTraversals() &#123;</span><br><span class="line">    ...</span><br><span class="line">    relayoutWindow(params, viewVisibility, insetsPending);</span><br><span class="line">    ...</span><br><span class="line">    performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);</span><br><span class="line">    ...         </span><br><span class="line">    performLayout(lp, mWidth, mHeight);</span><br><span class="line">    ...</span><br><span class="line">    performDraw();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void performDraw() &#123;</span><br><span class="line">    draw(fullRedrawNeeded);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void draw(boolean fullRedrawNeeded) &#123;</span><br><span class="line">    if (!dirty.isEmpty() || mIsAnimating || accessibilityFocusDirty) &#123;</span><br><span class="line">        &#x2F;&#x2F; 硬件加速 ，绘制绘制流程</span><br><span class="line">        if (mAttachInfo.mHardwareRenderer !&#x3D; null &amp;&amp; mAttachInfo.mHardwareRenderer.isEnabled()) &#123;</span><br><span class="line">             ...</span><br><span class="line">            mAttachInfo.mHardwareRenderer.draw(mView, mAttachInfo, this);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">          ...</span><br><span class="line">           &#x2F;&#x2F; 软件绘制 流程</span><br><span class="line">            if (!drawSoftware(surface, mAttachInfo, xOffset, yOffset, scalingRequired, dirty)) &#123;</span><br><span class="line">                return;</span><br><span class="line">            &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -1796,7 +1795,8 @@ Notifications.showNotification(
     <content><![CDATA[<blockquote>
 <p>基于API 23</p>
 </blockquote>
-<p>SurfaceFlinger，合成抛射机，它在Android系统是一个独立的服务进程<br>它的作用是接受多个来源的图形显示数据，将他们合成，然后发送到显示设备。<br>它的工作内容主要包括合成的创建和管理、Vsync信号的处理<br>本文分析SurfaceFlinger的启动流程，和Vsync信号的处理流程<br><img src="https://upload-images.jianshu.io/upload_images/9696036-d486634011edd814.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="SurfaceFlinger的Vsync信号处理流程"></p>
+<p>SurfaceFlinger，合成抛射机，它在Android系统是一个独立的服务进程<br>它的作用是接受多个来源的图形显示数据，将他们合成，然后发送到显示设备。<br>它的工作内容主要包括合成的创建和管理、Vsync信号的处理<br>本文分析SurfaceFlinger的启动流程，和Vsync信号的处理流程</p>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145918.png"  alt=""></p>
 <h3 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h3><p>SurfaceFlinger 进程是由 init 进程创建的，运行在独立的 SurfaceFlinger 进程中。init 进程读取 init.rc 文件启动 SurfaceFlinger。首先来看main方法</p>
 <h4 id="main方法"><a href="#main方法" class="headerlink" title="main方法"></a>main方法</h4><ul>
 <li>设定线程池上线4，并启动binder线程池</li>
