@@ -2603,7 +2603,7 @@ if (matchWidth) {
 
 
 <hr>
-<p><img src="https://upload-images.jianshu.io/upload_images/9696036-70673e2d55e85b18.gif?imageMogr2/auto-orient/strip" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-70673e2d55e85b18.gif?imageMogr2/auto-orient/strip"  alt=""></p>
 ]]></content>
       <categories>
         <category>开发效率</category>
@@ -3246,7 +3246,7 @@ if (matchWidth) {
 <li>ThreadLocalMap是一个映射表，内部实现一个数组，每一个元素位Entry</li>
 <li>Entry为一个键值对，key为Thread，Value为任何对象</li>
 </ul>
-<p><img src="media/15527089073930.jpg" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="media/15527089073930.jpg"  alt=""></p>
 <h5 id="ThreadLocal解析"><a href="#ThreadLocal解析" class="headerlink" title="ThreadLocal解析"></a>ThreadLocal解析</h5><p>set和get方法通过线程对应ThreadLocalMap来管理实现</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public void set(T value) &#123;</span><br><span class="line">     Thread t &#x3D; Thread.currentThread(); &#x2F;&#x2F; 获取当前线程</span><br><span class="line">     ThreadLocalMap map &#x3D; getMap(t); &#x2F;&#x2F; 获取线程对应映射表</span><br><span class="line">     if (map !&#x3D; null) &#x2F;&#x2F; 设置KV</span><br><span class="line">         map.set(this, value);</span><br><span class="line">     else</span><br><span class="line">         createMap(t, value);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public T get() &#123;</span><br><span class="line">      Thread t &#x3D; Thread.currentThread();</span><br><span class="line">      ThreadLocalMap map &#x3D; getMap(t);</span><br><span class="line">      if (map !&#x3D; null) &#123;</span><br><span class="line">          &#x2F;&#x2F; 获取映射表中当前ThreadLocal对应的Value</span><br><span class="line">          ThreadLocalMap.Entry e &#x3D; map.getEntry(this);</span><br><span class="line">          if (e !&#x3D; null) &#123;</span><br><span class="line">              @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">              T result &#x3D; (T)e.value;</span><br><span class="line">              return result;</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      &#x2F;&#x2F; 如果Map还未初始化或者Map中没有找到Key，则设置一个初始值</span><br><span class="line">      return setInitialValue();</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
@@ -3378,7 +3378,7 @@ if (matchWidth) {
     <title>Reference和ReferenceQueue相关源码解析</title>
     <url>/blog/2019/03/05/Reference%E5%92%8CReferenceQueue%E7%9B%B8%E5%85%B3%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/</url>
     <content><![CDATA[<h3 id="为什么需要引用？"><a href="#为什么需要引用？" class="headerlink" title="为什么需要引用？"></a>为什么需要引用？</h3><p>我们知道在最早的JVM实现里，是使用“跟踪回收”算法从GC ROOTS出发，按照BFS或者DFS遍历所有可达对象，针对不不可达对象进行回收。但随着Java演进，暴露出一些不能覆盖的场景，例如：某些场景下使用方希望在回收具体对象的同时还能辅助回收这个对象绑定的一些资源（如socket、堆外内存等）、某些场景下希望使用堆内缓存尽可能缓存更多更久的数据但不OOM。基于此，JDK在1.2引入了Refreence及其子类来支持一些新特性和功能</p>
-<h3 id="Reference介绍"><a href="#Reference介绍" class="headerlink" title="Reference介绍"></a>Reference介绍</h3><h5 id="Reference类图"><a href="#Reference类图" class="headerlink" title="Reference类图"></a>Reference类图</h5><p><img src="https://upload-images.jianshu.io/upload_images/9696036-fec84bdd662d2c10.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="Reference介绍"><a href="#Reference介绍" class="headerlink" title="Reference介绍"></a>Reference介绍</h3><h5 id="Reference类图"><a href="#Reference类图" class="headerlink" title="Reference类图"></a>Reference类图</h5><p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-fec84bdd662d2c10.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt=""></p>
 <ul>
 <li><strong>FinalReference</strong>，一种保底策略，因为GC只能管理自动内存资源而无法管理其它资源（如堆外内存、file handle、socket等），这些需要使用方手动对资源进行管理</li>
 <li><strong>SoftReference</strong>，软引用，只有在堆内存不足时，垃圾回收器会回收对应引用。所以比较适合用来实现不是特别重要的缓存</li>
@@ -3387,8 +3387,8 @@ if (matchWidth) {
 </ul>
 <p>⚠️ 因为默认的引用就是强引用，所以没有强引用的Reference实现类。<br>详情：<a href="https://www.jianshu.com/p/7ff38dfbb5a8" target="_blank" rel="noopener">Reference子类源码解析</a></p>
 <h4 id="Reference生命周期"><a href="#Reference生命周期" class="headerlink" title="Reference生命周期"></a>Reference生命周期</h4><p>Referent被GC回收，则会根据是持有ReferenceQueue，而加入到对应到ReferenceQueue中，这样可以通过RQ来监听reference是否回收状态</p>
-<p><img src="https://upload-images.jianshu.io/upload_images/9696036-78514b107996e4a8.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
-<h4 id="Reference运行结构"><a href="#Reference运行结构" class="headerlink" title="Reference运行结构"></a>Reference运行结构</h4><p><img src="https://upload-images.jianshu.io/upload_images/9696036-0bd5881d52164f6e.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-78514b107996e4a8.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt=""></p>
+<h4 id="Reference运行结构"><a href="#Reference运行结构" class="headerlink" title="Reference运行结构"></a>Reference运行结构</h4><p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-0bd5881d52164f6e.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt=""></p>
 <h4 id="Reference源码"><a href="#Reference源码" class="headerlink" title="Reference源码"></a>Reference源码</h4><h6 id="字段"><a href="#字段" class="headerlink" title="字段"></a>字段</h6><ul>
 <li>referent：  引用指向的对象</li>
 <li>queue： ReferenceQueue，Reference构造的时候传入，其内部封装了单向链表的添加，删除和遍历等操作。用于Reference状态监听及管理</li>
