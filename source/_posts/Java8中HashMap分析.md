@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155317.png
 tags: 
 - 源码
 - 集合
@@ -8,8 +9,7 @@ categories:
 
 
 ### Put方法流程图
-![](http://upload-images.jianshu.io/upload_images/9696036-d3f845741e8a5756.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155317.png)
 
 ### 特殊值
 #### hash
@@ -34,7 +34,7 @@ categories:
 
 ### 扩容机制
 * hash与旧链表大小做 & 运算，=0不变，=1移动到原位置+旧链表大小的位置 
-![](http://upload-images.jianshu.io/upload_images/9696036-07f14b44d2fd625b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155324.png)
 
 
 ### 线程是否安全

@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154500.png
 tags: 
 - 源码
 - 生命周期
@@ -8,7 +9,7 @@ categories:
 
 ### Java类生命周期图
 
- ![](http://upload-images.jianshu.io/upload_images/9696036-fbfb4eb49ba287ba.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154500.png)
 
 ### 加载
 * 通过一个类的全限定名来获取此类的二进制字节流

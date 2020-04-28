@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154534.png
 tags: 
 - 源码
 categories:
@@ -17,7 +18,8 @@ categories:
 * 如果想维持双亲委派机制，则覆写findClass方法
 * 如果想打破双亲委派机制，则覆写loadClass方法
 
-![](http://upload-images.jianshu.io/upload_images/9696036-bdec0871909f7e63.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154534.png)
+
 
 #### 示例
 ##### Tomcat类加载器
@@ -28,8 +30,8 @@ categories:
 * 安全：服务器和应用程序有各自的类加载器加载Class文件。服务器的类库与应用程序的类库可以互相独立。
 
 * 支持HotSwap（热替换）：JSP文件有独立的类加载器，服务器能通过替换JSP文件的类加载器来实现JSP的HotSwap功能。
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154542.png)
 
-![](http://upload-images.jianshu.io/upload_images/9696036-6c2d2a58d8a20614.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ### Android类加载图
 #### 加载阶段
@@ -39,8 +41,8 @@ categories:
 * PathClassLoader，主要用于加载应用内中的类，路径是固定的，只能加载/data/app中的apk，无法指定dex路径
 * DexClassLoader，可任意加载.apk、zip或jar等，实现动态加载
 
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154548.png)
 
-![](http://upload-images.jianshu.io/upload_images/9696036-635865c5ccbce353.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 #### TODO
 类加载器相关应用，插件化、热补等

@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150503.png
 tags: 
 - 源码
 - View
@@ -8,11 +9,10 @@ categories:
 
 ### 图文概括
 
-![](https://upload-images.jianshu.io/upload_images/9696036-e3eac09a50090ec5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150503.png)
 
 
-![](https://upload-images.jianshu.io/upload_images/9696036-b47728a137279df6.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152307.png)
 
 ### 源码分析
 #### View.Measure 类分析

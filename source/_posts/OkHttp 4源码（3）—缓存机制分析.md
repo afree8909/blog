@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143225.png
 tags: 
 - OkHttp
 categories:
@@ -13,21 +14,22 @@ categories:
 ## 预备知识
 
 [HTTP缓存原理](https://www.jianshu.com/p/6ec0d13d85bb)
-![HTTP缓存流程图](https://upload-images.jianshu.io/upload_images/9696036-e9f7b43d56529039.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![HTTP缓存流程图](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143220.png)
 
 ## 概述
 OkHttp整体流程（本文覆盖红色部分）
 
-![](https://upload-images.jianshu.io/upload_images/9696036-5ced29d142fd9623.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144516.png)
 
 缓存处理流程
-![](https://upload-images.jianshu.io/upload_images/9696036-9a68e72386c130ac.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143225.png)
 
 缓存文件夹
-![](https://upload-images.jianshu.io/upload_images/9696036-265537b559561175.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144602.png)
 
 缓存日志格式
-![](https://upload-images.jianshu.io/upload_images/9696036-f083541448afa4a7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144613.png)
 
 
 ## 源码分析

@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144805.png
 tags: 
 - OkHttp
 categories:
@@ -15,11 +16,11 @@ categories:
 
 OkHttp整体流程（本文覆盖红色部分）
 
-![](https://upload-images.jianshu.io/upload_images/9696036-5b2b658e081918d4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144743.png)
 
 本文覆盖代码流程图
 
-![](https://upload-images.jianshu.io/upload_images/9696036-d901334cea97e334.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144805.png)
 
 ## 示例
 使用OkHttp一般流程，初始化一个共享OkHttpClient，构建Request，然后OkHttpClient根据Request构建Call，接着执行call，最后进行Response处理

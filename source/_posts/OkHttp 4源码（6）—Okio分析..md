@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143252.png
 tags: 
 - OkHttp
 categories:
@@ -31,11 +32,9 @@ Okio来源Square公司，它是对java.io和java.nio的进一步封装实现，�
 *   非常轻便，便于实现、使用、测试
 
 ### Okio 图文概括
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143246.png)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143252.png)
 
-![](https://upload-images.jianshu.io/upload_images/9696036-70458cdb60301a91.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-
-![](https://upload-images.jianshu.io/upload_images/9696036-a8366af16cf02cb6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 

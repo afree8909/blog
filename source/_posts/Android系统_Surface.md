@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151413.png
 tags: 
 - 源码
 - Surface
@@ -10,7 +11,7 @@ categories:
 
 >基于API 23
 
-![](https://upload-images.jianshu.io/upload_images/9696036-b7271e93c8490bde.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151413.png)
 
 ### SurfaceComposerClient的创建过程
 

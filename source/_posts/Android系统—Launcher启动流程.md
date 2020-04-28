@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150413.png
 tags: 
 - 源码
 - 启动流程
@@ -17,7 +18,8 @@ categories:
 
 
 ### Launcher启动期流程图
-![](https://upload-images.jianshu.io/upload_images/9696036-2ade1db25b50bc50.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150413.png)
+
 
 
 ### 代码追踪
@@ -950,11 +952,5 @@ final void handleResumeActivity(IBinder token,
     }
 }
 ```
-
-> 您的👍，激励我的前行 👻👻👻
-
--------
-
-推荐阅读：[图形系统总结](https://www.jianshu.com/p/238eb0a17760)
 
 

@@ -1,10 +1,12 @@
 
 ---
+
 tags: 
 - 源码
 - View
 categories:
 - [Android, 系统]
+
 ---
 
 
@@ -15,7 +17,7 @@ categories:
 3. 分发子View绘制
 4. 绘制装饰
 
-![](https://upload-images.jianshu.io/upload_images/9696036-0bfd5198cdefa19c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151633.png)
 
 
 ### 源码分析

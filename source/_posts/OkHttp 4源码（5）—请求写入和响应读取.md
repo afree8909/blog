@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144225.png
 tags: 
 - OkHttp
 categories:
@@ -11,11 +12,10 @@ categories:
 
 ## 概述
 OkHttp整体流程（本文覆盖红色部分）
-![](https://upload-images.jianshu.io/upload_images/9696036-45a52add159e06b2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144225.png)
 
 IO流程图
-![](https://upload-images.jianshu.io/upload_images/9696036-4f71931e4b7a5416.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143241.png)
 ## 源码分析
 ### 拦截器
 #### CallServerInterceptor.intercept

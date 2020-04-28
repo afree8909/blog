@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154824.png
 tags: 
 - Charles
 categories:
@@ -20,17 +21,17 @@ Charles是常用的截取网络封包的工具，Mac、Windows和linux下均可�
 ##### 相关软件
 fiddler、tcpdump
 ##### 工作原理
-![](http://upload-images.jianshu.io/upload_images/9696036-18c68b1c63bbda25.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154824.png)
 
 ### 安装配置
 ##### Charles安装
 
 ##### 代理设置
 ###### 设置charles为设置成系统代理
-![](http://upload-images.jianshu.io/upload_images/9696036-37301ef7e2d3438d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154838.png)
 
 ###### 开启Charles的代理功能
-![](http://upload-images.jianshu.io/upload_images/9696036-18643fd001f9b826.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154849.png)
 
 
 ###### 手机连Charles<br>
@@ -41,23 +42,23 @@ fiddler、tcpdump
 ##### Https截取配置
 给Mac安装证书，并信任证书
 给手机安装证书（需要安装伪CA证书）
-![](http://upload-images.jianshu.io/upload_images/9696036-65d4c371e6b4171d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154855.png)
 
 Charles设置SSL代理
-![](http://upload-images.jianshu.io/upload_images/9696036-1ae0ba56926f6128.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155248.png)
 
 
 
 ### 功能介绍
 
 ##### 模拟弱网
-![](http://upload-images.jianshu.io/upload_images/9696036-cabadbe1187d5bab.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154909.png)
 
 
 ##### 修改请求或响应内容
 * Breakpoint
 &emsp;临时性网络内容修改
-![](http://upload-images.jianshu.io/upload_images/9696036-2190372ba3f82220.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154921.png)
 
 
 * Rewrite 
@@ -71,7 +72,7 @@ Charles设置SSL代理
 &emsp;适用于需要将**域名**打到**ip地址**的服务器上
 
 ##### 反向代理
-![](http://upload-images.jianshu.io/upload_images/9696036-4dd5d0c100489910.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154930.png)
 
 
 
@@ -80,7 +81,7 @@ Charles设置SSL代理
 ##### Charles设置MapLocal在Android中出现乱码
 原因：MapLocal的Response的Headers中Content-Type值为text/plain,没有指定编码，Android的网络解析框架如果不支持的话则会出现乱码
 解决：Tools->Rewrite->Rewrite Rule
-![](http://upload-images.jianshu.io/upload_images/9696036-a93a904173cbe565.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154942.png)
 
 ##### Charles连接不上
 其它配置正确情况下，请先用网线试下，是否可以连接成功，如果可以的话，基本确认是Mac的wifi网络对手机不可见，如果属于公司网络，联系公司内网进行设置，保证手机和Mac的网段一致

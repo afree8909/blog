@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150402.png
 tags: 
 - 源码
 - 启动流程
@@ -24,7 +25,7 @@ APP应用启动时，系统会为应用创建一个名为“主线程”的执�
 2. zygote进程，socket会循环监听请求，在接受请求后，会封装好构建进程参数通过Zygote.forkAndSpecialize及其native方法fork出一个子进程
 3. 子进程fork后，会进行一系列fork后处理事项及Runtime的init初始化工作，最后回调到子进程的zygote.runSelectLoop方法抛出异常走到ActivityThread.main方法，进入子进程世
 
-![](https://upload-images.jianshu.io/upload_images/9696036-b317f94b27701458.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150402.png)
 
 
 
@@ -394,7 +395,7 @@ fork()采用copy on write技术，这是linux创建进程的标准方法，调�
 
 fork()的主要工作是寻找空闲的进程号pid，然后从父进程拷贝进程信息，例如数据段和代码段，fork()后子进程要执行的代码等。 Zygote进程是所有Android进程的母体，包括system_server和各个App进程。zygote利用fork()方法生成新进程，对于新进程A复用Zygote进程本身的资源，再加上新进程A相关的资源，构成新的应用进程A。
 
-![](https://upload-images.jianshu.io/upload_images/9696036-6fe66a172ebcb763.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152437.png)
 
 
 

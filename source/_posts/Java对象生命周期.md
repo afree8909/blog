@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154402.png
 tags: 
 - 源码
 - 生命周期
@@ -8,7 +9,7 @@ categories:
 ---
 
 ### Java对象生命周期图
-![](http://upload-images.jianshu.io/upload_images/9696036-0dd562d1863f77b1.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154402.png)
 
 ### 创建阶段（Created）
 * 分配存储空间
@@ -45,8 +46,7 @@ void test(){
 垃圾回收器对该对象的所占用的内存空间进行回收或者再分配了，则该对象彻底消失了，此时称为对象空间重新分配阶段
 
 ### 子父类代码执行顺序图
-![](http://upload-images.jianshu.io/upload_images/9696036-ad430f40c254dee1.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154407.png)
 
 
 

@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153616.png
 tags: 
 - 源码
 - Handler
@@ -422,12 +423,12 @@ App进程：
 Binder
 用于不同进程之间通信
 
+![主线程消息循环模型](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153522.png)
 
-![主线程消息循环模型](https://upload-images.jianshu.io/upload_images/9696036-5f594a326e5a7d2e.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 #### 主线程与子线程交互的消息循环模型
-
-![主线程与子线程交互的消息循环模型.jpg](https://upload-images.jianshu.io/upload_images/9696036-cb9d80fde5fadfb6.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![主线程与子线程交互的消息循环模型](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153616.png)
+![主线程与子线程交互的消息循环模型.jpg](https://upload-
 
 
 

@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153154.png
 tags: 
 - 源码
 - 启动流程
@@ -16,7 +17,7 @@ Zygote是一个C/S模型，Zygote进程作为服务端，其他进程作为客�
 
 #### Zygote进程启动流程图
 
-![](https://upload-images.jianshu.io/upload_images/9696036-310e2ec8e0685edb.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153154.png)
 
 
 #### init进程main方法

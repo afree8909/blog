@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152801.png
 tags: 
 - 缓存
 - http
@@ -11,26 +12,30 @@ categories:
 HTTP缓存通常指浏览器缓存，基于HTTP中header字段实现
 HTTP缓存分为强缓存和协商缓存，见下图
 
-![](https://upload-images.jianshu.io/upload_images/9696036-cce700528e23bc81.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152733.png)
+
+
 
 
 #### Cache-Control主要字段说明
 
-![](https://upload-images.jianshu.io/upload_images/9696036-2a26a690808fb292.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152738.png)
 
 
 #### 缓存校验字段
-![](https://upload-images.jianshu.io/upload_images/9696036-4656eec189b891ab.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152745.png)
 
 
 #### 缓存字段对比
-![](https://upload-images.jianshu.io/upload_images/9696036-0d9fb787867f2f04.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152750.png)
+
 
 
 
 
 ### HTTP缓存流程
-![](https://upload-images.jianshu.io/upload_images/9696036-e9f7b43d56529039.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152801.png)
 
 ### 为什么使用HTTP缓存
 

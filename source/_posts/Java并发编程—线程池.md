@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153317.png
 tags: 
 - 源码
 categories:
@@ -17,9 +18,9 @@ categories:
 
 ### 线程池的工作流程
 
-![15534290301842.jpg](https://upload-images.jianshu.io/upload_images/9696036-bf3d2e726a5dd6d0.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153302.png)
 
-![](https://upload-images.jianshu.io/upload_images/9696036-d52f7d01a39f8a44.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153317.png)
 
 **ThreadPoolExecutor执行任务流程**
 
@@ -38,7 +39,7 @@ categories:
 * 任务执行者：ThreadPoolExecutor、ScheduledThreadPoolExecutor
 * 工具类：Executors
 
-![](https://upload-images.jianshu.io/upload_images/9696036-836ddd4f9b3c7f1f.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153417.png)
 
 
 
@@ -46,7 +47,7 @@ categories:
 Java线程池最核心的类即ThreadPoolExecutor，它是线程池的实现类。
 ##### 类图
 
-![](https://upload-images.jianshu.io/upload_images/9696036-ef17773e5dd66c5f.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153417.png)
 
 ##### 构造函数
 

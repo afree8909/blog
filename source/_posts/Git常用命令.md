@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145339.png
 tags: 
 - git
 - 命令
@@ -8,7 +9,8 @@ categories:
 ---
 
 
-![经典Git操作与对应区域图](https://upload-images.jianshu.io/upload_images/9696036-f719bd62f295b4fa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![经典Git操作与对应区域图](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145339.png)
 
 ## Git库创建
 
@@ -237,8 +239,5 @@ git checkout -b [branch][tag]
 
 ```
 
->
-
-![](https://upload-images.jianshu.io/upload_images/9696036-70673e2d55e85b18.gif?imageMogr2/auto-orient/strip)
 
 

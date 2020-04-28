@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143543.png
 tags: 
 - OkHttp
 categories:
@@ -13,11 +14,11 @@ categories:
 
 OkHttp整体流程（本文覆盖红色部分）
 
-![](https://upload-images.jianshu.io/upload_images/9696036-f1141c1f5f161a09.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144715.png)
 
 Interceptor流程
 
-![](https://upload-images.jianshu.io/upload_images/9696036-037f59b6d4bbf080.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143543.png)
 
 
 

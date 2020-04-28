@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151705.png
 tags: 
 - 源码
 - View
@@ -20,8 +21,9 @@ categories:
 
 
 
-![](https://upload-images.jianshu.io/upload_images/9696036-0ce23ae06edca160.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-![](https://upload-images.jianshu.io/upload_images/9696036-4b862fec211de964.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150513.png)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151705.png)
 
 
 ### 源码分析

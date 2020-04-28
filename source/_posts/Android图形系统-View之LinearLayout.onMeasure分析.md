@@ -1,10 +1,13 @@
 
 ---
+
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151905.png
 tags: 
 - 源码
 - LinearLayout
 categories:
 - [Android, 系统]
+
 ---
 
 ### 图文概括
@@ -14,13 +17,15 @@ categories:
 3. 【父非EXACTLY & 子height未指定0 】则weight属性不生效
 
 **流程**
-![](https://upload-images.jianshu.io/upload_images/9696036-f6bec68f9afc5729.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151905.png)
 
 
 ### 源码分析
 > 基于API23分析
+
 #### 概览
+
 ```
 
 @Override

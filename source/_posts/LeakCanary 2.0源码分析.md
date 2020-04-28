@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145659.png
 tags: 
 - 源码
 - LeakCanary
@@ -30,8 +31,7 @@ categories:
 从GC Roots出发进行遍历，强引用可到达对象，都是存活对象，不可达对象则为即将被回收的对象。如果那些存活对象本应该是要被回收的，那么这个对象就是发生了内存泄漏（见下图，引用一张图说明）
 实际过程通常作法是针对核心对象Activity、Fragment进行监控分析
 
-![](https://upload-images.jianshu.io/upload_images/9696036-390ce78028460e86.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145649.png)
 
 #### 如何开始监控
 LeakCanary通过实现四大组件中的ContentProvider，所以可以在App启动的时候执行到LeakCanary的AppWatcherInstaller.onCreate方法，从而完成**0侵入**实现注册监控流程
@@ -74,11 +74,11 @@ Fragment： 通过注册 FragmentManager.FragmentLifecycleCallbacks实现onFragm
 ### LeakCanary 源码分析
 #### 主要包的结构介绍
 
-![](https://upload-images.jianshu.io/upload_images/9696036-7f35590ddeeb2d11.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145659.png)
 
 
 #### 主要工作的时序图
-![](https://upload-images.jianshu.io/upload_images/9696036-3a291778423a85ec.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145801.png)
 
 #### 相关源码
 ##### 注册流程

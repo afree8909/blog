@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143202.png
 tags: 
 - OkHttp
 categories:
@@ -37,28 +38,31 @@ OkHttp来源Square公司，它是针对HTTP进行高效封装的一套网络库
 [OkHttp 4源码（4）— 连接机制分析](https://www.jianshu.com/p/be6d09f2656b)
 [OkHttp 4源码（5）— 请求和响应 I/O操作](https://www.jianshu.com/p/097b1904f580)
 [OkHttp 4源码（6）— Okio源码解析](https://www.jianshu.com/p/7b7ba4333c5e)
+![OkHttp整体流程](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143202.png)
+
+![请求创建和分发流程](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143210.png)
+
+![拦截器时序图](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143543.png)
+
+![HTTP缓存流程图](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143220.png)
+
+![缓存处理流程图](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143236.png)
+
+![连接时序图](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143230.png)
 
 
-![OkHttp整体流程](https://upload-images.jianshu.io/upload_images/9696036-87cf14865f96650a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![HTTP不同协议连接区分](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143236.png)
 
 
-![请求创建和分发流程](https://upload-images.jianshu.io/upload_images/9696036-d901334cea97e334.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-![拦截器时序图](https://upload-images.jianshu.io/upload_images/9696036-037f59b6d4bbf080.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-![HTTP缓存流程图](https://upload-images.jianshu.io/upload_images/9696036-e9f7b43d56529039.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-![缓存处理流程图](https://upload-images.jianshu.io/upload_images/9696036-9a68e72386c130ac.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-![连接时序图](https://upload-images.jianshu.io/upload_images/9696036-c629851ea8fb73d6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-![HTTP不同协议连接区分](https://upload-images.jianshu.io/upload_images/9696036-d16e8389d436637b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-![IO操作流程图](https://upload-images.jianshu.io/upload_images/9696036-4f71931e4b7a5416.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-![Okio类图](https://upload-images.jianshu.io/upload_images/9696036-70458cdb60301a91.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![IO操作流程图](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143241.png)
 
 
-![Okio Buffer相关数据结构](https://upload-images.jianshu.io/upload_images/9696036-a8366af16cf02cb6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![Okio类图](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143246.png)
+
+
+![Okio Buffer相关数据结构](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143252.png)
+
 
 

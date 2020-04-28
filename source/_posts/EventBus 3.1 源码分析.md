@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145500.png
 tags: 
 - 源码
 - EventBus
@@ -34,9 +35,10 @@ categories:
 消费者：订阅者注册消息
 调度中心： 执行消息的分发到位
 
-![图片来源EventBus](https://upload-images.jianshu.io/upload_images/9696036-dbdce0f49425368a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-![](https://upload-images.jianshu.io/upload_images/9696036-c2e6b8e2a67958ea.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![图片来源EventBus](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145447.png)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145451.png)
+
 
 #### 线程切换
 主要就是两个切换，主线程切子线程，子线程切主线程
@@ -55,13 +57,13 @@ categories:
 * PostingThreadState：消息发布状态封装
 * Poster：不同线程消息发布器
 
-![](https://upload-images.jianshu.io/upload_images/9696036-4c00b6179c92cb4c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145456.png)
 
 ### EventBus 订阅-发布时序图
-![](https://upload-images.jianshu.io/upload_images/9696036-5905ca1a69e99644.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145500.png)
 
 ### EventBus 订阅-发布流程图
-![](https://upload-images.jianshu.io/upload_images/9696036-8648e4c75064762b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145508.png)
 
 ### 订阅流程源码分析
 

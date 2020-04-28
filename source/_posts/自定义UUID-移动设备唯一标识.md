@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155359.png
 tags: 
 - ID
 categories:
@@ -12,7 +13,7 @@ categories:
 ### 作用
 业务支撑、日活和新增设备等数据统计、风控等
 ### uuid系统图
-![](http://upload-images.jianshu.io/upload_images/9696036-3430540af001a4ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155359.png)
 
 ### UUID生成
 #### 移动端相关参数

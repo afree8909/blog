@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145839.png
 tags: 
 - 源码
 - Surface
@@ -11,7 +12,8 @@ categories:
 >基于API 23
 
 前篇：[Android系统_Surface创建流程分析](https://www.jianshu.com/p/956db9044cd8)
-![](https://upload-images.jianshu.io/upload_images/9696036-b2bb93136eb953d9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145839.png)
 
 
 ### 申请Buffer

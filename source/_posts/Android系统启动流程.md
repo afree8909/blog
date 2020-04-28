@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153232.png
 tags: 
 - 源码
 - 启动流程
@@ -15,7 +16,7 @@ categories:
 3. [Launcher启动流程分析](https://www.jianshu.com/p/6df6ddac15d5)
 
 
-![](https://upload-images.jianshu.io/upload_images/9696036-b50171bddb4bb847.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153232.png)
 
 
 ### Loader

@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145918.png
 tags: 
 - 源码
 - SurfaceFlinger
@@ -13,7 +14,8 @@ SurfaceFlinger，合成抛射机，它在Android系统是一个独立的服务�
 它的作用是接受多个来源的图形显示数据，将他们合成，然后发送到显示设备。
 它的工作内容主要包括合成的创建和管理、Vsync信号的处理
 本文分析SurfaceFlinger的启动流程，和Vsync信号的处理流程
-![SurfaceFlinger的Vsync信号处理流程](https://upload-images.jianshu.io/upload_images/9696036-d486634011edd814.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145918.png)
 
 
 ### 启动流程

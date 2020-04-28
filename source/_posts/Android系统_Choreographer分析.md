@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150233.png
 tags: 
 - 源码
 - Choreogprapher
@@ -15,10 +16,10 @@ Choreographer 编舞者。统一动画、输入和绘制时机
 Choreographer 的作用，主要是配合 Vsync ，给上层 App 的渲染提供一个稳定的 Message 处理的时机，即 Vsync 到来的时候 ，系统通过对 Vsync 信号周期的调整，来控制每一帧绘制操作的时机
 
 
-![](https://upload-images.jianshu.io/upload_images/9696036-cfbb74160f4104d4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150233.png)
 
 
-![](https://upload-images.jianshu.io/upload_images/9696036-ef306f7cf547c798.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428150244.png)
 
 
 ### Choreographer启动流程

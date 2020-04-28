@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145153.png
 tags: 
 - 目标管理
 categories:
@@ -7,7 +8,7 @@ categories:
 
 
 ## 一图以蔽之
-![](https://upload-images.jianshu.io/upload_images/9696036-99645f5d4e58ed36.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145153.png)
 
 ## 基本情况
 ### 基本信息

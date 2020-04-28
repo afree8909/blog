@@ -1,6 +1,7 @@
 
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151445.png
 tags: 
 - 源码
 - Window
@@ -12,7 +13,7 @@ categories:
 ### 流程图
 （大体流程，从Activity接受启动开始）
 
-![](https://upload-images.jianshu.io/upload_images/9696036-b817d3db3ce31ee5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151445.png)
 
 
 ### 源码分析

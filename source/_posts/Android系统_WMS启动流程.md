@@ -1,20 +1,24 @@
 
 ---
+
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151550.png
 tags: 
 - 源码
 - WMS
 categories:
 - [Android, 系统]
+
 ---
 
 
 ### 图文概括
 #### 启动流程
-![](https://upload-images.jianshu.io/upload_images/9696036-a6e6f84469e58d99.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151550.png)
 
 #### 重要成员
 
-![](https://upload-images.jianshu.io/upload_images/9696036-726e431873d74004.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428151555.png)
+
 * Session
     * WMS的成员变量mSessions保存着所有的Session对象,Session继承于IWindowSession.Stub, 作为Binder服务端
     * 每一个应用进程都有一个唯一的 Session 对象与 WMS 通信

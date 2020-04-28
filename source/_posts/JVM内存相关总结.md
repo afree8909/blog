@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153741.png
 tags: 
 - 源码
 categories:
@@ -7,7 +8,8 @@ categories:
 
 
 ### JVM大体结构图
-![](http://upload-images.jianshu.io/upload_images/9696036-10ef43c4b4f8a6eb.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153741.png)
 
 ### 运行时数据区
 * 线程隔离数据区
@@ -29,7 +31,7 @@ categories:
         * 运行时常量池，字面量、符号引用
     
 ### 对象创建与回收过程
-![](http://upload-images.jianshu.io/upload_images/9696036-a2f5045f5ab5eccb.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153753.png)
 
 
 ### JVM垃圾收集算法
@@ -38,24 +40,25 @@ categories:
 * 优点，回收效率提高、不存在碎片化
 * 缺点，内存利用率低
 * 解决，采用非对称法，eden:survivor = 8:1      
-![](http://upload-images.jianshu.io/upload_images/9696036-c07b3961929e9872.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153805.png)
 
 #### 标记清除
 * 标记阶段，确定所有要回收的对象，做标记
 * 清除阶段，将标记阶段确定的回收对象进行清除
 * 优点，简单，最基础算法 
 * 缺点，效率低，碎片化 
-![](http://upload-images.jianshu.io/upload_images/9696036-af74e3fbdcf1e7ba.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153819.png)
 
 #### 标记整理
 * 把存活对象移动到内存的一端，然后直接回收边界以外的内存
 * 场景,适合老年代存活对象较多的情况，减少内存复制量
  
-![](http://upload-images.jianshu.io/upload_images/9696036-2af17d66179a1ad3.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153825.png)
 
 ### 垃圾收集器
-![](http://upload-images.jianshu.io/upload_images/9696036-8457b2b3c2eae67d.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154104.png)
 
 
 #### Serial/SerialOld
@@ -67,7 +70,9 @@ categories:
 * 优点，简单高效    
 * 缺点，STW，服务停顿时间长 
 * 场景，几百兆以内客户端程序 
-![](http://upload-images.jianshu.io/upload_images/9696036-1f48e73d09b24f8b.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153839.png)
+
 
 
 #### Parnew/Parallel Scavenge/Parallel Old
@@ -79,20 +84,22 @@ categories:
 ParNew与Parallel Scanvenge区别
 * Parnew关注回收速度，多线程减少单词GC时间
 * Parallel Scanvenge关注吞吐量，减少GC时间占比
-![](http://upload-images.jianshu.io/upload_images/9696036-ba913709dfc65c9c.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153851.png)
 
 
 #### CMS(Concurrent Mark Sweep)算法
 * 优点，并发，暂停时间短
 * 缺点，耗CPU、GC时间长，GC提前，浮动垃圾，碎片化
 * 场景，对响应时间敏感的Server服务，大部分线上服务应该是CMS
-![](http://upload-images.jianshu.io/upload_images/9696036-6c2a95b66e1b3040.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153859.png)
 
 #### G1垃圾回收器
 * 新一代垃圾回收算法
 * 场景，大内存、高响应的服务端应用
-![](http://upload-images.jianshu.io/upload_images/9696036-9fd6fdd04512a592.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153859.png)
 
 
 ### JVM工具集

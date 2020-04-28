@@ -1,5 +1,6 @@
 
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152212.png
 tags: 
 - 源码
 - View
@@ -24,7 +25,7 @@ View测量规格参考：[View.MeasureSpec分析](https://www.jianshu.com/p/66eb
 
 
 #### ViewGroup测量大概流程
-![View.Measure](media/View.Measure.png)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428152212.png)
 
 
 ### 源码分析

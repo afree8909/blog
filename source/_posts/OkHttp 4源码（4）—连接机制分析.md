@@ -1,4 +1,5 @@
 ---
+cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143236.png
 tags: 
 - OkHttp
 categories:
@@ -12,15 +13,15 @@ categories:
 
 ## 概述
 OkHttp整体流程（本文覆盖红色部分）
-![](https://upload-images.jianshu.io/upload_images/9696036-074bde427d6e3cdb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144349.png)
 
 连接时序图
-![](https://upload-images.jianshu.io/upload_images/9696036-c629851ea8fb73d6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143230.png)
 
 HTTP不同协议连接区分
 参考：[HTTP/2 是如何建立连接的](https://halfrost.com/http2_begin/)
 
-![](https://upload-images.jianshu.io/upload_images/9696036-d16e8389d436637b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143236.png)
 
 
 ## 源码分析
