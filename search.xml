@@ -11,7 +11,7 @@
 <li>缓存能力增强，离屏缓存相对较优，另增加了一层缓存池缓存</li>
 <li>支持局部刷新，对于一些交互处理多的情况下，会带来更好的性能</li>
 </ul>
-<h3 id="RecyclerView类图"><a href="#RecyclerView类图" class="headerlink" title="RecyclerView类图"></a>RecyclerView类图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141843.png"  alt=""></p>
+<h3 id="RecyclerView类图"><a href="#RecyclerView类图" class="headerlink" title="RecyclerView类图"></a>RecyclerView类图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/20200429123125.png"  alt=""></p>
 <h3 id="RecyclerView绘制流程图"><a href="#RecyclerView绘制流程图" class="headerlink" title="RecyclerView绘制流程图"></a>RecyclerView绘制流程图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141858.png"  alt=""></p>
 <h3 id="RecyclerView滑动流程图"><a href="#RecyclerView滑动流程图" class="headerlink" title="RecyclerView滑动流程图"></a>RecyclerView滑动流程图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141904.png"  alt=""></p>
 <h3 id="RecyclerView缓存介绍图"><a href="#RecyclerView缓存介绍图" class="headerlink" title="RecyclerView缓存介绍图"></a>RecyclerView缓存介绍图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141917.png"  alt=""></p>
