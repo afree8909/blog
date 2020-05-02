@@ -2188,7 +2188,7 @@ Notifications.showNotification(
 <p>基于API 23</p>
 </blockquote>
 <p>前篇：<a href="https://www.jianshu.com/p/956db9044cd8" target="_blank" rel="noopener">Android系统_Surface创建流程分析</a></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145839.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884359400748.png"  alt=""></p>
 <h3 id="申请Buffer"><a href="#申请Buffer" class="headerlink" title="申请Buffer"></a>申请Buffer</h3><h4 id="ViewRootImpl-draw"><a href="#ViewRootImpl-draw" class="headerlink" title="ViewRootImpl.draw"></a>ViewRootImpl.draw</h4><p>执行遍历 &gt; 执行Draw &gt; draw方法 &gt; 软件绘制流程</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">private void performTraversals() &#123;</span><br><span class="line">    ...</span><br><span class="line">    relayoutWindow(params, viewVisibility, insetsPending);</span><br><span class="line">    ...</span><br><span class="line">    performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);</span><br><span class="line">    ...         </span><br><span class="line">    performLayout(lp, mWidth, mHeight);</span><br><span class="line">    ...</span><br><span class="line">    performDraw();</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void performDraw() &#123;</span><br><span class="line">    draw(fullRedrawNeeded);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void draw(boolean fullRedrawNeeded) &#123;</span><br><span class="line">    if (!dirty.isEmpty() || mIsAnimating || accessibilityFocusDirty) &#123;</span><br><span class="line">        &#x2F;&#x2F; 硬件加速 ，绘制绘制流程</span><br><span class="line">        if (mAttachInfo.mHardwareRenderer !&#x3D; null &amp;&amp; mAttachInfo.mHardwareRenderer.isEnabled()) &#123;</span><br><span class="line">             ...</span><br><span class="line">            mAttachInfo.mHardwareRenderer.draw(mView, mAttachInfo, this);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">          ...</span><br><span class="line">           &#x2F;&#x2F; 软件绘制 流程</span><br><span class="line">            if (!drawSoftware(surface, mAttachInfo, xOffset, yOffset, scalingRequired, dirty)) &#123;</span><br><span class="line">                return;</span><br><span class="line">            &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -2244,7 +2244,7 @@ Notifications.showNotification(
 <p>基于API 23</p>
 </blockquote>
 <p>SurfaceFlinger，合成抛射机，它在Android系统是一个独立的服务进程<br>它的作用是接受多个来源的图形显示数据，将他们合成，然后发送到显示设备。<br>它的工作内容主要包括合成的创建和管理、Vsync信号的处理<br>本文分析SurfaceFlinger的启动流程，和Vsync信号的处理流程</p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145918.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884359629340.png"  alt=""></p>
 <h3 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h3><p>SurfaceFlinger 进程是由 init 进程创建的，运行在独立的 SurfaceFlinger 进程中。init 进程读取 init.rc 文件启动 SurfaceFlinger。首先来看main方法</p>
 <h4 id="main方法"><a href="#main方法" class="headerlink" title="main方法"></a>main方法</h4><ul>
 <li>设定线程池上线4，并启动binder线程池</li>
