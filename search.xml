@@ -309,9 +309,9 @@
 <li>支持局部刷新，对于一些交互处理多的情况下，会带来更好的性能</li>
 </ul>
 <h3 id="RecyclerView类图"><a href="#RecyclerView类图" class="headerlink" title="RecyclerView类图"></a>RecyclerView类图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/20200429123125.png"  alt=""></p>
-<h3 id="RecyclerView绘制流程图"><a href="#RecyclerView绘制流程图" class="headerlink" title="RecyclerView绘制流程图"></a>RecyclerView绘制流程图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141858.png"  alt=""></p>
-<h3 id="RecyclerView滑动流程图"><a href="#RecyclerView滑动流程图" class="headerlink" title="RecyclerView滑动流程图"></a>RecyclerView滑动流程图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141904.png"  alt=""></p>
-<h3 id="RecyclerView缓存介绍图"><a href="#RecyclerView缓存介绍图" class="headerlink" title="RecyclerView缓存介绍图"></a>RecyclerView缓存介绍图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141917.png"  alt=""></p>
+<h3 id="RecyclerView绘制流程图"><a href="#RecyclerView绘制流程图" class="headerlink" title="RecyclerView绘制流程图"></a>RecyclerView绘制流程图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884348092958.png"  alt=""></p>
+<h3 id="RecyclerView滑动流程图"><a href="#RecyclerView滑动流程图" class="headerlink" title="RecyclerView滑动流程图"></a>RecyclerView滑动流程图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884348202362.png"  alt=""></p>
+<h3 id="RecyclerView缓存介绍图"><a href="#RecyclerView缓存介绍图" class="headerlink" title="RecyclerView缓存介绍图"></a>RecyclerView缓存介绍图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884348287378.png"  alt=""></p>
 <h2 id="源码阅读"><a href="#源码阅读" class="headerlink" title="源码阅读"></a>源码阅读</h2><h3 id="RecyclerView使用方法分分析"><a href="#RecyclerView使用方法分分析" class="headerlink" title="RecyclerView使用方法分分析"></a>RecyclerView使用方法分分析</h3><h4 id="RecyclerView-构造方法"><a href="#RecyclerView-构造方法" class="headerlink" title="RecyclerView 构造方法"></a>RecyclerView 构造方法</h4><ul>
 <li>进行View相关配置属性设置，触摸范围、滑动速度等</li>
 <li>设置Item动画监听器</li>
@@ -784,16 +784,17 @@
 <li>支持TLS特性</li>
 <li>请求和响应Api简洁明了，支持同步和异步请求</li>
 </ul>
-<h2 id="OkHttp-图文总结"><a href="#OkHttp-图文总结" class="headerlink" title="OkHttp 图文总结"></a>OkHttp 图文总结</h2><p><a href="https://www.jianshu.com/p/ff836d3cacd1" target="_blank" rel="noopener">OkHttp 4源码（1）— OkHttp初始化和请求构造分析</a><br><a href="https://www.jianshu.com/p/0c830962c6e3" target="_blank" rel="noopener">OkHttp 4源码（2）— 拦截器机制分析</a><br><a href="https://www.jianshu.com/p/2eafcd161dd9" target="_blank" rel="noopener">OkHttp 4源码（3）— 缓存机制分析</a><br><a href="https://www.jianshu.com/p/be6d09f2656b" target="_blank" rel="noopener">OkHttp 4源码（4）— 连接机制分析</a><br><a href="https://www.jianshu.com/p/097b1904f580" target="_blank" rel="noopener">OkHttp 4源码（5）— 请求和响应 I/O操作</a><br><a href="https://www.jianshu.com/p/7b7ba4333c5e" target="_blank" rel="noopener">OkHttp 4源码（6）— Okio源码解析</a><br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143202.png"  alt="OkHttp整体流程"></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143210.png"  alt="请求创建和分发流程"></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143543.png"  alt="拦截器时序图"></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143220.png"  alt="HTTP缓存流程图"></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143236.png"  alt="缓存处理流程图"></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143230.png"  alt="连接时序图"></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143236.png"  alt="HTTP不同协议连接区分"></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143241.png"  alt="IO操作流程图"></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143246.png"  alt="Okio类图"></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143252.png"  alt="Okio Buffer相关数据结构"></p>
+<h2 id="OkHttp-图文总结"><a href="#OkHttp-图文总结" class="headerlink" title="OkHttp 图文总结"></a>OkHttp 图文总结</h2><p><a href="https://www.jianshu.com/p/ff836d3cacd1" target="_blank" rel="noopener">OkHttp 4源码（1）— OkHttp初始化和请求构造分析</a><br><a href="https://www.jianshu.com/p/0c830962c6e3" target="_blank" rel="noopener">OkHttp 4源码（2）— 拦截器机制分析</a><br><a href="https://www.jianshu.com/p/2eafcd161dd9" target="_blank" rel="noopener">OkHttp 4源码（3）— 缓存机制分析</a><br><a href="https://www.jianshu.com/p/be6d09f2656b" target="_blank" rel="noopener">OkHttp 4源码（4）— 连接机制分析</a><br><a href="https://www.jianshu.com/p/097b1904f580" target="_blank" rel="noopener">OkHttp 4源码（5）— 请求和响应 I/O操作</a><br><a href="https://www.jianshu.com/p/7b7ba4333c5e" target="_blank" rel="noopener">OkHttp 4源码（6）— Okio源码解析</a></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349070330.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349198291.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349359474.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349399526.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349603597.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349768181.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349822059.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349902121.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349963397.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884350013241.jpg"  alt=""></p>
 ]]></content>
       <categories>
         <category>Android</category>
