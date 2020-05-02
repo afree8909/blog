@@ -3,7 +3,10 @@
   <entry>
     <title>ReactNative 实践总结</title>
     <url>/blog/2020/05/02/ReactNative%20%E5%AE%9E%E8%B7%B5%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3>]]></content>
+    <content><![CDATA[<h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><p><a href="https://engineering.fb.com/wp-content/uploads/2016/03/GEF5wQCX-cXZUeEAADQ_6S4AAAAAbj0JAAAB.jpg" target="_blank" rel="noopener">https://engineering.fb.com/wp-content/uploads/2016/03/GEF5wQCX-cXZUeEAADQ_6S4AAAAAbj0JAAAB.jpg</a></p>
+<p><img src="/blog/" class="lazyload" data-src="https://reactnative.dev/blog/assets/RNPerformanceStartup.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884196845415.jpg"  alt=""></p>
+]]></content>
   </entry>
   <entry>
     <title>ReactNative 介绍</title>
@@ -43,8 +46,7 @@
 </ul>
 <h4 id="2016"><a href="#2016" class="headerlink" title="2016"></a>2016</h4><ul>
 <li>March 24, 2016：<a href="https://reactnative.dev/blog/2016/03/24/introducing-hot-reloading" target="_blank" rel="noopener">Introducing Hot Reloading</a>，热加载介绍，实现了变更实施可见</li>
-<li>MAR 28, 2016：<a href="https://engineering.fb.com/android/dive-into-react-native-performance/" target="_blank" rel="noopener">Dive into React Native performance
-</a>，全面提升性能<ul>
+<li>MAR 28, 2016：<a href="https://engineering.fb.com/android/dive-into-react-native-performance/" target="_blank" rel="noopener">Dive into React Native performance</a>，全面提升性能<ul>
 <li>Cleanup Require/Babel helpers (high impact): 清楚无用引用</li>
 <li>Avoid copying and decoding strings when loading the bundle (medium impact): 加载bundle避免复制和解码</li>
 <li>Stripping DEV-only modules (low impact): 支持Dev模块，减少体积从而提升JS转换效率</li>
@@ -127,6 +129,7 @@
 <p>此外，还有一类 Native Modules 线程，不同的 Native Module 可以运行在不同的线程中<a href="http://chain-react-bridging.surge.sh/dist/96efedea67e784036f946c487a06cdc9.png" target="_blank" rel="noopener">http://chain-react-bridging.surge.sh/dist/96efedea67e784036f946c487a06cdc9.png</a></p>
 <p><strong>线程工作流程</strong></p>
 <p><img src="/blog/" class="lazyload" data-src="media/15883426106541.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://engineering.fb.com/wp-content/uploads/2016/03/GCefvQD26BsmvqsAAFRTmREAAAAAbj0JAAAB.jpg"  alt=""></p>
 <p><strong>线程交互流程</strong></p>
 <p><img src="/blog/" class="lazyload" data-src="media/15883428058711.jpg"  alt=""></p>
 <h3 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h3><ul>
