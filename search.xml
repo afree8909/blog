@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>ReactNative 启动优化实践</title>
+    <url>/blog/2020/05/02/ReactNative%20%E5%90%AF%E5%8A%A8%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5/</url>
+    <content><![CDATA[<h3 id="RN-启动简介"><a href="#RN-启动简介" class="headerlink" title="RN 启动简介"></a>RN 启动简介</h3><p><a href="https://engineering.fb.com/android/dive-into-react-native-performance" target="_blank" rel="noopener">Dive into React Native performance</a><br>阐述了基于RN实现的页面各部分加载时间占比图<br><img src="/blog/" class="lazyload" data-src="https://engineering.fb.com/wp-content/uploads/2016/03/GEF5wQCX-cXZUeEAADQ_6S4AAAAAbj0JAAAB.jpg"  alt=""></p>
+<p>页面加载流程图（引用）</p>
+<p><img src="/blog/" class="lazyload" data-src="https://reactnative.dev/blog/assets/RNPerformanceStartup.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884224120287.jpg"  alt=""></p>
+<p>从业务视角可以归纳为四个部分</p>
+<ol>
+<li>Bundle包准备：客户端Bundle包下载、解析等过程</li>
+<li>初始化引擎：引擎准备，RN执行环境</li>
+<li>加载Bundle：引擎加载JS代码</li>
+<li>渲染Bundle：执行JS中runApplication()方法，开始渲染</li>
+</ol>
+<h3 id="RN-启动优化实践"><a href="#RN-启动优化实践" class="headerlink" title="RN 启动优化实践"></a>RN 启动优化实践</h3><h4 id="包生产"><a href="#包生产" class="headerlink" title="包生产"></a>包生产</h4><ul>
+<li>分包<ul>
+<li>分业务分包：页面维度单独成包，避免大文件包</li>
+<li>分层分包：页面和组件拆分，便于复用，同时也减少了整体体积</li>
+</ul>
+</li>
+<li>拆包<ul>
+<li>一种方案，将一个包整体的index.js，拆分成一个入口+多个子模块，从而实现页面模块维度懒加载功能，减少页面首次加载时间，webpack和react loadable都有提供了切割能力</li>
+<li>另一种方案，RAM bundles和内联引用<ul>
+<li>RAM bundles：Indexed RAM Bundle和File RAM Bundle两种实现，将每个模块拆分为独立文件</li>
+<li>内联引用（inline requires）：内联引用(require 代替 import)可以延迟模块或文件的加载，直到实际需要该文件。 </li>
+</ul>
+</li>
+</ul>
+</li>
+<li>包大小优化<ul>
+<li><a href="https://github.com/webpack-contrib/webpack-bundle-analyzer" target="_blank" rel="noopener">包大小分析工具</a>  </li>
+<li>引入<a href="https://www.webpackjs.com/guides/tree-shaking/" target="_blank" rel="noopener">tree-shaking</a>将无用代码删除</li>
+<li>静态资源压缩，重点图片</li>
+</ul>
+</li>
+</ul>
+<h4 id="包下载"><a href="#包下载" class="headerlink" title="包下载"></a>包下载</h4><ul>
+<li>Bundle包缓存策略优化，减少下载时间<ul>
+<li>核心或者重要页面直接预装</li>
+<li>本地增量更新策略</li>
+</ul>
+</li>
+<li>Bundle包下载策略优化，根据页面深度区分下载时机，实现延缓下载，减少首次并发下载任务量</li>
+</ul>
+<h4 id="包加载"><a href="#包加载" class="headerlink" title="包加载"></a>包加载</h4><ul>
+<li>引擎池技术，默认空引擎+引擎复用，减少引擎池初始化时间</li>
+</ul>
+<h4 id="包渲染"><a href="#包渲染" class="headerlink" title="包渲染"></a>包渲染</h4><ul>
+<li>数据层<ul>
+<li>本地化数据优化，数据缓存、前一个页面数据带入后一个数据</li>
+<li>数据请求异步加载，且尽可能提前请求，譬如执行js加载到内存</li>
+</ul>
+</li>
+<li>模块层<ul>
+<li>模块=页面一个个模块，对于复杂或者长的页面，简单理解可以是预先加载可见模块，然后在加载非可见模块。</li>
+</ul>
+</li>
+<li>组件层<ul>
+<li>减少重复渲染，例如Immutablejs、唯一Kye、慎用setState</li>
+<li>React布局和渲染的一些基本常识</li>
+<li>实践过程中，最难点也是比较常见的场景就是，复杂且条目多的长列表实现，FlatList可以满足一般场景，但是有两个缺陷，<ul>
+<li>白屏问题是因为异步渲染导致的。cell先创建了一个等高空白容器，然后整个cell的viewTree异步渲染完成后再添加到空白容器内。所以快速滑动的时候，由于异步任务堆积，导致无法快速展现出现白屏。</li>
+<li>FlatList数据条目多时容易产生崩溃。这是因为FlatList中Cell之间的viewTree并没有真实复用，随着滚动渲染出来的viewTree越来越多，内存开销过大容易出现OOM</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<p>参考：<br><a href="http://blog.poetries.top/2019/10/02/rn-start-progress/" target="_blank" rel="noopener">React Native之启动流程</a><br><a href="https://juejin.im/post/5a4dc842518825698e7279a9" target="_blank" rel="noopener">Tree-Shaking性能优化实践 - 原理篇</a><br><a href="https://reactnative.cn/docs/performance/#%E6%8B%86%E5%8C%85ram-bundles%E5%92%8C%E5%86%85%E8%81%94%E5%BC%95%E7%94%A8" target="_blank" rel="noopener">ReactNative 性能</a></p>
+]]></content>
+      <categories>
+        <category>ReactNative</category>
+      </categories>
+      <tags>
+        <tag>RN，性能优化</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>ReactNative 介绍</title>
     <url>/blog/2020/04/30/ReactNative%20%E4%BB%8B%E7%BB%8D/</url>
     <content><![CDATA[<h2 id="ReactNative-发展历史"><a href="#ReactNative-发展历史" class="headerlink" title="ReactNative 发展历史"></a>ReactNative 发展历史</h2><h3 id="起源"><a href="#起源" class="headerlink" title="起源"></a>起源</h3><p>React Native 想法来源于2013年的 Facebook 内部黑客马拉松（hackathon）<br><a href="https://engineering.fb.com/android/react-native-bringing-modern-web-techniques-to-mobile/" target="_blank" rel="noopener">React Native: A year in review</a></p>
@@ -111,7 +189,8 @@
 </li>
 <li></li>
 </ul>
-<p><strong>系统分层</strong><br><img src="/blog/" class="lazyload" data-src="media/15883413548048.jpg"  alt=""><br><strong>系统结构（Android）（引用）</strong><br><img src="/blog/" class="lazyload" data-src="media/15883421170600.jpg"  alt=""></p>
+<p><strong>系统分层</strong><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884342848646.jpg"  alt=""></p>
+<p><strong>系统结构（Android）（引用）</strong><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884342941914.jpg"  alt=""></p>
 <h3 id="线程模型"><a href="#线程模型" class="headerlink" title="线程模型"></a>线程模型</h3><p>React Native 中主要有3种线程</p>
 <ul>
 <li>UI Thread：Android/iOS（或其它平台）应用中的主线程</li>
@@ -119,11 +198,10 @@
 <li>JS Thread：React或其它JavaScript 代码都在这个线程执行</li>
 </ul>
 <p>此外，还有一类 Native Modules 线程，不同的 Native Module 可以运行在不同的线程中<a href="http://chain-react-bridging.surge.sh/dist/96efedea67e784036f946c487a06cdc9.png" target="_blank" rel="noopener">http://chain-react-bridging.surge.sh/dist/96efedea67e784036f946c487a06cdc9.png</a></p>
-<p><strong>线程工作流程</strong></p>
-<p><img src="/blog/" class="lazyload" data-src="media/15883426106541.jpg"  alt=""></p>
+<p><strong>线程工作流程</strong><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884343045589.jpg"  alt=""></p>
 <p><img src="/blog/" class="lazyload" data-src="https://engineering.fb.com/wp-content/uploads/2016/03/GCefvQD26BsmvqsAAFRTmREAAAAAbj0JAAAB.jpg"  alt=""></p>
 <p><strong>线程交互流程</strong></p>
-<p><img src="/blog/" class="lazyload" data-src="media/15883428058711.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884343191889.jpg"  alt=""></p>
 <h3 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h3><ul>
 <li>启动RN App</li>
 <li>加载JavaScript VM、JavaScript Bundle、NativeModule</li>
@@ -131,7 +209,7 @@
 <li>native调用、shadow tree创建、布局、NativeView创建</li>
 <li>View渲染</li>
 </ul>
-<p><strong>整体启动流程</strong><br><img src="/blog/" class="lazyload" data-src="media/15883429708684.jpg"  alt=""></p>
+<p><strong>整体启动流程</strong><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884343256657.jpg"  alt=""></p>
 <p><strong>官方启动时间模块划分</strong><br><img src="/blog/" class="lazyload" data-src="https://reactnative.dev/blog/assets/RNPerformanceStartup.png"  alt=""></p>
 <h3 id="渲染流程"><a href="#渲染流程" class="headerlink" title="渲染流程"></a>渲染流程</h3><p><strong>事件传递</strong></p>
 <p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884061536946.jpg"  alt=""></p>
@@ -422,7 +500,7 @@
     <url>/blog/2020/04/27/Git%E4%B8%BB%E6%B5%81%E5%88%86%E6%94%AF%E6%A8%A1%E5%9E%8B/</url>
     <content><![CDATA[<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>分支模型的抉择可以概括为围绕 <strong>持续集成</strong> 和 <strong>特性隔离</strong> 两个特征进行博弈。</p>
 <h3 id="分支模型对比结论"><a href="#分支模型对比结论" class="headerlink" title="分支模型对比结论"></a>分支模型对比结论</h3><h4 id="优缺点分析"><a href="#优缺点分析" class="headerlink" title="优缺点分析"></a>优缺点分析</h4><p><a href="https://trunkbaseddevelopment.com/alternative-branching-models/index.html#modern-claimed-high-throughput-branching-models" target="_blank" rel="noopener">TBD说明</a></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blogbranch_comparison.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884345933675.jpg"  alt=""></p>
 <h4 id="使用分析"><a href="#使用分析" class="headerlink" title="使用分析"></a>使用分析</h4><table>
 <thead>
 <tr>
@@ -502,14 +580,13 @@
 </ul>
 </li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428122337.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884346291576.png"  alt=""></p>
 <h4 id="GitHubFlow"><a href="#GitHubFlow" class="headerlink" title="GitHubFlow"></a>GitHubFlow</h4><p><a href="https://guides.github.com/introduction/flow/" target="_blank" rel="noopener">详情参考</a></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428122414.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884346745153.jpg"  alt=""></p>
 <h5 id="分支情况-1"><a href="#分支情况-1" class="headerlink" title="分支情况"></a>分支情况</h5><p>主干分支：master<br>特性分支：feature</p>
 <h5 id="玩法-1"><a href="#玩法-1" class="headerlink" title="玩法"></a>玩法</h5><p>开发：主分支创建feature分支进行开发、PR、Review、发布完成后，建立PR回master<br>修复：特性分支未合入master前特性分支修复，合入后针对tag单开分支修复并合入主干分支</p>
 <p>它有一个变种版本，更好的支持多环境和多版本 ，可以参考 <a href="https://docs.gitlab.com/ee/topics/gitlab_flow.html" target="_blank" rel="noopener">GitLab Flow</a></p>
-<h4 id="TBD"><a href="#TBD" class="headerlink" title="TBD"></a>TBD</h4><p><a href="https://trunkbaseddevelopment.com/" target="_blank" rel="noopener">详情参考</a></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428122414.png"  alt=""></p>
+<h4 id="TBD"><a href="#TBD" class="headerlink" title="TBD"></a>TBD</h4><p><a href="https://trunkbaseddevelopment.com/" target="_blank" rel="noopener">详情参考</a><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884346820323.png"  alt=""></p>
 <h5 id="分支情况-2"><a href="#分支情况-2" class="headerlink" title="分支情况"></a>分支情况</h5><p>主干分支：master</p>
 <h5 id="玩法-2"><a href="#玩法-2" class="headerlink" title="玩法"></a>玩法</h5><p>开发：所有团队成员都在单个主干分支上进行开发，<br>符合约定后commit到主干分支。也可创建短周期分支进行开发rebase主干分支后提交PR</p>
 <p>发布：优先Tag，Tag不能满足则创建发布分支</p>
@@ -519,7 +596,7 @@
 <li>如何避免引入未完成feature？ feature toggle（功能开关）</li>
 <li>如果重构？ BBA（抽象分支）</li>
 </ul>
-<h4 id="AoneFlow"><a href="#AoneFlow" class="headerlink" title="AoneFlow"></a>AoneFlow</h4><p><a href="https://mp.weixin.qq.com/sJsBX3UPgZL_HUOTCIopr_A" target="_blank" rel="noopener">详情参考</a><br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428122511.png"  alt=""><br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428122517.png"  alt=""><br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428122521.png"  alt=""></p>
+<h4 id="AoneFlow"><a href="#AoneFlow" class="headerlink" title="AoneFlow"></a>AoneFlow</h4><p><a href="https://mp.weixin.qq.com/sJsBX3UPgZL_HUOTCIopr_A" target="_blank" rel="noopener">详情参考</a><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884346905034.png"  alt=""><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884346974000.png"  alt=""><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884347033922.png"  alt=""></p>
 <h5 id="分支情况-3"><a href="#分支情况-3" class="headerlink" title="分支情况"></a>分支情况</h5><p>主干分支：master<br>特性分支：feature、release</p>
 <h5 id="玩法-3"><a href="#玩法-3" class="headerlink" title="玩法"></a>玩法</h5><ul>
 <li>开始工作前，从主干创建特性分支。</li>
@@ -4059,6 +4136,54 @@ if (matchWidth) {
       </tags>
   </entry>
   <entry>
+    <title>Java8中HashMap分析</title>
+    <url>/blog/2018/02/08/Java8%E4%B8%ADHashMap%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h3 id="Put方法流程图"><a href="#Put方法流程图" class="headerlink" title="Put方法流程图"></a>Put方法流程图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155317.png"  alt=""></p>
+<h3 id="特殊值"><a href="#特殊值" class="headerlink" title="特殊值"></a>特殊值</h3><h4 id="hash"><a href="#hash" class="headerlink" title="hash"></a>hash</h4><p>高16bit不变，低16bit和高16bit做了一个异或</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static final int hash(Object key) &#123;</span><br><span class="line">       int h;</span><br><span class="line">       return (key &#x3D;&#x3D; null) ? 0 : (h &#x3D; key.hashCode()) ^ (h &gt;&gt;&gt; 16);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="size"><a href="#size" class="headerlink" title="size"></a>size</h4><ul>
+<li>map中存储的KV数目</li>
+<li>值为2的n次幂<ul>
+<li>哈希表是通过除法散列法，取模会用到除法运算，效率很低，而HashMap通过 h&amp;（length－1）替代取模</li>
+<li>length 为2的整数次幂，是为了使不同hash值发生碰撞概率小即更均匀散列</li>
+<li>length 的值为100..0，length－1为011..1，相当于对取模，而且保证了hash可以奇偶都有</li>
+</ul>
+</li>
+</ul>
+<h4 id="threshold"><a href="#threshold" class="headerlink" title="threshold"></a>threshold</h4><ul>
+<li>阀值，=容量*loadFactor（负载因子，默认0.75）</li>
+</ul>
+<h3 id="扩容机制"><a href="#扩容机制" class="headerlink" title="扩容机制"></a>扩容机制</h3><ul>
+<li>hash与旧链表大小做 &amp; 运算，=0不变，=1移动到原位置+旧链表大小的位置<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155324.png"  alt=""></li>
+</ul>
+<h3 id="线程是否安全"><a href="#线程是否安全" class="headerlink" title="线程是否安全"></a>线程是否安全</h3><ul>
+<li>JDK1.7，扩容前后链表导致，转移过程中修改了原来链表中节点引用关系，可能导致死循环</li>
+<li>JDK1.8，不会引起死循环，但put／get不一定同步</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>数据结构</category>
+      </categories>
+      <tags>
+        <tag>源码</tag>
+        <tag>集合</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>设计模式</title>
+    <url>/blog/2018/02/08/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</url>
+    <content><![CDATA[<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154705.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154718.png"  alt=""></p>
+]]></content>
+      <categories>
+        <category>设计模式</category>
+      </categories>
+      <tags>
+        <tag>设计模式</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>自定义UUID-移动设备唯一标识</title>
     <url>/blog/2018/02/08/%E8%87%AA%E5%AE%9A%E4%B9%89UUID-%E7%A7%BB%E5%8A%A8%E8%AE%BE%E5%A4%87%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/</url>
     <content><![CDATA[<h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>希望自主生成用于所有移动业务上标识设备唯一性的标识符</p>
@@ -4107,54 +4232,6 @@ MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算�
       </categories>
       <tags>
         <tag>ID</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Java8中HashMap分析</title>
-    <url>/blog/2018/02/08/Java8%E4%B8%ADHashMap%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<h3 id="Put方法流程图"><a href="#Put方法流程图" class="headerlink" title="Put方法流程图"></a>Put方法流程图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155317.png"  alt=""></p>
-<h3 id="特殊值"><a href="#特殊值" class="headerlink" title="特殊值"></a>特殊值</h3><h4 id="hash"><a href="#hash" class="headerlink" title="hash"></a>hash</h4><p>高16bit不变，低16bit和高16bit做了一个异或</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static final int hash(Object key) &#123;</span><br><span class="line">       int h;</span><br><span class="line">       return (key &#x3D;&#x3D; null) ? 0 : (h &#x3D; key.hashCode()) ^ (h &gt;&gt;&gt; 16);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-<h4 id="size"><a href="#size" class="headerlink" title="size"></a>size</h4><ul>
-<li>map中存储的KV数目</li>
-<li>值为2的n次幂<ul>
-<li>哈希表是通过除法散列法，取模会用到除法运算，效率很低，而HashMap通过 h&amp;（length－1）替代取模</li>
-<li>length 为2的整数次幂，是为了使不同hash值发生碰撞概率小即更均匀散列</li>
-<li>length 的值为100..0，length－1为011..1，相当于对取模，而且保证了hash可以奇偶都有</li>
-</ul>
-</li>
-</ul>
-<h4 id="threshold"><a href="#threshold" class="headerlink" title="threshold"></a>threshold</h4><ul>
-<li>阀值，=容量*loadFactor（负载因子，默认0.75）</li>
-</ul>
-<h3 id="扩容机制"><a href="#扩容机制" class="headerlink" title="扩容机制"></a>扩容机制</h3><ul>
-<li>hash与旧链表大小做 &amp; 运算，=0不变，=1移动到原位置+旧链表大小的位置<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155324.png"  alt=""></li>
-</ul>
-<h3 id="线程是否安全"><a href="#线程是否安全" class="headerlink" title="线程是否安全"></a>线程是否安全</h3><ul>
-<li>JDK1.7，扩容前后链表导致，转移过程中修改了原来链表中节点引用关系，可能导致死循环</li>
-<li>JDK1.8，不会引起死循环，但put／get不一定同步</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Java</category>
-        <category>数据结构</category>
-      </categories>
-      <tags>
-        <tag>源码</tag>
-        <tag>集合</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>设计模式</title>
-    <url>/blog/2018/02/08/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</url>
-    <content><![CDATA[<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154705.png"  alt=""></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154718.png"  alt=""></p>
-]]></content>
-      <categories>
-        <category>设计模式</category>
-      </categories>
-      <tags>
-        <tag>设计模式</tag>
       </tags>
   </entry>
   <entry>
