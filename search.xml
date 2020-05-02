@@ -820,7 +820,7 @@
 <li>支持超时机制</li>
 <li>非常轻便，便于实现、使用、测试</li>
 </ul>
-<h3 id="Okio-图文概括"><a href="#Okio-图文概括" class="headerlink" title="Okio 图文概括"></a>Okio 图文概括</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143246.png"  alt=""><br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143252.png"  alt=""></p>
+<h3 id="Okio-图文概括"><a href="#Okio-图文概括" class="headerlink" title="Okio 图文概括"></a>Okio 图文概括</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884351494519.png"  alt=""><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884351613228.png"  alt=""></p>
 <h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><h3 id="测试代码示例"><a href="#测试代码示例" class="headerlink" title="测试代码示例"></a>测试代码示例</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public final class OkioTest &#123;</span><br><span class="line">  @Rule public TemporaryFolder temporaryFolder &#x3D; new TemporaryFolder();</span><br><span class="line"></span><br><span class="line">  @Test public void readWriteFile() throws Exception &#123;</span><br><span class="line">    File file &#x3D; temporaryFolder.newFile();</span><br><span class="line">    &#x2F;&#x2F; 写</span><br><span class="line">    BufferedSink sink &#x3D; Okio.buffer(Okio.sink(file));</span><br><span class="line">    sink.writeUtf8(&quot;Hello, java.io file!&quot;);</span><br><span class="line">    sink.close();</span><br><span class="line">    assertTrue(file.exists());</span><br><span class="line">    assertEquals(20, file.length());</span><br><span class="line">    &#x2F;&#x2F; 读</span><br><span class="line">    BufferedSource source &#x3D; Okio.buffer(Okio.source(file));</span><br><span class="line">    assertEquals(&quot;Hello, java.io file!&quot;, source.readUtf8());</span><br><span class="line">    source.close();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h3 id="数据写入-Sink"><a href="#数据写入-Sink" class="headerlink" title="数据写入 Sink"></a>数据写入 Sink</h3><ul>
@@ -912,8 +912,8 @@
     <content><![CDATA[<blockquote>
 <p>本文基于OkHttp 4.3.1源码分析<br><a href="https://square.github.io/okhttp/" target="_blank" rel="noopener">OkHttp - 官方地址</a><br><a href="https://github.com/square/okhttp" target="_blank" rel="noopener">OkHttp - GitHub代码地址</a></p>
 </blockquote>
-<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144225.png"  alt=""></p>
-<p>IO流程图<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143241.png"  alt=""></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）<br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884351872473.png"  alt=""></p>
+<p>IO流程图<br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349902121.jpg"  alt=""></p>
 <h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><h3 id="拦截器"><a href="#拦截器" class="headerlink" title="拦截器"></a>拦截器</h3><h4 id="CallServerInterceptor-intercept"><a href="#CallServerInterceptor-intercept" class="headerlink" title="CallServerInterceptor.intercept"></a>CallServerInterceptor.intercept</h4><p>整体可以划分6个步骤，根据不同协议执行实现逻辑区分Http1.x和Http2</p>
 <ol>
 <li>写请求头</li>
@@ -1081,10 +1081,9 @@
     <content><![CDATA[<blockquote>
 <p>本文基于OkHttp 4.3.1源码分析<br><a href="https://square.github.io/okhttp/" target="_blank" rel="noopener">OkHttp - 官方地址</a><br><a href="https://github.com/square/okhttp" target="_blank" rel="noopener">OkHttp - GitHub代码地址</a></p>
 </blockquote>
-<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144349.png"  alt=""></p>
-<p>连接时序图<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143230.png"  alt=""></p>
-<p>HTTP不同协议连接区分<br>参考：<a href="https://halfrost.com/http2_begin/" target="_blank" rel="noopener">HTTP/2 是如何建立连接的</a></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143236.png"  alt=""></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）<br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884353600040.png"  alt=""></p>
+<p>连接时序图<br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349768181.jpg"  alt=""></p>
+<p>HTTP不同协议连接区分<br>参考：<a href="https://halfrost.com/http2_begin/" target="_blank" rel="noopener">HTTP/2 是如何建立连接的</a><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349822059.jpg"  alt=""></p>
 <h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><h3 id="ConnectInterceptor"><a href="#ConnectInterceptor" class="headerlink" title="ConnectInterceptor"></a>ConnectInterceptor</h3><ul>
 <li>获取发射机</li>
 <li>获取有效连接，RealConnection</li>
@@ -1210,13 +1209,11 @@
     <content><![CDATA[<blockquote>
 <p>本文基于OkHttp 4.3.1源码分析<br><a href="https://square.github.io/okhttp/" target="_blank" rel="noopener">OkHttp - 官方地址</a><br><a href="https://github.com/square/okhttp" target="_blank" rel="noopener">OkHttp - GitHub代码地址</a></p>
 </blockquote>
-<h2 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h2><p><a href="https://www.jianshu.com/p/6ec0d13d85bb" target="_blank" rel="noopener">HTTP缓存原理</a></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143220.png"  alt="HTTP缓存流程图"></p>
-<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）</p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144516.png"  alt=""></p>
-<p>缓存处理流程<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143225.png"  alt=""></p>
-<p>缓存文件夹<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144602.png"  alt=""></p>
-<p>缓存日志格式<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144613.png"  alt=""></p>
+<h2 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h2><p><a href="https://www.jianshu.com/p/6ec0d13d85bb" target="_blank" rel="noopener">HTTP缓存原理</a><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349399526.jpg"  alt=""></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）<br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884354446240.png"  alt=""></p>
+<p>缓存处理流程<br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884354566322.png"  alt=""></p>
+<p>缓存文件夹<br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884354900850.png"  alt=""></p>
+<p>缓存日志格式<br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884355023778.png"  alt=""></p>
 <h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><p>如果需要缓存机制，那么在构造OkHttpClient的时候需要传入一个Cache实例。<br>下面是OkHttp提供的一个CacheResponse的用例，除了传入一个Cache构造OkHttpClient，其它完全一样。<br>OkHttp实现缓存的切入点依旧是拦截器，之前的文章我们知道拦截器处理对象可以接受命令对象并根据自身情况选择处理还是不处理，所以接下来就是直接从CacheInterceptor开始分析</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public final class CacheResponse &#123;</span><br><span class="line">  private final OkHttpClient client;</span><br><span class="line"></span><br><span class="line">  public CacheResponse(File cacheDirectory) throws Exception &#123;</span><br><span class="line">    int cacheSize &#x3D; 10 * 1024 * 1024; &#x2F;&#x2F; 10 MiB 大小</span><br><span class="line">    Cache cache &#x3D; new Cache(cacheDirectory, cacheSize); &#x2F;&#x2F; 路径</span><br><span class="line">    &#x2F;&#x2F; 要使用缓存功能，需要在构造OkHttpClient的时候传入 cache （缓存大小，缓存路径地址）</span><br><span class="line">    client &#x3D; new OkHttpClient.Builder()</span><br><span class="line">        .cache(cache)</span><br><span class="line">        .build();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public void run() throws Exception &#123;</span><br><span class="line">    Request request &#x3D; new Request.Builder()</span><br><span class="line">        .url(&quot;http:&#x2F;&#x2F;publicobject.com&#x2F;helloworld.txt&quot;)</span><br><span class="line">        .build();</span><br><span class="line">    </span><br><span class="line">    String response1Body;</span><br><span class="line">    try (Response response1 &#x3D; client.newCall(request).execute()) &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    String response2Body;</span><br><span class="line">    try (Response response2 &#x3D; client.newCall(request).execute()) &#123;</span><br><span class="line">        ...    </span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F; 两次请求结果一致</span><br><span class="line">    System.out.println(&quot;Response 2 equals Response 1? &quot; + response1Body.equals(response2Body));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public static void main(String... args) throws Exception &#123;</span><br><span class="line">    new CacheResponse(new File(&quot;CacheResponse.tmp&quot;)).run();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -1317,9 +1314,9 @@
 <p>本文基于OkHttp 4.3.1源码分析<br><a href="https://square.github.io/okhttp/" target="_blank" rel="noopener">OkHttp - 官方地址</a><br><a href="https://github.com/square/okhttp" target="_blank" rel="noopener">OkHttp - GitHub代码地址</a></p>
 </blockquote>
 <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OkHttp整体流程（本文覆盖红色部分）</p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428144715.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884355133199.png"  alt=""></p>
 <p>Interceptor流程</p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428143543.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884349359474.jpg"  alt=""></p>
 <h2 id="责任链模式"><a href="#责任链模式" class="headerlink" title="责任链模式"></a>责任链模式</h2><p>概念<br>责任链模式（Chain of Responsibility Pattern），包含命令对象和一系列实现了相同接口的处理对象，这些处理对象相互连接成为一条责任链。每一个处理对象能决定它能处理哪些命令对象，对于它不能处理的命令对象，将会传递给该链中的下一个处理对象。负责链模式就是对这种顺序处理事件的行为的抽象,通过接口来定义处理事件的方法，顺序分发/处理事件。</p>
 <p>主要解决<br>职责链上的处理者负责处理请求，客户只需要将请求发送到职责链上即可，无须关心请求的处理细节和请求的传递，所以职责链将请求的发送者和请求的处理者解耦了。</p>
 <p>优点</p>
@@ -1483,7 +1480,7 @@
   <entry>
     <title>目标管理-SMART原则</title>
     <url>/blog/2020/01/10/%E7%9B%AE%E6%A0%87%E7%AE%A1%E7%90%86-SMART%E5%8E%9F%E5%88%99/</url>
-    <content><![CDATA[<h2 id="一图以蔽之"><a href="#一图以蔽之" class="headerlink" title="一图以蔽之"></a>一图以蔽之</h2><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145153.png"  alt=""></p>
+    <content><![CDATA[<h2 id="一图以蔽之"><a href="#一图以蔽之" class="headerlink" title="一图以蔽之"></a>一图以蔽之</h2><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884355625226.png"  alt=""></p>
 <h2 id="基本情况"><a href="#基本情况" class="headerlink" title="基本情况"></a>基本情况</h2><h3 id="基本信息"><a href="#基本信息" class="headerlink" title="基本信息"></a>基本信息</h3><ul>
 <li>提出者：彼得·德鲁克</li>
 <li>出处：《管理的实践》</li>
@@ -1573,7 +1570,7 @@
 <li><strong>主次分明</strong>（强化逻辑）：分清楚主要和次要，先主要后次要</li>
 <li><strong>规范动作</strong>（减少耗时时间）：使用标准动作健身和使用非标准动作健身，花同样的时间，两者呈现的结果可能是千差万别；金字塔原理也是写作、思考、表达的规范性动作，在前期训练的过程，你会感觉很不舒适，但是一旦动作成型，那么你的写作、思考、表达的记忆性肌肉就炼成了，后期将会释放出力量。</li>
 </ul>
-<p><strong>图例</strong><br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145239.png"  alt=""></p>
+<p><strong>图例</strong><br><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884356429749.jpg"  alt=""></p>
 <h2 id="什么是金字塔原理"><a href="#什么是金字塔原理" class="headerlink" title="什么是金字塔原理"></a>什么是金字塔原理</h2><h3 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h3><p>金字塔原理是一种结构化思考、表达和解决问题的艺术</p>
 <h3 id="金字塔原理的234"><a href="#金字塔原理的234" class="headerlink" title="金字塔原理的234"></a>金字塔原理的234</h3><h4 id="2个目标"><a href="#2个目标" class="headerlink" title="2个目标"></a>2个目标</h4><ul>
 <li>想清楚：自下而上思考，总结概括</li>
@@ -1636,7 +1633,7 @@
 </ul>
 </li>
 </ul>
-<h2 id="一图以蔽之"><a href="#一图以蔽之" class="headerlink" title="一图以蔽之"></a>一图以蔽之</h2><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145239.png"  alt=""></p>
+<h2 id="一图以蔽之"><a href="#一图以蔽之" class="headerlink" title="一图以蔽之"></a>一图以蔽之</h2><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884355946547.png"  alt=""></p>
 ]]></content>
       <categories>
         <category>方法论</category>
@@ -1806,7 +1803,7 @@
   <entry>
     <title>Git常用命令</title>
     <url>/blog/2019/12/23/Git%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/</url>
-    <content><![CDATA[<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428145339.png"  alt="经典Git操作与对应区域图"></p>
+    <content><![CDATA[<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884356753906.jpg"  alt=""></p>
 <h2 id="Git库创建"><a href="#Git库创建" class="headerlink" title="Git库创建"></a>Git库创建</h2><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F; 远程仓库克隆到本地</span><br><span class="line">git clone [ssh]</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 本地构建仓库</span><br><span class="line">git init</span><br></pre></td></tr></table></figure>
 
 <h2 id="Git配置"><a href="#Git配置" class="headerlink" title="Git配置"></a>Git配置</h2><p>以MAC系统，Git配置文件一般有两个配置文件，其作用域分别为全局级、仓库级</p>
