@@ -3448,7 +3448,7 @@ if (matchWidth) {
     <title>Zygote启动流程分析</title>
     <url>/blog/2019/05/16/Zygote%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/</url>
     <content><![CDATA[<h4 id="Zygote简介"><a href="#Zygote简介" class="headerlink" title="Zygote简介"></a>Zygote简介</h4><p>Zygote中文翻译为“受精卵”，正如其名，它主要用于孵化子进程。<br>Zygote是一个C/S模型，Zygote进程作为服务端，其他进程作为客户端向它发出“孵化”请求，而Zygote接收到这个请求后就“孵化”出一个新的进程。<br>此篇文章着重介绍 Zygote进程的创建和启动流程</p>
-<h4 id="Zygote进程启动流程图"><a href="#Zygote进程启动流程图" class="headerlink" title="Zygote进程启动流程图"></a>Zygote进程启动流程图</h4><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153154.png"  alt=""></p>
+<h4 id="Zygote进程启动流程图"><a href="#Zygote进程启动流程图" class="headerlink" title="Zygote进程启动流程图"></a>Zygote进程启动流程图</h4><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884374803682.jpg"  alt=""></p>
 <h4 id="init进程main方法"><a href="#init进程main方法" class="headerlink" title="init进程main方法"></a>init进程main方法</h4><h5 id="system-core-init-init-c"><a href="#system-core-init-init-c" class="headerlink" title="/system/core/init/init.c"></a>/system/core/init/init.c</h5><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">     int main(int argc, char **argv)&#123;      </span><br><span class="line">        ... &#x2F;&#x2F; 初始化 文件、属性服务等</span><br><span class="line">        </span><br><span class="line">        &#x2F;&#x2F; 解析 init.rc </span><br><span class="line">1077    init_parse_config_file(&quot;&#x2F;init.rc&quot;);</span><br><span class="line">1078    &#x2F;&#x2F; 执行 rc解析后的data （见 rc 语法）</span><br><span class="line">1079    action_for_each_trigger(&quot;early-init&quot;, action_add_queue_tail);</span><br><span class="line">1081    queue_builtin_action(wait_for_coldboot_done_action, &quot;wait_for_coldboot_done&quot;);</span><br><span class="line">1082    queue_builtin_action(mix_hwrng_into_linux_rng_action, &quot;mix_hwrng_into_linux_rng&quot;);</span><br><span class="line">1083    queue_builtin_action(keychord_init_action, &quot;keychord_init&quot;);</span><br><span class="line">1084    queue_builtin_action(console_init_action, &quot;console_init&quot;);</span><br><span class="line">1087    action_for_each_trigger(&quot;init&quot;, action_add_queue_tail);</span><br><span class="line">1092    queue_builtin_action(mix_hwrng_into_linux_rng_action, &quot;mix_hwrng_into_linux_rng&quot;);</span><br><span class="line">1093    queue_builtin_action(property_service_init_action, &quot;property_service_init&quot;);</span><br><span class="line">1094    queue_builtin_action(signal_init_action, &quot;signal_init&quot;);</span><br><span class="line">1097    if (is_charger) &#123;</span><br><span class="line">1098        action_for_each_trigger(&quot;charger&quot;, action_add_queue_tail);</span><br><span class="line">1099    &#125; else &#123;</span><br><span class="line">1100        action_for_each_trigger(&quot;late-init&quot;, action_add_queue_tail);</span><br><span class="line">1101    &#125;</span><br><span class="line">1104    queue_builtin_action(queue_property_triggers_action, &quot;queue_property_triggers&quot;);</span><br><span class="line">1108    queue_builtin_action(bootchart_init_action, &quot;bootchart_init&quot;);</span><br><span class="line"></span><br><span class="line">1110    &#x2F;&#x2F; 无限循环，执行action、检查是否需要重启、处理系统属性变化、回收僵尸进程等</span><br><span class="line">1111    for(;;) &#123;</span><br><span class="line">            ......</span><br><span class="line">1173    &#125;</span><br><span class="line">1174</span><br><span class="line">1175    return 0;</span><br><span class="line">1176&#125;</span><br><span class="line">1177</span><br></pre></td></tr></table></figure>
 
 <h4 id="rc配置文件"><a href="#rc配置文件" class="headerlink" title="rc配置文件"></a>rc配置文件</h4><h5 id="system-core-rootdir-init-rc"><a href="#system-core-rootdir-init-rc" class="headerlink" title="/system/core/rootdir/init.rc"></a>/system/core/rootdir/init.rc</h5><p>init.rc是一个配置文件，内部由Android初始化语言编写（Android Init Language）编写的脚本，它主要包含五种类型语句：<br>Action、Commands、Services、Options和Import</p>
@@ -3583,7 +3583,7 @@ if (matchWidth) {
 <li>Zygote进程接收到创建新进程的请求后，调用ZygoteInit.main()方法进行runSelectLoop()循环体内，当有客户端连接时执行ZygoteConnection.runOnce()方法，最后fork生成新的应用进程。</li>
 <li>新创建的进程会调用handleChildProc()方法，最后调用我们非常熟悉的ActivityThread.main()方法。</li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-3eb0e8834c129aeb.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884375001962.jpg"  alt=""></p>
 <hr>
 <p>推荐阅读：<a href="https://www.jianshu.com/p/238eb0a17760" target="_blank" rel="noopener">图形系统总结</a></p>
 ]]></content>
@@ -3605,8 +3605,8 @@ if (matchWidth) {
 <li>提高响应速度。通过已创建线程立即执行任务，减少了线程的创建时间</li>
 <li>提高线程的可管理性。通过合理地使用线程池，从而实现统一分配、调优和监控等</li>
 </ol>
-<h3 id="线程池的工作流程"><a href="#线程池的工作流程" class="headerlink" title="线程池的工作流程"></a>线程池的工作流程</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153302.png"  alt=""></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153317.png"  alt=""></p>
+<h3 id="线程池的工作流程"><a href="#线程池的工作流程" class="headerlink" title="线程池的工作流程"></a>线程池的工作流程</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884375643340.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884375704682.jpg"  alt=""></p>
 <p><strong>ThreadPoolExecutor执行任务流程</strong></p>
 <ol>
 <li>如果当前运行的线程少于corePoolSize，则创建线程来执行任务</li>
@@ -3620,9 +3620,9 @@ if (matchWidth) {
 <li>任务执行者：ThreadPoolExecutor、ScheduledThreadPoolExecutor</li>
 <li>工具类：Executors</li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153417.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884375892205.jpg"  alt=""></p>
 <h3 id="ThreadPoolExecutor解析"><a href="#ThreadPoolExecutor解析" class="headerlink" title="ThreadPoolExecutor解析"></a>ThreadPoolExecutor解析</h3><p>Java线程池最核心的类即ThreadPoolExecutor，它是线程池的实现类。</p>
-<h5 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h5><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153417.png"  alt=""></p>
+<h5 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h5><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884375970217.jpg"  alt=""></p>
 <h5 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h5><ul>
 <li><p>WorkQueue: 任务阻塞队列，缓存将要执行的Runnable任务</p>
 <ul>
@@ -3693,7 +3693,7 @@ if (matchWidth) {
 <li>ThreadLocalMap是一个映射表，内部实现一个数组，每一个元素位Entry</li>
 <li>Entry为一个键值对，key为Thread，Value为任何对象</li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="media/15527089073930.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884376281320.jpg"  alt=""></p>
 <h5 id="ThreadLocal解析"><a href="#ThreadLocal解析" class="headerlink" title="ThreadLocal解析"></a>ThreadLocal解析</h5><p>set和get方法通过线程对应ThreadLocalMap来管理实现</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public void set(T value) &#123;</span><br><span class="line">     Thread t &#x3D; Thread.currentThread(); &#x2F;&#x2F; 获取当前线程</span><br><span class="line">     ThreadLocalMap map &#x3D; getMap(t); &#x2F;&#x2F; 获取线程对应映射表</span><br><span class="line">     if (map !&#x3D; null) &#x2F;&#x2F; 设置KV</span><br><span class="line">         map.set(this, value);</span><br><span class="line">     else</span><br><span class="line">         createMap(t, value);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public T get() &#123;</span><br><span class="line">      Thread t &#x3D; Thread.currentThread();</span><br><span class="line">      ThreadLocalMap map &#x3D; getMap(t);</span><br><span class="line">      if (map !&#x3D; null) &#123;</span><br><span class="line">          &#x2F;&#x2F; 获取映射表中当前ThreadLocal对应的Value</span><br><span class="line">          ThreadLocalMap.Entry e &#x3D; map.getEntry(this);</span><br><span class="line">          if (e !&#x3D; null) &#123;</span><br><span class="line">              @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">              T result &#x3D; (T)e.value;</span><br><span class="line">              return result;</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      &#x2F;&#x2F; 如果Map还未初始化或者Map中没有找到Key，则设置一个初始值</span><br><span class="line">      return setInitialValue();</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
@@ -3765,9 +3765,9 @@ if (matchWidth) {
 <p>system_server进程：<br>系统进程，包含了大量的系统服务。如图中ApplicationThreadProxy、ActivityManagerService，这两个服务都运行在system_server进程的不同线程中。另外ATP、AMS都是基于IBinder接口，属于binder线程，都是由binder底层驱动创建和销毁</p>
 <p>App进程：<br>即应用程序，主线程主要负责Activity/Service等组件的生命周期以及UI相关操作；另外每个App进程至少都有两个Binder线程，ApplicationThread和ActivityManagerProxy。</p>
 <p>Binder<br>用于不同进程之间通信</p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153522.png"  alt="主线程消息循环模型"></p>
-<h4 id="主线程与子线程交互的消息循环模型"><a href="#主线程与子线程交互的消息循环模型" class="headerlink" title="主线程与子线程交互的消息循环模型"></a>主线程与子线程交互的消息循环模型</h4><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153616.png"  alt="主线程与子线程交互的消息循环模型"><br>![主线程与子线程交互的消息循环模型.jpg](<a href="https://upload-" target="_blank" rel="noopener">https://upload-</a></p>
-<h3 id="Android线程和线程池相关概念"><a href="#Android线程和线程池相关概念" class="headerlink" title="Android线程和线程池相关概念"></a>Android线程和线程池相关概念</h3><p>参考：<a href="[https://www.jianshu.com/p/d9e46d5a4af9](https://www.jianshu.com/p/d9e46d5a4af9">Java线程池理解</a></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884377557402.jpg"  alt=""></p>
+<h4 id="主线程与子线程交互的消息循环模型"><a href="#主线程与子线程交互的消息循环模型" class="headerlink" title="主线程与子线程交互的消息循环模型"></a>主线程与子线程交互的消息循环模型</h4><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884377701439.jpg"  alt=""></p>
+<h3 id="Android线程和线程池相关概念"><a href="#Android线程和线程池相关概念" class="headerlink" title="Android线程和线程池相关概念"></a>Android线程和线程池相关概念</h3><p>参考：<a href="https://www.jianshu.com/p/d9e46d5a4af9" target="_blank" rel="noopener">Java线程池理解</a></p>
 <h3 id="FAQ"><a href="#FAQ" class="headerlink" title="FAQ"></a>FAQ</h3><h5 id="Looper死循环为什么不会导致应用卡死，会消耗大量资源吗？"><a href="#Looper死循环为什么不会导致应用卡死，会消耗大量资源吗？" class="headerlink" title="Looper死循环为什么不会导致应用卡死，会消耗大量资源吗？"></a>Looper死循环为什么不会导致应用卡死，会消耗大量资源吗？</h5><p>见MessageQueue的next方法，涉及到Linux pipe/epoll机制，因为在主线程的MessageQueue没有消息时，便阻塞在loop的queue.next ()中的nativePollOnce方法里，这是主线程会释放CPU资源进入休眠状态，直到下个消息到达或者有事物发生。所以说，主线程大多数时候都是处于休眠状态，并不会消耗大量CPU资源。 </p>
 <h5 id="主线程的消息循环机制是什么（死循环如何处理其它事务）？"><a href="#主线程的消息循环机制是什么（死循环如何处理其它事务）？" class="headerlink" title="主线程的消息循环机制是什么（死循环如何处理其它事务）？"></a>主线程的消息循环机制是什么（死循环如何处理其它事务）？</h5><p>参考前面的主线程消息模型图例</p>
 <h5 id="ActivityThread-的动力是什么？（ActivityThread执行Looper的线程是什么）"><a href="#ActivityThread-的动力是什么？（ActivityThread执行Looper的线程是什么）" class="headerlink" title="ActivityThread 的动力是什么？（ActivityThread执行Looper的线程是什么）"></a>ActivityThread 的动力是什么？（ActivityThread执行Looper的线程是什么）</h5><p>ActivityThread通过main方法执行，也就是咱们的Runtime线程。该线程默认是不可quit的</p>
@@ -3825,7 +3825,7 @@ if (matchWidth) {
     <title>Reference和ReferenceQueue相关源码解析</title>
     <url>/blog/2019/03/05/Reference%E5%92%8CReferenceQueue%E7%9B%B8%E5%85%B3%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/</url>
     <content><![CDATA[<h3 id="为什么需要引用？"><a href="#为什么需要引用？" class="headerlink" title="为什么需要引用？"></a>为什么需要引用？</h3><p>我们知道在最早的JVM实现里，是使用“跟踪回收”算法从GC ROOTS出发，按照BFS或者DFS遍历所有可达对象，针对不不可达对象进行回收。但随着Java演进，暴露出一些不能覆盖的场景，例如：某些场景下使用方希望在回收具体对象的同时还能辅助回收这个对象绑定的一些资源（如socket、堆外内存等）、某些场景下希望使用堆内缓存尽可能缓存更多更久的数据但不OOM。基于此，JDK在1.2引入了Refreence及其子类来支持一些新特性和功能</p>
-<h3 id="Reference介绍"><a href="#Reference介绍" class="headerlink" title="Reference介绍"></a>Reference介绍</h3><h5 id="Reference类图"><a href="#Reference类图" class="headerlink" title="Reference类图"></a>Reference类图</h5><p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-fec84bdd662d2c10.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt=""></p>
+<h3 id="Reference介绍"><a href="#Reference介绍" class="headerlink" title="Reference介绍"></a>Reference介绍</h3><h5 id="Reference类图"><a href="#Reference类图" class="headerlink" title="Reference类图"></a>Reference类图</h5><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884378246371.jpg"  alt=""></p>
 <ul>
 <li><strong>FinalReference</strong>，一种保底策略，因为GC只能管理自动内存资源而无法管理其它资源（如堆外内存、file handle、socket等），这些需要使用方手动对资源进行管理</li>
 <li><strong>SoftReference</strong>，软引用，只有在堆内存不足时，垃圾回收器会回收对应引用。所以比较适合用来实现不是特别重要的缓存</li>
@@ -3834,8 +3834,8 @@ if (matchWidth) {
 </ul>
 <p>⚠️ 因为默认的引用就是强引用，所以没有强引用的Reference实现类。<br>详情：<a href="https://www.jianshu.com/p/7ff38dfbb5a8" target="_blank" rel="noopener">Reference子类源码解析</a></p>
 <h4 id="Reference生命周期"><a href="#Reference生命周期" class="headerlink" title="Reference生命周期"></a>Reference生命周期</h4><p>Referent被GC回收，则会根据是持有ReferenceQueue，而加入到对应到ReferenceQueue中，这样可以通过RQ来监听reference是否回收状态</p>
-<p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-78514b107996e4a8.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt=""></p>
-<h4 id="Reference运行结构"><a href="#Reference运行结构" class="headerlink" title="Reference运行结构"></a>Reference运行结构</h4><p><img src="/blog/" class="lazyload" data-src="https://upload-images.jianshu.io/upload_images/9696036-0bd5881d52164f6e.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884378341961.jpg"  alt=""></p>
+<h4 id="Reference运行结构"><a href="#Reference运行结构" class="headerlink" title="Reference运行结构"></a>Reference运行结构</h4><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884378410825.jpg"  alt=""></p>
 <h4 id="Reference源码"><a href="#Reference源码" class="headerlink" title="Reference源码"></a>Reference源码</h4><h6 id="字段"><a href="#字段" class="headerlink" title="字段"></a>字段</h6><ul>
 <li>referent：  引用指向的对象</li>
 <li>queue： ReferenceQueue，Reference构造的时候传入，其内部封装了单向链表的添加，删除和遍历等操作。用于Reference状态监听及管理</li>
@@ -3874,7 +3874,7 @@ if (matchWidth) {
   <entry>
     <title>JVM内存相关总结</title>
     <url>/blog/2018/02/11/JVM%E5%86%85%E5%AD%98%E7%9B%B8%E5%85%B3%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<h3 id="JVM大体结构图"><a href="#JVM大体结构图" class="headerlink" title="JVM大体结构图"></a>JVM大体结构图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153741.png"  alt=""></p>
+    <content><![CDATA[<h3 id="JVM大体结构图"><a href="#JVM大体结构图" class="headerlink" title="JVM大体结构图"></a>JVM大体结构图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884378926639.jpg"  alt=""></p>
 <h3 id="运行时数据区"><a href="#运行时数据区" class="headerlink" title="运行时数据区"></a>运行时数据区</h3><ul>
 <li>线程隔离数据区<ul>
 <li>程序计算器<ul>
@@ -3908,7 +3908,7 @@ if (matchWidth) {
 </ul>
 </li>
 </ul>
-<h3 id="对象创建与回收过程"><a href="#对象创建与回收过程" class="headerlink" title="对象创建与回收过程"></a>对象创建与回收过程</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153753.png"  alt=""></p>
+<h3 id="对象创建与回收过程"><a href="#对象创建与回收过程" class="headerlink" title="对象创建与回收过程"></a>对象创建与回收过程</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884379135740.jpg"  alt=""></p>
 <h3 id="JVM垃圾收集算法"><a href="#JVM垃圾收集算法" class="headerlink" title="JVM垃圾收集算法"></a>JVM垃圾收集算法</h3><h4 id="复制"><a href="#复制" class="headerlink" title="复制"></a>复制</h4><ul>
 <li>内存分成大小相等的两块，每次使用其中一块，回收的时候，把存活的对象复制到另一块，然后把这块内存整个清理掉</li>
 <li>优点，回收效率提高、不存在碎片化</li>
@@ -3921,13 +3921,13 @@ if (matchWidth) {
 <li>优点，简单，最基础算法 </li>
 <li>缺点，效率低，碎片化 </li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153819.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884379225616.jpg"  alt=""></p>
 <h4 id="标记整理"><a href="#标记整理" class="headerlink" title="标记整理"></a>标记整理</h4><ul>
 <li>把存活对象移动到内存的一端，然后直接回收边界以外的内存</li>
 <li>场景,适合老年代存活对象较多的情况，减少内存复制量</li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153825.png"  alt=""></p>
-<h3 id="垃圾收集器"><a href="#垃圾收集器" class="headerlink" title="垃圾收集器"></a>垃圾收集器</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154104.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884379370450.jpg"  alt=""></p>
+<h3 id="垃圾收集器"><a href="#垃圾收集器" class="headerlink" title="垃圾收集器"></a>垃圾收集器</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884379522001.jpg"  alt=""></p>
 <h4 id="Serial-SerialOld"><a href="#Serial-SerialOld" class="headerlink" title="Serial/SerialOld"></a>Serial/SerialOld</h4><ul>
 <li>过程<ol>
 <li>收集GC_ROOTS</li>
@@ -3940,7 +3940,7 @@ if (matchWidth) {
 <li>缺点，STW，服务停顿时间长 </li>
 <li>场景，几百兆以内客户端程序 </li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153839.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884379609341.jpg"  alt=""></p>
 <h4 id="Parnew-Parallel-Scavenge-Parallel-Old"><a href="#Parnew-Parallel-Scavenge-Parallel-Old" class="headerlink" title="Parnew/Parallel Scavenge/Parallel Old"></a>Parnew/Parallel Scavenge/Parallel Old</h4><h5 id="Serial算法多线程版"><a href="#Serial算法多线程版" class="headerlink" title="Serial算法多线程版"></a>Serial算法多线程版</h5><ul>
 <li>优点，多线程，回收速度快 </li>
 <li>缺点，依然会暂停服务</li>
@@ -3951,18 +3951,18 @@ if (matchWidth) {
 <li>Parnew关注回收速度，多线程减少单词GC时间</li>
 <li>Parallel Scanvenge关注吞吐量，减少GC时间占比</li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153851.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884379722524.jpg"  alt=""></p>
 <h4 id="CMS-Concurrent-Mark-Sweep-算法"><a href="#CMS-Concurrent-Mark-Sweep-算法" class="headerlink" title="CMS(Concurrent Mark Sweep)算法"></a>CMS(Concurrent Mark Sweep)算法</h4><ul>
 <li>优点，并发，暂停时间短</li>
 <li>缺点，耗CPU、GC时间长，GC提前，浮动垃圾，碎片化</li>
 <li>场景，对响应时间敏感的Server服务，大部分线上服务应该是CMS</li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153859.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884380075349.jpg"  alt=""></p>
 <h4 id="G1垃圾回收器"><a href="#G1垃圾回收器" class="headerlink" title="G1垃圾回收器"></a>G1垃圾回收器</h4><ul>
 <li>新一代垃圾回收算法</li>
 <li>场景，大内存、高响应的服务端应用</li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428153859.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884380225514.jpg"  alt=""></p>
 <h3 id="JVM工具集"><a href="#JVM工具集" class="headerlink" title="JVM工具集"></a>JVM工具集</h3><h4 id="JPS"><a href="#JPS" class="headerlink" title="JPS"></a>JPS</h4><ul>
 <li>查看当前用户java进程，类似于ps</li>
 <li>-q 只输出LVMID(与PID一致)，省略主类的名称 </li>
@@ -4000,7 +4000,7 @@ if (matchWidth) {
   <entry>
     <title>java对象生命周期</title>
     <url>/blog/2018/02/10/java%E5%AF%B9%E8%B1%A1%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/</url>
-    <content><![CDATA[<h3 id="Java对象生命周期图"><a href="#Java对象生命周期图" class="headerlink" title="Java对象生命周期图"></a>Java对象生命周期图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154402.png"  alt=""></p>
+    <content><![CDATA[<h3 id="Java对象生命周期图"><a href="#Java对象生命周期图" class="headerlink" title="Java对象生命周期图"></a>Java对象生命周期图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884380468535.jpg"  alt=""></p>
 <h3 id="创建阶段（Created）"><a href="#创建阶段（Created）" class="headerlink" title="创建阶段（Created）"></a>创建阶段（Created）</h3><ul>
 <li>分配存储空间</li>
 <li>开始构造对象</li>
@@ -4016,7 +4016,7 @@ if (matchWidth) {
 <h3 id="收集阶段（Collected）"><a href="#收集阶段（Collected）" class="headerlink" title="收集阶段（Collected）"></a>收集阶段（Collected）</h3><p>对象不可达，并且垃圾回收器已经对该对象的内存空间重新分配做好准备时</p>
 <h3 id="终结阶段（Finalized）"><a href="#终结阶段（Finalized）" class="headerlink" title="终结阶段（Finalized）"></a>终结阶段（Finalized）</h3><p>对象执行完finalize方法后，等待垃圾回收器对对象空间进行回收</p>
 <h3 id="对象重新分配阶段（Deallocated）"><a href="#对象重新分配阶段（Deallocated）" class="headerlink" title="对象重新分配阶段（Deallocated）"></a>对象重新分配阶段（Deallocated）</h3><p>垃圾回收器对该对象的所占用的内存空间进行回收或者再分配了，则该对象彻底消失了，此时称为对象空间重新分配阶段</p>
-<h3 id="子父类代码执行顺序图"><a href="#子父类代码执行顺序图" class="headerlink" title="子父类代码执行顺序图"></a>子父类代码执行顺序图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154407.png"  alt=""></p>
+<h3 id="子父类代码执行顺序图"><a href="#子父类代码执行顺序图" class="headerlink" title="子父类代码执行顺序图"></a>子父类代码执行顺序图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884380726555.jpg"  alt=""></p>
 ]]></content>
       <categories>
         <category>Java</category>
@@ -4030,7 +4030,7 @@ if (matchWidth) {
   <entry>
     <title>Java类生命周期</title>
     <url>/blog/2018/02/10/Java%E7%B1%BB%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/</url>
-    <content><![CDATA[<h3 id="Java类生命周期图"><a href="#Java类生命周期图" class="headerlink" title="Java类生命周期图"></a>Java类生命周期图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154500.png"  alt=""></p>
+    <content><![CDATA[<h3 id="Java类生命周期图"><a href="#Java类生命周期图" class="headerlink" title="Java类生命周期图"></a>Java类生命周期图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884380896710.jpg"  alt=""></p>
 <h3 id="加载"><a href="#加载" class="headerlink" title="加载"></a>加载</h3><ul>
 <li>通过一个类的全限定名来获取此类的二进制字节流</li>
 <li>将这个字节流所代表的静态存储结构转化为方法区的运行时数据结构</li>
@@ -4103,7 +4103,7 @@ if (matchWidth) {
 <li>如果想维持双亲委派机制，则覆写findClass方法</li>
 <li>如果想打破双亲委派机制，则覆写loadClass方法</li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154534.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884381298637.jpg"  alt=""></p>
 <h4 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h4><h5 id="Tomcat类加载器"><a href="#Tomcat类加载器" class="headerlink" title="Tomcat类加载器"></a>Tomcat类加载器</h5><ul>
 <li><p>Java类库的隔离：不同应用程序使用不同的类加载器，可以实现Java类库的隔离。</p>
 </li>
@@ -4111,16 +4111,17 @@ if (matchWidth) {
 </li>
 <li><p>安全：服务器和应用程序有各自的类加载器加载Class文件。服务器的类库与应用程序的类库可以互相独立。</p>
 </li>
-<li><p>支持HotSwap（热替换）：JSP文件有独立的类加载器，服务器能通过替换JSP文件的类加载器来实现JSP的HotSwap功能。<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154542.png"  alt=""></p>
+<li><p>支持HotSwap（热替换）：JSP文件有独立的类加载器，服务器能通过替换JSP文件的类加载器来实现JSP的HotSwap功能。</p>
 </li>
 </ul>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884381427798.jpg"  alt=""></p>
 <h3 id="Android类加载图"><a href="#Android类加载图" class="headerlink" title="Android类加载图"></a>Android类加载图</h3><h4 id="加载阶段-1"><a href="#加载阶段-1" class="headerlink" title="加载阶段"></a>加载阶段</h4><p>通过一个dex文件或者apk文件的路径完成类的加载</p>
 <h4 id="类加载器"><a href="#类加载器" class="headerlink" title="类加载器"></a>类加载器</h4><ul>
 <li>BootClassLoader，主要用于加载系统的类，包括java和Android系统的类库</li>
 <li>PathClassLoader，主要用于加载应用内中的类，路径是固定的，只能加载/data/app中的apk，无法指定dex路径</li>
 <li>DexClassLoader，可任意加载.apk、zip或jar等，实现动态加载</li>
 </ul>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154548.png"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884381510914.jpg"  alt=""></p>
 <h4 id="TODO"><a href="#TODO" class="headerlink" title="TODO"></a>TODO</h4><p>类加载器相关应用，插件化、热补等</p>
 ]]></content>
       <categories>
@@ -4134,7 +4135,7 @@ if (matchWidth) {
   <entry>
     <title>Java8中HashMap分析</title>
     <url>/blog/2018/02/08/Java8%E4%B8%ADHashMap%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<h3 id="Put方法流程图"><a href="#Put方法流程图" class="headerlink" title="Put方法流程图"></a>Put方法流程图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155317.png"  alt=""></p>
+    <content><![CDATA[<h3 id="Put方法流程图"><a href="#Put方法流程图" class="headerlink" title="Put方法流程图"></a>Put方法流程图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884382228558.png"  alt=""></p>
 <h3 id="特殊值"><a href="#特殊值" class="headerlink" title="特殊值"></a>特殊值</h3><h4 id="hash"><a href="#hash" class="headerlink" title="hash"></a>hash</h4><p>高16bit不变，低16bit和高16bit做了一个异或</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static final int hash(Object key) &#123;</span><br><span class="line">       int h;</span><br><span class="line">       return (key &#x3D;&#x3D; null) ? 0 : (h &#x3D; key.hashCode()) ^ (h &gt;&gt;&gt; 16);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
 <h4 id="size"><a href="#size" class="headerlink" title="size"></a>size</h4><ul>
@@ -4150,8 +4151,9 @@ if (matchWidth) {
 <li>阀值，=容量*loadFactor（负载因子，默认0.75）</li>
 </ul>
 <h3 id="扩容机制"><a href="#扩容机制" class="headerlink" title="扩容机制"></a>扩容机制</h3><ul>
-<li>hash与旧链表大小做 &amp; 运算，=0不变，=1移动到原位置+旧链表大小的位置<br><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155324.png"  alt=""></li>
+<li>hash与旧链表大小做 &amp; 运算，=0不变，=1移动到原位置+旧链表大小的位置 </li>
 </ul>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884382320409.png"  alt=""></p>
 <h3 id="线程是否安全"><a href="#线程是否安全" class="headerlink" title="线程是否安全"></a>线程是否安全</h3><ul>
 <li>JDK1.7，扩容前后链表导致，转移过程中修改了原来链表中节点引用关系，可能导致死循环</li>
 <li>JDK1.8，不会引起死循环，但put／get不一定同步</li>
@@ -4171,7 +4173,7 @@ if (matchWidth) {
     <url>/blog/2018/02/08/%E8%87%AA%E5%AE%9A%E4%B9%89UUID-%E7%A7%BB%E5%8A%A8%E8%AE%BE%E5%A4%87%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/</url>
     <content><![CDATA[<h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>希望自主生成用于所有移动业务上标识设备唯一性的标识符</p>
 <h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h3><p>业务支撑、日活和新增设备等数据统计、风控等</p>
-<h3 id="uuid系统图"><a href="#uuid系统图" class="headerlink" title="uuid系统图"></a>uuid系统图</h3><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428155359.png"  alt=""></p>
+<h3 id="uuid系统图"><a href="#uuid系统图" class="headerlink" title="uuid系统图"></a>uuid系统图</h3><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884381961254.jpg"  alt=""></p>
 <h3 id="UUID生成"><a href="#UUID生成" class="headerlink" title="UUID生成"></a>UUID生成</h3><h4 id="移动端相关参数"><a href="#移动端相关参数" class="headerlink" title="移动端相关参数"></a>移动端相关参数</h4><h5 id="Android"><a href="#Android" class="headerlink" title="Android"></a>Android</h5><pre><code>IMEI
 
 * International Mobile Equipment Identity，移动设备国际识别码，是手机的唯一识别号码。等价于DeviceId
@@ -4220,8 +4222,8 @@ MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算�
   <entry>
     <title>设计模式</title>
     <url>/blog/2018/02/08/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</url>
-    <content><![CDATA[<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154705.png"  alt=""></p>
-<p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154718.png"  alt=""></p>
+    <content><![CDATA[<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884381673571.jpg"  alt=""></p>
+<p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884381735864.jpg"  alt=""></p>
 ]]></content>
       <categories>
         <category>设计模式</category>
