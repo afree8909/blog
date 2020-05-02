@@ -1,7 +1,7 @@
 ---
 title: RececlerView 源码分析
 date: 2020-04-27
-cover: https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141843.png
+cover: http://q9j7c7ivg.bkt.clouddn.com/20200429123125.png
 tags: 
 - RececlerView
 categories:
@@ -20,7 +20,7 @@ categories:
 * 支持局部刷新，对于一些交互处理多的情况下，会带来更好的性能
 
 ### RecyclerView类图
-![](https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428141843.png)
+![](http://q9j7c7ivg.bkt.clouddn.com/20200429123125.png)
 
 
 ### RecyclerView绘制流程图

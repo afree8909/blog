@@ -562,7 +562,7 @@ aside:
     description:
   card_announcement:
     enable: true
-    content: 努力到无能为力 拼搏到感动自己
+    content: 每天前进一点点...
   card_recent_post:
     enable: true
     limit: 5 # if set 0 will show all
