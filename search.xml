@@ -4244,7 +4244,7 @@ MACAddress和UDID:老版本兼容按需使用</code></pre><h4 id="uuid生成算�
 <li>支持网络请求和响应内容的mock修改</li>
 </ul>
 <h5 id="相关软件"><a href="#相关软件" class="headerlink" title="相关软件"></a>相关软件</h5><p>fiddler、tcpdump</p>
-<h5 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h5><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154824.png"  alt=""></p>
+<h5 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h5><p><img src="/blog/" class="lazyload" data-src="http://q9j7c7ivg.bkt.clouddn.com/2020-05-03-15884383257665.png"  alt=""></p>
 <h3 id="安装配置"><a href="#安装配置" class="headerlink" title="安装配置"></a>安装配置</h3><h5 id="Charles安装"><a href="#Charles安装" class="headerlink" title="Charles安装"></a>Charles安装</h5><h5 id="代理设置"><a href="#代理设置" class="headerlink" title="代理设置"></a>代理设置</h5><h6 id="设置charles为设置成系统代理"><a href="#设置charles为设置成系统代理" class="headerlink" title="设置charles为设置成系统代理"></a>设置charles为设置成系统代理</h6><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154838.png"  alt=""></p>
 <h6 id="开启Charles的代理功能"><a href="#开启Charles的代理功能" class="headerlink" title="开启Charles的代理功能"></a>开启Charles的代理功能</h6><p><img src="/blog/" class="lazyload" data-src="https://raw.githubusercontent.com/afree8909/pictures/master/blog20200428154849.png"  alt=""></p>
 <h6 id="手机连Charles"><a href="#手机连Charles" class="headerlink" title="手机连Charles"></a>手机连Charles<br></h6><ul>
