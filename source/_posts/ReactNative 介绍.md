@@ -159,7 +159,9 @@ React Native 中主要有3种线程
 ### 渲染流程
 **事件传递**
 
-![](media/15883433369415.jpg)
+![](http://q9j7c7ivg.bkt.clouddn.com/2020-05-02-15884061536946.jpg)
+
+
 
 **首次渲染**
 
@@ -177,8 +179,8 @@ React Native 中主要有3种线程
 以前架构问题：
 
 * 异步：无法将 JavaScript 逻辑直接与许多需要同步的 Native API 集成
-* 处理：很难让 React Native 应用调用 Native 实现的函数
-* 可序列化：存在不必要的 copy，而不是直接共享内存
+* 同步桥支持差：在官方代码注释中提到，同步桥存在严重的性能问题，并且会引入线程BUG
+* 通信性能瓶颈：JS与Native通信采用消息队列的方式，传输过程中需要将要传递的消息序列化为JSON。当传输数据量变大时，桥上会出现拥塞
 
 改进方向
 
@@ -206,6 +208,7 @@ React Native 中主要有3种线程
 -------
 
 参考
+[CHANGELOG](https://github.com/react-native-community/releases/blob/master/CHANGELOG.md)
 [The New React Native Architecture Explained](https://formidable.com/blog/2019/react-codegen-part-1/)
 [React.js Conf 2016 - Tadeu Zagallo - Optimising React Native: Tools and Tips](https://www.youtube.com/watch?v=0MlT74erp60)
 [Bridging in React Native](https://tadeuzagallo.com/blog/react-native-bridge/)
