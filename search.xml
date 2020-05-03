@@ -59,12 +59,48 @@
 </ul>
 </li>
 <li>组件层<ul>
-<li>减少重复渲染，例如Immutablejs、唯一Kye、慎用setState</li>
+<li>减少重复渲染，例如pureComponent、Immutablejs、 <a href="https://zh-hans.reactjs.org/docs/lists-and-keys.html" target="_blank" rel="noopener">列表 &amp; Key</a>、慎用setState</li>
 <li>其它React布局和渲染的一些常规优化</li>
 </ul>
 </li>
 </ul>
-<h3 id="列表"><a href="#列表" class="headerlink" title="列表"></a>列表</h3><p>  复杂且条目多的长列表实现，FlatList可以满足一般场景，但是有两个缺陷，<br>        * 白屏问题是因为异步渲染导致的。cell先创建了一个等高空白容器，然后整个cell的viewTree异步渲染完成后再添加到空白容器内。所以快速滑动的时候，由于异步任务堆积，导致无法快速展现出现白屏。<br>        * FlatList数据条目多时容易产生崩溃。这是因为FlatList中Cell之间的viewTree并没有真实复用，随着滚动渲染出来的viewTree越来越多，内存开销过大容易出现OOM</p>
+<h4 id="列表"><a href="#列表" class="headerlink" title="列表"></a>列表</h4><p>官方推出的FlatList及SectionList的一些问题</p>
+<ul>
+<li>元素懒加载：元素只有出现在屏幕中，才会被初始化出来。</li>
+<li>无复用池机制：且初始化后不销毁：在元素离开可视范围后，会被同尺寸的空白元素替换，但是不会被销毁。另外FlatList中item的viewTree并没有真实复用，随着滚动渲染出来的viewTree越来越多，内存开销过大容易出现OOM</li>
+<li>异步渲染：在空白元素滚动到可视区域后，会进行UI渲染，先创建了一个等高空白容器，然后整个cell的viewTree异步渲染完成后再添加到空白容器内。所以快速滑动的时候，由于异步任务堆积，导致无法快速展现出现白屏。</li>
+</ul>
+<p>官方对列表的一些配置推荐和实现建议 <a href="https://reactnative.dev/docs/optimizing-flatlist-configuration" target="_blank" rel="noopener">Optimizing Flatlist Configuration</a> </p>
+<ul>
+<li>Props<ul>
+<li>maxToRenderPerBatch，最大预加载数，即屏幕外渲染的Item数目</li>
+<li>updateCellsBatchingPeriod，批量更新Cell周期，即批处理更新时间频率</li>
+<li>initialNumToRender，初始化最大渲染数</li>
+</ul>
+</li>
+<li>List Items<ul>
+<li>尽可能使用基础组件、轻量化组件，Item尽可能低层级、少逻辑</li>
+<li>使用shouldComponentUpdate来优化diff判断，从而减少重复渲染</li>
+<li>图片控件缓存优化，例如推荐<a href="https://github.com/DylanVann/react-native-fast-image" target="_blank" rel="noopener">react-native-fast-image</a>优秀的图片控件</li>
+<li>通过getItemLayout告知高度，减少layout时间</li>
+<li>使用 <a href="https://zh-hans.reactjs.org/docs/lists-and-keys.html" target="_blank" rel="noopener">列表 &amp; Key</a>，加速更新Diff计算</li>
+<li>避免匿名函数，每一个函数是一个新的对象</li>
+</ul>
+</li>
+</ul>
+<p>列表实践过程中的思考</p>
+<h5 id="OOM（增加复用能力）"><a href="#OOM（增加复用能力）" class="headerlink" title="OOM（增加复用能力）"></a>OOM（增加复用能力）</h5><p>实现Cell复用：一种思路是Native列表 + RN Cell，借助Native列表实现Cell复用能力，需要做以下几个事情</p>
+<ul>
+<li>Native列表渲染Cell，在没有RN Cell的时候需要占位，有Cell的时候需要展示</li>
+<li>Native列表Cell复用情况下，需要复用正确RN Cell，Cell之间关联关系处理</li>
+<li>Native渲染线程全部在主线程同步执行，但是RN渲染是经过JS -&gt; Shadow -&gt; Native 三条线程异步操作，所以需要主动进行通信机制管理</li>
+</ul>
+<h5 id="白屏（减少通信或者提高通信速度）"><a href="#白屏（减少通信或者提高通信速度）" class="headerlink" title="白屏（减少通信或者提高通信速度）"></a>白屏（减少通信或者提高通信速度）</h5><p>Native与RN通信频繁是带来白屏的主要原因，那么可以结合一些特定的业务场景进行一些优化</p>
+<ul>
+<li>新一代的RN重构框架Fabric会重点优化线程通信效率，敬请期待</li>
+<li>RN侧自己感知View变更，作出更新操作，而不全依靠Native通知，从而减少通信。例如顶部、底部上下移动带来新的View渲染，点击回到顶部，直接服用首页View等RN侧处理操作</li>
+<li>快速滑动限速，一般来说快速滑动是一个非常规操作，我们可以将速度限制到合理范围，减少过多的异步任务并发出发</li>
+</ul>
 <hr>
 <p>参考：<br><a href="http://blog.poetries.top/2019/10/02/rn-start-progress/" target="_blank" rel="noopener">React Native之启动流程</a><br><a href="https://juejin.im/post/5a4dc842518825698e7279a9" target="_blank" rel="noopener">Tree-Shaking性能优化实践 - 原理篇</a><br><a href="https://reactnative.cn/docs/performance/#%E6%8B%86%E5%8C%85ram-bundles%E5%92%8C%E5%86%85%E8%81%94%E5%BC%95%E7%94%A8" target="_blank" rel="noopener">ReactNative 性能</a></p>
 ]]></content>
