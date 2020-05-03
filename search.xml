@@ -45,7 +45,8 @@
 <li>Bundle包下载策略优化，根据页面深度区分下载时机，实现延缓下载，减少首次并发下载任务量</li>
 </ul>
 <h4 id="包加载"><a href="#包加载" class="headerlink" title="包加载"></a>包加载</h4><ul>
-<li>引擎池技术，默认空引擎+引擎复用，减少引擎池初始化时间</li>
+<li>业务容器层加载JS的引擎，使用引擎池技术，默认空引擎+引擎复用，减少引擎池初始化时间</li>
+<li>底层引擎可以根据业务进行替换，使用V8或者Hermes <a href="https://dev.to/anotherjsguy/react-native-memory-profiling-jsc-vs-v8-vs-hermes-1c76" target="_blank" rel="noopener">React Native Memory profiling (JSC vs V8 vs Hermes</a></li>
 </ul>
 <h4 id="包渲染"><a href="#包渲染" class="headerlink" title="包渲染"></a>包渲染</h4><ul>
 <li>数据层<ul>
@@ -59,15 +60,11 @@
 </li>
 <li>组件层<ul>
 <li>减少重复渲染，例如Immutablejs、唯一Kye、慎用setState</li>
-<li>React布局和渲染的一些基本常识</li>
-<li>实践过程中，最难点也是比较常见的场景就是，复杂且条目多的长列表实现，FlatList可以满足一般场景，但是有两个缺陷，<ul>
-<li>白屏问题是因为异步渲染导致的。cell先创建了一个等高空白容器，然后整个cell的viewTree异步渲染完成后再添加到空白容器内。所以快速滑动的时候，由于异步任务堆积，导致无法快速展现出现白屏。</li>
-<li>FlatList数据条目多时容易产生崩溃。这是因为FlatList中Cell之间的viewTree并没有真实复用，随着滚动渲染出来的viewTree越来越多，内存开销过大容易出现OOM</li>
+<li>其它React布局和渲染的一些常规优化</li>
 </ul>
 </li>
 </ul>
-</li>
-</ul>
+<h3 id="列表"><a href="#列表" class="headerlink" title="列表"></a>列表</h3><p>  复杂且条目多的长列表实现，FlatList可以满足一般场景，但是有两个缺陷，<br>        * 白屏问题是因为异步渲染导致的。cell先创建了一个等高空白容器，然后整个cell的viewTree异步渲染完成后再添加到空白容器内。所以快速滑动的时候，由于异步任务堆积，导致无法快速展现出现白屏。<br>        * FlatList数据条目多时容易产生崩溃。这是因为FlatList中Cell之间的viewTree并没有真实复用，随着滚动渲染出来的viewTree越来越多，内存开销过大容易出现OOM</p>
 <hr>
 <p>参考：<br><a href="http://blog.poetries.top/2019/10/02/rn-start-progress/" target="_blank" rel="noopener">React Native之启动流程</a><br><a href="https://juejin.im/post/5a4dc842518825698e7279a9" target="_blank" rel="noopener">Tree-Shaking性能优化实践 - 原理篇</a><br><a href="https://reactnative.cn/docs/performance/#%E6%8B%86%E5%8C%85ram-bundles%E5%92%8C%E5%86%85%E8%81%94%E5%BC%95%E7%94%A8" target="_blank" rel="noopener">ReactNative 性能</a></p>
 ]]></content>
